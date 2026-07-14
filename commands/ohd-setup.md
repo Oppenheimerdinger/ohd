@@ -8,7 +8,7 @@ the checklist.
 
 1. Run `claude plugin list` (Bash) and evaluate:
    - **superpowers** — recommended — required for the full workflow from v0.2; v0.1 works without it.
-   <!-- lock-step 두 곳!: keep this label in sync with the way-of-working skill (v0.2). -->
+   <!-- lock-step 세 곳!: keep this label in sync with the way-of-working skill (v0.2). -->
    - **oh-my-claudecode** — optional; only needed for the ralph persistence
      mode.
    - **deep-solve@dipark (stale)** — if installed, warn: this plugin bundles

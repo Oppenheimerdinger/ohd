@@ -17,12 +17,16 @@ router — which tool, when.
 | A deliverable exists and must be checked | `review-to-convergence` |
 | The deliverable is a code diff | `review-to-convergence`, using `/code-review` as the instrument |
 | A creative/structural piece of work just completed | workflow review (below) |
+| CLAUDE.md / memory hygiene check | `claude-md-sanity` |
 
 **Workflow-review trigger (default, user-adjustable):** work where judgment
 (not a single right answer) shaped the result — a new design, a new module, an
 algorithm choice — gets a multi-agent workflow review when (a) it spans 3+
 files or ~100+ lines of new logic, or (b) later work will build on top of it.
 Below that, a single independent reviewer (review-to-convergence) suffices.
+Run it as 2–3 independent fresh-context reviewers with distinct lenses (design
+soundness, correctness, simplicity), each given the goal + the diff; reconcile
+findings before banking.
 
 ## Two force-multipliers (defaults, not ad-hoc)
 
@@ -52,8 +56,9 @@ If ralph (or similar) is used: ① mentioning the word in a design conversation
 can auto-register its state — a status question is not a task; cancel misfired
 modes instead of "continuing" them. ② Cancel path: the mode's cancel command →
 `--force` → if the stop hook STILL loops, look for state under the **current
-repo's own `.omc/state/sessions/<id>/`** (state tools may resolve a different
-root) and use the documented file-removal fallback. ③ An autonomous loop always
+repo's own `.omc/state/sessions/` (ls it — newest session dir) and remove the
+misfired mode's state file** (state tools may resolve a different root) and
+use the documented file-removal fallback. ③ An autonomous loop always
 gets a termination condition and an iteration cap.
 
 ## Collaboration discipline

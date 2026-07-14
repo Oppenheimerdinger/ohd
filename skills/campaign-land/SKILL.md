@@ -80,7 +80,8 @@ the change touches, now — not "later".
 
 `campaign.sh clean <name>` (verifies merge before deleting) — or manually:
 verify with the campaign-status verdict first, then remove worktree + local +
-remote branch. Whoever spawned the worktree owns its teardown. ⚠ Parallel
+remote branch: `git worktree remove <wt> && git branch -D <br> && git push origin --delete <br> && git worktree prune`.
+Whoever spawned the worktree owns its teardown. ⚠ Parallel
 processes with identical argv can't be targeted by `pkill -f` (it kills both)
 — sweep by PID.
 
@@ -96,6 +97,7 @@ marker.
 A campaign that also changed a pinned dependent/fork repo merges in strict
 order: dependent PR first → bump the pin (`campaign.sh pin <name>` updates the
 PIN line to the merged dep-trunk SHA) → this repo's PR → clean.
+Raw path: after verifying the dep branch merged (campaign-status), set the PIN line to `git -C <dep> rev-parse origin/<dep-trunk>`, commit (the trunk hook may require --no-verify for a non-docs file), push.
 
 ## What this skill does NOT do
 

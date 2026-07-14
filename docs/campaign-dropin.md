@@ -35,7 +35,8 @@ standard single-repo project.
    remove the scratch state doc** (`rm <STATE_DIR>/scratch-test.md`): `abort`
    only tears down the worktree and branch, the state doc is a trunk artifact
    and deliberately survives (so real aborts keep a paper trail) — the smoke
-   test needs an explicit cleanup step or it leaves scratch litter in the repo.
+   test needs an explicit cleanup step or it leaves scratch litter in the repo
+   (with NAMING=numbered, use `000-scratch` as the test name).
 
 ## Daily lifecycle
 
