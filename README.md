@@ -18,12 +18,18 @@ Then restart the session (or `/reload-plugins`) and run `/ohd-setup`.
 
 - `/deep-solve` — user-gated hard-problem convergence harness
   (isolated / grounded modes)
+- `way-of-working` — the routing layer: which tool when (produce / verify /
+  review / loop), delegation & review disciplines, collaboration rules
+- `campaign-land` / `campaign-status` — worktree campaign landing ritual and
+  squash-safe merge verdicts
 - `review-to-convergence` — verify a finished deliverable to zero findings
 - `claude-md-sanity` — audit a repo's CLAUDE.md / memory files for drift
 - `/ohd-setup` — check (and on approval install) the plugins this harness
   builds on
+- `assets/campaign.sh` — drop-in worktree lifecycle for any repo
+  ([guide](docs/campaign-dropin.md))
 
-Roadmap: v0.2 way-of-working + campaign-land/status · v0.3 new-project.
+Roadmap: v0.3 new-project (interview-driven scaffolder).
 Design docs live in `docs/superpowers/specs/`.
 
 ## Version note
