@@ -48,6 +48,8 @@ Public Claude Code harness plugin. Development happens on `main` directly
   required for the full workflow from v0.2; v0.1 works without it") lives in
   `commands/ohd-setup.md`, `README.md` (Requirements section), and (from
   v0.2) the way-of-working skill. Change them together. claude-md-sanity
-  audits this rule.
+  audits this rule; the audit instruction requires the phrase "required for
+  the full workflow from v0.2" to be greppable single-line in all its
+  locations.
 - Open deviations and carried decisions live in `docs/backlog.md` — do not
   delete entries; mark them resolved with the fixing commit.

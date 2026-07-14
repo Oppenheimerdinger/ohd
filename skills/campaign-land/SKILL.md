@@ -38,6 +38,7 @@ Compare its touched files/paths against everything landed since its base:
 **disjoint → merge in any order, no re-validation; overlapping → after the
 merge, re-run this campaign's validation against the new trunk — but only the
 conflict set, not a blanket full pass.**
+Raw overlap check: `comm -12 <(git diff --name-only <base>...origin/<trunk> | sort) <(git diff --name-only <base>...HEAD | sort)` — empty output = disjoint.
 
 ## Phase 3 — quality gate on the diff
 
