@@ -1,0 +1,31 @@
+<!-- value tokens: {{NAME}} {{TRUNK}} {{NAMING}} {{MERGE_MODEL}} {{DEPLOY}} ;
+     block tokens (alone on their line): {{MATRIX_BLOCK}} {{DATA_BLOCK}} {{HOSTS_BLOCK}} -->
+# {{NAME}}
+
+goal: (한 줄로 — 첫 세션에서 채우세요)
+
+## Facts
+
+- trunk: `{{TRUNK}}` · campaign naming: {{NAMING}} · merge model: {{MERGE_MODEL}}
+- worktrees: `$HOME/wt/<campaign>` via `tools/campaign.sh` (new|land|status|list|clean|abort)
+- deploy: {{DEPLOY}}
+
+## Machines & environments
+
+{{MATRIX_BLOCK}}
+
+{{DATA_BLOCK}}
+
+{{HOSTS_BLOCK}}
+
+## How we work
+
+Working discipline lives in the oppenheimerdinger plugin (way-of-working ·
+campaign-land · campaign-status · claude-md-sanity); lifecycle tooling is
+`tools/campaign.sh`. Sessions without the plugin: see the plugin repo's
+`docs/campaign-dropin.md`.
+
+- project memory slug `{{NAME}}` — 첫 실질 세션에서 생성하고, 이후 세션은
+  작업 전에 읽는다.
+
+<!-- This file is audited by claude-md-sanity — update facts when they change. -->
