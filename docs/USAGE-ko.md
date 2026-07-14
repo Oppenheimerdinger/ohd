@@ -1,7 +1,14 @@
-# deep-solve 설치 및 사용 안내
+# oppenheimerdinger 설치 및 사용 안내
 
-어려운 문제를 "위임 → 독립 리뷰 → 재풀이" 루프로 수렴할 때까지 자동으로 푸는
-Claude Code 플러그인입니다.
+oppenheimerdinger는 연구·개발용 Claude Code 하네스 플러그인이며, 이 문서는
+설치와 핵심 도구 사용법을 다룹니다.
+
+주요 구성 요소:
+
+- `/ohd-setup` — 환경 점검·선행 플러그인 설치
+- `/deep-solve` — 어려운 문제 수렴 하네스 (이 문서의 본문 주제)
+- `review-to-convergence` — 완성된 산출물을 zero-finding까지 검증
+- `claude-md-sanity` — CLAUDE.md/메모리 드리프트 감사
 
 ## 설치
 
@@ -23,6 +30,8 @@ Agent 툴 기반 수동 루프로 대체합니다.
 > 이 문서의 deep-solve는 oppenheimerdinger 플러그인에 포함되어 있습니다
 > (구 deep-solve@dipark 단독 플러그인은 archive됨). 옛 플러그인이 설치되어
 > 있다면 `claude plugin uninstall deep-solve@dipark` 로 제거하세요.
+
+## deep-solve 사용법
 
 ## 언제 쓰나
 
