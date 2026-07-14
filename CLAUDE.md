@@ -20,9 +20,9 @@ Public Claude Code harness plugin. Development happens on `main` directly
      quote the words it's filtering for), and `docs/superpowers/{specs,plans}/`
      (see note below).
    - `grep -rnE "Oppenheimerdinger/deep-solve|deep-solve@dipark|deep-solve:deep-solve" $(git ls-files)`
-     — allowed ONLY: docs/backlog.md history links, README version note,
-     USAGE-ko migration note, ohd-setup's stale-plugin check, this
-     section's own text, and `docs/superpowers/{specs,plans}/`.
+     — allowed ONLY: docs/backlog.md and CHANGELOG.md history links, README
+     version note, USAGE-ko migration note, ohd-setup's stale-plugin check,
+     this section's own text, and `docs/superpowers/{specs,plans}/`.
    - `docs/superpowers/{specs,plans}/` are tracked internal design docs,
      public by precedent (deep-solve shipped its specs too) — whitelisted
      wholesale against both gates above. They must still never carry
