@@ -19,10 +19,12 @@ standard single-repo project.
 ## Install
 
 1. Copy `assets/campaign.sh` from the plugin into the repo as
-   `tools/campaign.sh`; edit the config block at the top with the interview
-   answers (env `CAMPAIGN_*` variables override at runtime); `chmod +x`. If
-   the defaults already match your answers, no edits are needed — just note
-   that in a header comment for provenance.
+   `tools/campaign.sh` (the plugin's files live under
+   `~/.claude/plugins/cache/dipark/oppenheimerdinger/<version>/assets/` after
+   install, or clone the repo); edit the config block at the top with the
+   interview answers (env `CAMPAIGN_*` variables override at runtime);
+   `chmod +x`. If the defaults already match your answers, no edits are
+   needed — just note that in a header comment for provenance.
 2. `git add`-track the empty state directory: `touch <STATE_DIR>/.gitkeep`
    (`cmd_new` will `mkdir -p` it on first use, but an untracked empty dir is
    invisible to git — commit the placeholder now so the drop-in leaves a

@@ -40,6 +40,13 @@ PATH="/usr/bin:/bin" "$CS" status c1 | grep -q UNVERIFIED || fail "expected UNVE
 if PATH="/usr/bin:/bin" "$CS" clean c1 2>/dev/null; then fail "clean accepted unmerged branch"; fi
 [ -d "$TMP/wt/c1" ] || fail "worktree destroyed by refused clean"
 
+# clean must refuse a never-pushed campaign (data-loss guard)
+"$CS" new c3 >/dev/null
+( cd "$TMP/wt/c3" && echo w3 > h.txt && git add h.txt && git commit -qm w3 )
+if "$CS" clean c3 2>/dev/null; then fail "clean destroyed a never-pushed campaign"; fi
+[ -d "$TMP/wt/c3" ] || fail "worktree destroyed by refused clean (unpushed)"
+"$CS" abort c3 >/dev/null
+
 # merge on trunk → status flips to MERGED (ancestry)
 git fetch -q origin && git merge -q --no-ff origin/c1 -m merge && git push -q origin main
 "$CS" status c1 | grep -q "MERGED (ancestry)" || fail "expected MERGED after merge"

@@ -57,9 +57,8 @@ can auto-register its state — a status question is not a task; cancel misfired
 modes instead of "continuing" them. ② Cancel path: the mode's cancel command →
 `--force` → if the stop hook STILL loops, look for state under the **current
 repo's own `.omc/state/sessions/` (ls it — newest session dir) and remove the
-misfired mode's state file** (state tools may resolve a different root) and
-use the documented file-removal fallback. ③ An autonomous loop always
-gets a termination condition and an iteration cap.
+misfired mode's state file** (state tools may resolve a different root). ③ An
+autonomous loop always gets a termination condition and an iteration cap.
 
 ## Collaboration discipline
 
@@ -81,5 +80,5 @@ gets a termination condition and an iteration cap.
 
 Creative work starts at brainstorming; multi-step work gets a written plan
 (writing-plans) and subagent-driven execution; nothing is declared complete
-without verification-before-completion. This is why superpowers is required
-for the full workflow from v0.2 (see `/ohd-setup`).
+without verification-before-completion. This is why superpowers is
+required for the full workflow from v0.2 (see `/ohd-setup`).

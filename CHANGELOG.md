@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.2 (2026-07-14)
+
+- fix: clean refuses never-pushed campaigns (data-loss guard, new smoke
+  assertion); clean/status stacked-PR verification tightened (per-PR base
+  matching); pin robustness (PIN= guard, portable sed, pathspec commit); list
+  handles spaced paths; CI guards assets↔tools drift; doc polish.
+
 ## v0.2.1 (2026-07-14)
 
 - fix: campaign.sh status treats a FAILING gh call as UNVERIFIED (was:

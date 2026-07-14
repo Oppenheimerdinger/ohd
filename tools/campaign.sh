@@ -102,8 +102,10 @@ cmd_status() {
   if command -v gh >/dev/null 2>&1; then
     local prs
     if prs="$(gh pr list --head "$n" --state all --json number,state,mergedAt,baseRefName 2>/dev/null)"; then
-      if echo "$prs" | grep -q '"state":"MERGED"'; then
-        if echo "$prs" | grep -q "\"baseRefName\":\"$TRUNK\""; then
+      local merged_objs
+      merged_objs="$(echo "$prs" | grep -o '{[^}]*}' | grep '"state":"MERGED"' || true)"
+      if [ -n "$merged_objs" ]; then
+        if echo "$merged_objs" | grep -qF "\"baseRefName\":\"$TRUNK\""; then
           echo "MERGED (via PR — squash/merge-commit; non-ancestry is NORMAL for squash)"
         else
           echo "STACKED?: MERGED PR exists but its base ≠ $TRUNK — content may not be on trunk."
@@ -124,7 +126,7 @@ cmd_status() {
 
 cmd_list() {
   git fetch origin -q --prune 2>/dev/null || true
-  git worktree list --porcelain | awk '/^worktree /{w=$2} /^branch /{print w, $2}' | \
+  git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /,""); w=$0} /^branch /{print w, $2}' | \
   while read -r wt br; do
     br="${br#refs/heads/}"
     [ "$wt" = "$ROOT" ] && continue
@@ -150,12 +152,16 @@ cmd_clean() {
   if git rev-parse -q --verify "origin/$n" >/dev/null; then
     if ! git merge-base --is-ancestor "origin/$n" "origin/$TRUNK"; then
       if command -v gh >/dev/null 2>&1 \
-         && gh pr list --head "$n" --state merged --json number 2>/dev/null | grep -q '"number"'; then
-        :  # merged via squash — verified through the PR API
+         && gh pr list --head "$n" --state merged --json number,baseRefName 2>/dev/null \
+              | grep -o '{[^}]*}' | grep -F "\"baseRefName\":\"$TRUNK\"" | grep -q '"number"'; then
+        :  # merged via squash into $TRUNK — verified through the PR API
       else
         die "refusing clean: '$n' is not verifiably merged (run 'campaign.sh status $n'; use abort to discard)"
       fi
     fi
+  elif git rev-parse -q --verify "$n" >/dev/null 2>&1 \
+       && ! git merge-base --is-ancestor "$n" "origin/$TRUNK"; then
+    die "refusing clean: '$n' was never pushed and is not merged — its commits exist only here. Use 'abort $n' if you really mean to discard."
   fi
   teardown "$n" yes
   echo "cleaned $n (worktree + local & remote branch)"
@@ -182,9 +188,10 @@ cmd_pin() {
     die "'$n' not verifiably merged into dep trunk '$DEP_TRUNK' (squash? verify on the dep repo's PR page; ancestry check alone is squash-blind)"
   fi
   local sha; sha="$(git -C "$DEP_DIR" rev-parse "origin/$DEP_TRUNK")"
-  sed -i "s/^PIN=.*/PIN=$sha/" "$PIN_FILE"
+  grep -q '^PIN=' "$PIN_FILE" || die "no PIN= line in $PIN_FILE"
+  sed -i.bak "s|^PIN=.*|PIN=$sha|" "$PIN_FILE" && rm -f "$PIN_FILE.bak"
   git add "$PIN_FILE"
-  git commit --no-verify -m "pin: $PIN_FILE -> $sha ($n)"
+  git commit --no-verify -m "pin: $PIN_FILE -> $sha ($n)" -- "$PIN_FILE"
   git push origin HEAD
   echo "pinned $sha"
 }

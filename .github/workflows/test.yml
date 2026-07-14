@@ -10,3 +10,4 @@ jobs:
           node-version: 22
       - run: node --test tests/*.test.mjs
       - run: bash tests/campaign-smoke.sh
+      - run: diff <(grep -v '^# instantiated' tools/campaign.sh) <(grep -v '^# instantiated' assets/campaign.sh)
