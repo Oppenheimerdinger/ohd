@@ -1,6 +1,5 @@
 ---
 description: Check (and on approval install) the plugins oppenheimerdinger builds on, verify the Workflow tool, and report an environment checklist
-argument-hint: (no arguments)
 ---
 
 Run oppenheimerdinger's environment checkup. Interview tone throughout:
@@ -8,7 +7,8 @@ recommend, ask before acting, never force. Do the steps in order; end with
 the checklist.
 
 1. Run `claude plugin list` (Bash) and evaluate:
-   - **superpowers** — recommended — required for the full workflow from v0.2; v0.1 works without it. [lock-step 두 곳!: keep this label in sync with the way-of-working skill from v0.2]
+   - **superpowers** — recommended — required for the full workflow from v0.2; v0.1 works without it.
+   <!-- lock-step 두 곳!: keep this label in sync with the way-of-working skill (v0.2). -->
    - **oh-my-claudecode** — optional; only needed for the ralph persistence
      mode.
    - **deep-solve@dipark (stale)** — if installed, warn: this plugin bundles
@@ -32,4 +32,6 @@ the checklist.
    requirement. End with EXACTLY this line:
    "새로 설치한 플러그인이 있다면 세션을 재시작(또는 /reload-plugins)한 뒤
    /ohd-setup 을 다시 실행해 확인하세요."
-5. Render the report in the conversation language.
+5. Render the report in the conversation language (the step-4 final line stays
+   verbatim in Korean; if the conversation language is not Korean, add a
+   translation in parentheses after it).

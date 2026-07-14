@@ -1,19 +1,13 @@
 ---
 name: claude-md-sanity
 description: >-
-  Audit a repository's CLAUDE.md (+ MEMORY.md / memory/ / auto-memory) for drift —
-  verifying that the self-maintaining promises the file makes about itself still
-  hold against the actual code, git history, and memory store. It checks declared
-  invariants and reports drift; it does NOT rewrite or improve prose (that's a
-  rewriting/improver tool, if you have one). Use this whenever the user asks to
-  "check / audit / sanity / 정리 / 점검" a CLAUDE.md or project memory, before
-  landing/merging work that touched docs or workflow, when onboarding to a repo
-  whose CLAUDE.md you don't trust is current, or periodically on a long-lived
-  research repo to catch stale dated anchors, broken or dangling memory
-  pointers, gotchas that point at deleted code, lock-step rules that have been
-  half-landed, and bootstrap/TODO notes that were satisfied. Trigger even
-  if the user says "is my CLAUDE.md still accurate?" or "the docs feel out of
-  date" — this is the skill for keeping a self-maintaining doc honest.
+  Audit a repository's CLAUDE.md (+ MEMORY.md / memory/ / auto-memory) for drift
+  against the actual code, git history, and memory store — reports drift, does
+  NOT rewrite or improve prose. Use whenever the user asks to "check / audit /
+  sanity / 정리 / 점검" a CLAUDE.md or project memory, or asks "is my CLAUDE.md
+  still accurate?" or "my CLAUDE.md / project memory feels out of date". Also
+  use proactively: before landing work that touched docs/workflow; when
+  onboarding to an unfamiliar repo; periodically on a long-lived repo.
 ---
 
 # CLAUDE.md / memory sanity audit
@@ -151,8 +145,9 @@ grep -noE '(memory/[A-Za-z0-9_-]+\.md|MEMORY\.md|\[\[[a-z0-9-]+\]\]|(메모리|a
 (This line-based grep misses a slug wrapped across a newline — `auto-memory` ending
 one line, the backticked slug starting the next — so the direct section read of
 rule 1 is the real backstop here.) Try to resolve each slug against the harness
-memory store (search the project's
-memory dir — see the global CLAUDE.md for where it lives — for `<slug>.md`). If you
+auto-memory directory (`~/.claude/projects/<project-slug>/memory/`) for
+`<slug>.md`; if no memory store can be located, route ALL memory-slug promises to
+MANUAL-CHECK. If you
 **cannot** resolve a slug mechanically, route it to MANUAL-CHECK ("confirm memory
 `<slug>` still exists"); do not call Check 3 clean while slugs went unresolved.
 
