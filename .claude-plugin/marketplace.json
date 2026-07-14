@@ -1,0 +1,11 @@
+{
+  "name": "dipark",
+  "owner": { "name": "dipark" },
+  "plugins": [
+    {
+      "name": "oppenheimerdinger",
+      "source": "./",
+      "description": "Research & development harness (deep-solve, review-to-convergence, claude-md-sanity, ohd-setup)"
+    }
+  ]
+}
