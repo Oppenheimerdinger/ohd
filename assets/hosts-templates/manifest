@@ -1,0 +1,7 @@
+# host manifest — consumed by setup.sh and tools/campaign.sh pin (KEY=VALUE)
+HOST={{HOST}}
+VEHICLE={{VEHICLE}}
+REPO={{REPO}}
+TRUNK={{HOST_TRUNK}}
+PIN=
+PATCHES=
