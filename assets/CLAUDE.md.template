@@ -20,7 +20,7 @@ goal: (한 줄로 — 첫 세션에서 채우세요)
 
 ## How we work
 
-Working discipline lives in the oppenheimerdinger plugin (way-of-working ·
+Working discipline lives in the ohd plugin (way-of-working ·
 campaign-land · campaign-status · claude-md-sanity); lifecycle tooling is
 `tools/campaign.sh`. Sessions without the plugin: see the plugin repo's
 `docs/campaign-dropin.md`.

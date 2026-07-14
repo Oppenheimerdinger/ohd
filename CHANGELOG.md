@@ -1,3 +1,16 @@
+## v0.4.0 (2026-07-14)
+
+- **Plugin renamed: `oppenheimerdinger` → `ohd`** (repo:
+  https://github.com/Oppenheimerdinger/ohd — old URLs redirect). Migrate an
+  existing install:
+
+      claude plugin uninstall oppenheimerdinger@dipark
+      claude plugin marketplace remove dipark
+      claude plugin marketplace add Oppenheimerdinger/ohd
+      claude plugin install ohd@dipark
+
+- No functional changes; skill ids now `ohd:<skill>`.
+
 # Changelog
 
 ## v0.3.1 (2026-07-14)

@@ -1,6 +1,6 @@
-# oppenheimerdinger 설치 및 사용 안내
+# ohd 설치 및 사용 안내
 
-oppenheimerdinger는 연구·개발용 Claude Code 하네스 플러그인이며, 이 문서는
+ohd(=oppenheimerdinger의 약칭)는 연구·개발용 Claude Code 하네스 플러그인이며, 이 문서는
 설치와 핵심 도구 사용법을 다룹니다.
 
 주요 구성 요소:
@@ -18,19 +18,19 @@ oppenheimerdinger는 연구·개발용 Claude Code 하네스 플러그인이며,
 Claude Code가 있는 어느 머신에서든:
 
 ```
-claude plugin marketplace add Oppenheimerdinger/oppenheimerdinger
-claude plugin install oppenheimerdinger@dipark
+claude plugin marketplace add Oppenheimerdinger/ohd
+claude plugin install ohd@dipark
 ```
 
 설치/업데이트 후 새 세션을 열거나 `/reload-plugins`를 실행해야 적용됩니다.
 
-**업데이트**: `claude plugin update oppenheimerdinger@dipark` → `/reload-plugins`
+**업데이트**: `claude plugin update ohd@dipark` → `/reload-plugins`
 
 **요구사항**: isolated 모드는 Claude Code의 Workflow 툴(멀티에이전트
 오케스트레이션)을 사용합니다. 없는 환경에서는 스킬이 스스로 한계를 알리고
 Agent 툴 기반 수동 루프로 대체합니다.
 
-> 이 문서의 deep-solve는 oppenheimerdinger 플러그인에 포함되어 있습니다
+> 이 문서의 deep-solve는 ohd 플러그인에 포함되어 있습니다
 > (구 deep-solve@dipark 단독 플러그인은 archive됨). 옛 플러그인이 설치되어
 > 있다면 `claude plugin uninstall deep-solve@dipark` 로 제거하세요.
 

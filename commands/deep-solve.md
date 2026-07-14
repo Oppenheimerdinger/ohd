@@ -10,7 +10,7 @@ problem statement plus any overrides
 
 (The inline exists because this command and the bundled skill share the
 name `deep-solve`, so a name-triggered Skill-tool call would resolve to
-`oppenheimerdinger:deep-solve` and re-enter this same flow — re-invoking by
+`ohd:deep-solve` and re-enter this same flow — re-invoking by
 name resolves back to this command and loops. Do not "simplify" this file
 to a Skill-tool call.)
 
