@@ -9,7 +9,7 @@ This harness has one design language: **interview-driven decisions, exactly one
 recommendation per fork, honest gates over enforcement.** This skill is the
 router — which tool, when.
 
-## Quality routing
+## Routing
 
 | Situation | Tool |
 |---|---|
