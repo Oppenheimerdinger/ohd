@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.0 (2026-07-14)
+
+- New: `/ohd-new-project` — interview-driven research-project scaffolder
+  (deterministic `assets/new-project.sh`; campaign lifecycle instantiation,
+  protected trunk, machine×env matrix CLAUDE.md, external-code hosts
+  machinery with adopt-safe setup.sh, data symlink, gh repo creation).
+- New: 3-profile network-free smoke in CI.
+- way-of-working routing table gains the new-project row.
+
 ## v0.2.2 (2026-07-14)
 
 - fix: clean refuses never-pushed campaigns (data-loss guard, new smoke

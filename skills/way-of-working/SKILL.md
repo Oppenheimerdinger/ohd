@@ -18,6 +18,7 @@ router — which tool, when.
 | The deliverable is a code diff | `review-to-convergence`, using `/code-review` as the instrument |
 | A creative/structural piece of work just completed | workflow review (below) |
 | CLAUDE.md / memory hygiene check | `claude-md-sanity` |
+| Starting a new research project | `/ohd-new-project` (interview-driven scaffolder) |
 
 **Workflow-review trigger (default, user-adjustable):** work where judgment
 (not a single right answer) shaped the result — a new design, a new module, an

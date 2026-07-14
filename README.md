@@ -22,6 +22,8 @@ Then restart the session (or `/reload-plugins`) and run `/ohd-setup`.
   review / loop), delegation & review disciplines, collaboration rules
 - `campaign-land` / `campaign-status` — worktree campaign landing ritual and
   squash-safe merge verdicts
+- `/ohd-new-project` — interview-driven scaffolder for a new research project
+  (campaign lifecycle, protected trunk, machine×env matrix, hosts machinery)
 - `review-to-convergence` — verify a finished deliverable to zero findings
 - `claude-md-sanity` — audit a repo's CLAUDE.md / memory files for drift
 - `/ohd-setup` — check (and on approval install) the plugins this harness
@@ -29,7 +31,7 @@ Then restart the session (or `/reload-plugins`) and run `/ohd-setup`.
 - `assets/campaign.sh` — drop-in worktree lifecycle for any repo
   ([guide](docs/campaign-dropin.md))
 
-Roadmap: v0.3 new-project (interview-driven scaffolder).
+Roadmap: the original outline is complete; see docs/backlog.md for carried items.
 Design docs live in `docs/superpowers/specs/`.
 
 ## Version note
