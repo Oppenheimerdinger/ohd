@@ -20,6 +20,10 @@ goal: (한 줄로 — 첫 세션에서 채우세요)
 
 ## How we work
 
+**Open Claude Code sessions HERE — at this trunk-checkout root** (never inside
+a `$HOME/wt/...` campaign worktree). Campaign work is driven from this anchor:
+cd into the worktree within the session, or use `git -C <worktree>`.
+
 Working discipline lives in the ohd plugin (way-of-working ·
 campaign-land · campaign-status · claude-md-sanity); lifecycle tooling is
 `tools/campaign.sh`. Sessions without the plugin: see the plugin repo's

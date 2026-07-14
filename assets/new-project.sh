@@ -244,7 +244,7 @@ trap - ERR
 echo ""
 echo "scaffolded: $DIR"
 echo "next steps:"
-echo "  1. open a NEW session anchored at $DIR"
+echo "  1. open Claude Code sessions AT $DIR (the trunk root — never inside a worktree)"
 echo "  2. the way-of-working skill is the tool router; CLAUDE.md carries this project's facts"
 if ! git remote get-url origin >/dev/null 2>&1; then
   echo "  *  campaign.sh needs an origin remote — first:"

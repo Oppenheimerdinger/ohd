@@ -1,3 +1,10 @@
+## v0.4.3 (2026-07-14)
+
+- Session-anchor guidance in four places (scaffolded CLAUDE.md "How we work"
+  header, new-project next-steps, USAGE-ko, README): open Claude Code sessions
+  at the trunk-checkout root, never inside a campaign worktree; drive worktree
+  work from the anchor. Smoke asserts the scaffolded guidance.
+
 ## v0.4.2 (2026-07-14)
 
 - new-project: `--env name:none` — scaffolds no files, records "managed

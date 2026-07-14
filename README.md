@@ -17,6 +17,9 @@ fork, honest gates over enforcement.
 
 Then restart the session (or `/reload-plugins`) and run `/ohd-setup`.
 
+Open project sessions at the project's trunk-checkout root (its CLAUDE.md and
+memory live there) — never inside a campaign worktree.
+
 ## What's inside
 
 - `/deep-solve` — user-gated hard-problem convergence harness
