@@ -53,7 +53,7 @@ If step 0 prints NO-BRANCH, stop — don't run steps 1–3.
 | ancestry false, MERGED PR with base=trunk | MERGED (squash — confirm with step 3 if anything looks off) |
 | ancestry false, MERGED PR with base≠trunk | STACKED — content is on the base, maybe not trunk; step 3 is mandatory (the script prints `STACKED?`) |
 | ancestry false, PRs only OPEN / CLOSED with mergedAt=null / none | UNMERGED — genuine, safe to land |
-| ancestry false, `gh` unavailable | UNVERIFIED — a squash merge cannot be ruled out; check the PR page; NEVER treat as UNMERGED |
+| ancestry false, `gh` unavailable OR the PR API call fails | UNVERIFIED — a squash merge cannot be ruled out; check the PR page; NEVER treat as UNMERGED |
 | origin branch absent | NO-BRANCH (cleaned post-merge, or never pushed) |
 
 Rules: multiple PRs per head → MERGED if ANY is merged. A CLOSED PR with

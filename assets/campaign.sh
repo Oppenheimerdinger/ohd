@@ -100,17 +100,21 @@ cmd_status() {
   fi
   if command -v gh >/dev/null 2>&1; then
     local prs
-    prs="$(gh pr list --head "$n" --state all --json number,state,mergedAt,baseRefName 2>/dev/null || echo '[]')"
-    if echo "$prs" | grep -q '"state":"MERGED"'; then
-      if echo "$prs" | grep -q "\"baseRefName\":\"$TRUNK\""; then
-        echo "MERGED (via PR — squash/merge-commit; non-ancestry is NORMAL for squash)"
-      else
-        echo "STACKED?: MERGED PR exists but its base ≠ $TRUNK — content may not be on trunk."
-        echo "prove content reach: git show origin/$TRUNK:<file> | grep <token-unique-to-this-diff>"
+    if prs="$(gh pr list --head "$n" --state all --json number,state,mergedAt,baseRefName 2>/dev/null)"; then
+      if echo "$prs" | grep -q '"state":"MERGED"'; then
+        if echo "$prs" | grep -q "\"baseRefName\":\"$TRUNK\""; then
+          echo "MERGED (via PR — squash/merge-commit; non-ancestry is NORMAL for squash)"
+        else
+          echo "STACKED?: MERGED PR exists but its base ≠ $TRUNK — content may not be on trunk."
+          echo "prove content reach: git show origin/$TRUNK:<file> | grep <token-unique-to-this-diff>"
+        fi
+        return 0
       fi
-      return 0
+      echo "UNMERGED: not an ancestor and no MERGED PR (PRs: $prs)"
+    else
+      echo "UNVERIFIED: not an ancestor by git, and the PR API is unreachable (non-GitHub"
+      echo "remote or gh auth failure) — a squash merge cannot be ruled out. Check the PR page."
     fi
-    echo "UNMERGED: not an ancestor and no MERGED PR (PRs: $prs)"
   else
     echo "UNVERIFIED: not an ancestor by git, and gh is unavailable so a squash-merge"
     echo "cannot be ruled out. Do NOT treat as UNMERGED without checking the PR page."

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.1 (2026-07-14)
+
+- fix: campaign.sh status treats a FAILING gh call as UNVERIFIED (was:
+  silently treated as no-PRs → false UNMERGED on non-GitHub remotes / auth
+  failures; caught by CI)
+
 ## v0.2.0 (2026-07-14)
 
 - New skills: `way-of-working` (quality routing, delegation/review
