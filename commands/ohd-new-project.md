@@ -29,8 +29,9 @@ The interview (flag each answer maps to — collect them as you go):
    `--node name:role[:ssh-alias]`. Filesystems shared or separate?
    (`--fs`; default separate — code then moves by git only.)
 9. Execution environment(s): one, or split per program/stage? Each:
-   `--env name:uv|conda|module[@machine]` — the FIRST one is primary; uv is
-   allowed only as primary.
+   `--env name:uv|conda|module|none[@machine]` — the FIRST one is primary; uv
+   is allowed only as primary; `none` scaffolds no files (non-Python or
+   manually-managed setups — recorded in CLAUDE.md only).
 10. Large shared data? (`--data-dir <path>` — the path must already exist;
     becomes a read-only-by-discipline symlink `data/`.)
 11. Deployment shape later? (`--deploy none|snapshot|mirror` — recorded in

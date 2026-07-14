@@ -70,7 +70,7 @@ for e in "${ENVS[@]}"; do
   n="${e%%:*}"
   [[ "$n" =~ $NAME_RE ]] || die "bad --env name '$n'"
   t="${e#*:}"; t="${t%%@*}"
-  case "$t" in uv|conda|module) :;; *) die "bad --env type '$t' in '$e'";; esac
+  case "$t" in uv|conda|module|none) :;; *) die "bad --env type '$t' in '$e'";; esac
   [ "$t" = uv ] && [ $idx -ne 0 ] && die "uv is allowed only as the primary (first) --env"
   idx=$((idx+1))
 done
@@ -136,7 +136,7 @@ case "$pt" in
     echo "3.12" > .python-version ;;
   conda)
     printf 'name: %s\nchannels: [conda-forge]\ndependencies:\n  - python=3.12\n' "$pn" > environment.yml ;;
-  module) : ;;
+  module|none) : ;;
 esac
 for e in "${ENVS[@]:1}"; do
   n="${e%%:*}"; t="${e#*:}"; t="${t%%@*}"
@@ -192,7 +192,11 @@ fi
 for e in "${ENVS[@]}"; do
   n="${e%%:*}"; rest="${e#*:}"; t="${rest%%@*}"; m=""
   case "$rest" in *@*) m="${rest#*@}";; esac
-  echo "- env \`$n\` ($t${m:+ @ \`$m\`}) — activate: (fill in)" >> "$blk"
+  if [ "$t" = none ]; then
+    echo "- env \`$n\` — managed manually (no scaffolded files)" >> "$blk"
+  else
+    echo "- env \`$n\` ($t${m:+ @ \`$m\`}) — activate: (fill in)" >> "$blk"
+  fi
 done
 inject_block CLAUDE.md MATRIX_BLOCK "$blk"
 dblk="$(mktemp)"

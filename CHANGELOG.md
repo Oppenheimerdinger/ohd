@@ -1,3 +1,10 @@
+## v0.4.2 (2026-07-14)
+
+- new-project: `--env name:none` — scaffolds no files, records "managed
+  manually" in the CLAUDE.md matrix (non-Python / manually-managed setups;
+  makes the harness genuinely field-agnostic). Interview Q9 updated; smoke
+  assert added.
+
 ## v0.4.1 (2026-07-14)
 
 Activation-wiring fixes, driven by a 5-probe live simulation of a fresh

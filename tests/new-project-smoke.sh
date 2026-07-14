@@ -69,6 +69,10 @@ if "$NP" --name bad1 --dir "$TMP/bad1" --env a:conda --env b:uv 2>/dev/null; the
 # bad trunk rejected at preflight (no partial dir)
 if "$NP" --name bad2 --dir "$TMP/bad2" --trunk "my branch" 2>/dev/null; then fail "bad trunk accepted"; fi
 [ ! -e "$TMP/bad2" ] || fail "bad-trunk run left files"
+# env type none: no stubs, recorded in matrix
+"$NP" --name proj4 --dir "$TMP/p4" --env research:none >/dev/null
+[ ! -f "$TMP/p4/pyproject.toml" ] && [ ! -f "$TMP/p4/environment.yml" ] || fail "none env produced stubs"
+grep -q 'managed manually' "$TMP/p4/CLAUDE.md" || fail "none env not recorded"
 # path-escaping env name rejected
 if "$NP" --name bad3 --dir "$TMP/bad3" --env '../../oops:conda' 2>/dev/null; then fail "path-escape env accepted"; fi
 [ ! -e "$TMP/bad3" ] || fail "bad-env run left files"
