@@ -1,6 +1,6 @@
 {
   "name": "oppenheimerdinger",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Research-and-development harness for Claude Code: user-gated hard-problem solving (deep-solve), deliverable review to convergence, CLAUDE.md drift audits, and guided environment setup",
   "author": {
     "name": "dipark"

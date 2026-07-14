@@ -43,6 +43,10 @@ case "$NAMING" in free|numbered) :;; *) die "--naming must be free|numbered";; e
 case "$MERGE_MODEL" in coordinator|review-gate) :;; *) die "--merge-model must be coordinator|review-gate";; esac
 case "$FS" in shared|separate) :;; *) die "--fs must be shared|separate";; esac
 case "$DEPLOY" in none|snapshot|mirror) :;; *) die "--deploy must be none|snapshot|mirror";; esac
+[ "$GITHUB" = none ] || [[ "$GITHUB" == */* ]] || die "--github must be owner/name (or none)"
+git check-ref-format --branch "$TRUNK" >/dev/null 2>&1 || die "bad --trunk '$TRUNK'"
+[ -n "$HOST_TRUNK" ] && { git check-ref-format --branch "$HOST_TRUNK" >/dev/null 2>&1 || die "bad --host-trunk '$HOST_TRUNK'"; }
+[ -n "$HOST_REPO" ] && [[ "$HOST_REPO" =~ [[:space:]] ]] && die "--host-repo must not contain whitespace"
 if [ -n "$HOST_NAME" ]; then
   [[ "$HOST_NAME" =~ $NAME_RE ]] || die "bad --host-name '$HOST_NAME'"
   [ -n "$HOST_VEHICLE" ] && [ -n "$HOST_REPO" ] || die "--host-name requires --host-vehicle and --host-repo"
@@ -63,12 +67,18 @@ fi
 idx=0
 for e in "${ENVS[@]}"; do
   [[ "$e" == *:* ]] || die "bad --env '$e' (want name:type[@machine])"
+  n="${e%%:*}"
+  [[ "$n" =~ $NAME_RE ]] || die "bad --env name '$n'"
   t="${e#*:}"; t="${t%%@*}"
   case "$t" in uv|conda|module) :;; *) die "bad --env type '$t' in '$e'";; esac
   [ "$t" = uv ] && [ $idx -ne 0 ] && die "uv is allowed only as the primary (first) --env"
   idx=$((idx+1))
 done
-git config user.email >/dev/null 2>&1 || [ -n "${GIT_COMMITTER_EMAIL:-}" ] \
+for nd in "${NODES[@]}"; do
+  n="${nd%%:*}"
+  [[ "$n" =~ $NAME_RE ]] || die "bad --node name '$n'"
+done
+(cd / && git config user.email >/dev/null 2>&1) || [ -n "${GIT_COMMITTER_EMAIL:-}" ] \
   || die "no git identity (set git config user.email, or export GIT_COMMITTER_EMAIL/GIT_AUTHOR_EMAIL)"
 
 # ── helpers ──────────────────────────────────────────────────────────────
@@ -80,21 +90,23 @@ subst() {  # subst <file> KEY=value...  ({{KEY}} value tokens)
     v="${v//\\/\\\\}"; v="${v//&/\\&}"; v="${v//|/\\|}"
     args+=(-e "s|{{$k}}|$v|g")
   done
-  sed -i "${args[@]}" "$f"
+  sed -i.bak "${args[@]}" "$f" && rm -f "$f.bak"
 }
 inject_block() {  # inject_block <file> <TOKEN> <blockfile> (token alone on its line)
   local f="$1" tok="{{$2}}" blk="$3"
   awk -v tok="$tok" -v blk="$blk" '
-    $0 == tok { while ((getline line < blk) > 0) print line; close(blk); next }
+    { line0=$0; sub(/\r$/,"",line0) }
+    line0 == tok { while ((getline line < blk) > 0) print line; close(blk); next }
     { print }' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
 }
 set_default() {  # set_default <file> VAR value — rewrite ${CAMPAIGN_VAR:-old}
   local f="$1" var="$2" val="$3"
   val="${val//\\/\\\\}"; val="${val//&/\\&}"; val="${val//|/\\|}"
-  sed -i "s|\${CAMPAIGN_$var:-[^}]*}|\${CAMPAIGN_$var:-$val}|" "$f"
+  sed -i.bak "s|\${CAMPAIGN_$var:-[^}]*}|\${CAMPAIGN_$var:-$val}|" "$f" && rm -f "$f.bak"
 }
 
 # ── scaffold ─────────────────────────────────────────────────────────────
+trap 'echo "new-project.sh: died after directory creation — remove $DIR before rerunning" >&2' ERR
 mkdir -p "$DIR"; cd "$DIR"
 git init -q -b "$TRUNK"
 
@@ -143,12 +155,12 @@ if [ -n "$HOST_NAME" ]; then
   subst "hosts/$HOST_NAME/manifest" HOST="$HOST_NAME" VEHICLE="$HOST_VEHICLE" REPO="$HOST_REPO" HOST_TRUNK="$HOST_TRUNK"
   subst "hosts/$HOST_NAME/README.md" HOST="$HOST_NAME"
   if [ "$HOST_VEHICLE" = fork ]; then
-    sed -i '/^PATCHES=/d' "hosts/$HOST_NAME/manifest"
+    sed -i.bak '/^PATCHES=/d' "hosts/$HOST_NAME/manifest" && rm -f "hosts/$HOST_NAME/manifest.bak"
     set_default tools/campaign.sh DEP_DIR "../$HOST_NAME"
     set_default tools/campaign.sh DEP_TRUNK "$HOST_TRUNK"
     set_default tools/campaign.sh PIN_FILE "hosts/$HOST_NAME/manifest"
   else
-    sed -i '/^TRUNK=/d' "hosts/$HOST_NAME/manifest"
+    sed -i.bak '/^TRUNK=/d' "hosts/$HOST_NAME/manifest" && rm -f "hosts/$HOST_NAME/manifest.bak"
     mkdir -p "hosts/$HOST_NAME/patches"
     touch "hosts/$HOST_NAME/patches/.gitkeep"
   fi
@@ -159,6 +171,7 @@ if [ -n "$DATA_DIR" ]; then ln -s "$DATA_DIR" data; fi
 
 # CLAUDE.md
 cp "$TPL/CLAUDE.md.template" CLAUDE.md
+sed -i.bak '1,2d' CLAUDE.md && rm -f CLAUDE.md.bak
 subst CLAUDE.md NAME="$NAME" TRUNK="$TRUNK" NAMING="$NAMING" MERGE_MODEL="$MERGE_MODEL" DEPLOY="$DEPLOY"
 blk="$(mktemp)"
 if [ ${#NODES[@]} -eq 0 ]; then
@@ -218,10 +231,12 @@ if [ "$GITHUB" != none ]; then
     echo "gh absent or failed — run manually:"
     echo "  gh repo create $GITHUB --private --source=. --push"
     echo "  (or: git remote add origin git@github.com:$GITHUB.git && git push -u origin $TRUNK)"
+    echo "  (repo may already exist and origin may be set — then just: git push -u origin $TRUNK)"
   fi
 fi
 
 # ── next steps ───────────────────────────────────────────────────────────
+trap - ERR
 echo ""
 echo "scaffolded: $DIR"
 echo "next steps:"

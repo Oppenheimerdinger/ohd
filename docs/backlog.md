@@ -23,3 +23,15 @@ After a confirmation disagreement, both conclusions enter `allFindings` and
 reach later COLD solvers via the pitfall list — a mild anchoring channel into
 the round that exists to escape anchors. Normal path goes to SYNTH first, so
 this only fires when the forced SYNTH itself gets findings.
+
+## 3. ohd-share — fsx-style deployment tooling — OPEN
+
+snapshot/mirror deploy recorded by new-project but no executing tool yet.
+
+## 4. SessionStart brief-hook scaffold option — OPEN
+
+deferred from v0.3 spec.
+
+## 5. Multi-host scaffolding — OPEN
+
+v0.3 scaffolds at most one host; additional hosts are manual.
