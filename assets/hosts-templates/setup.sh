@@ -20,6 +20,13 @@ else
     echo "checked out PIN $PIN"
   else
     ref="${TRUNK:-}"
+    if [ -z "$ref" ] && ! git -C "$DEST" rev-parse -q --verify HEAD >/dev/null; then
+      # remote's HEAD symref didn't resolve (e.g. upstream's default branch
+      # name doesn't match this machine's init.defaultBranch) — plain clone
+      # left no branch checked out; fall back to the first remote branch.
+      ref="$(git -C "$DEST" for-each-ref --format='%(refname:short)' refs/remotes/origin \
+             | grep -v '/HEAD$' | head -1 | sed 's|^origin/||')"
+    fi
     if [ -n "$ref" ]; then git -C "$DEST" checkout -q "$ref"; fi
     sha="$(git -C "$DEST" rev-parse HEAD)"
     echo "PIN is empty — checked out ${ref:-the default branch} at $sha"

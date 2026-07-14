@@ -1,5 +1,5 @@
 <!-- value tokens: {{NAME}} {{TRUNK}} {{NAMING}} {{MERGE_MODEL}} {{DEPLOY}} ;
-     block tokens (alone on their line): {{MATRIX_BLOCK}} {{DATA_BLOCK}} {{HOSTS_BLOCK}} -->
+     block tokens (alone on their line): MATRIX_BLOCK DATA_BLOCK HOSTS_BLOCK -->
 # {{NAME}}
 
 goal: (한 줄로 — 첫 세션에서 채우세요)
