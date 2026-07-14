@@ -38,8 +38,8 @@ the old plugin installed, remove it to avoid double registration:
 ## Requirements
 
 - deep-solve's isolated mode runs on the Claude Code **Workflow tool**;
-  without it the skill announces the limitation and falls back (grounded /
-  manual loop).
+  without it the skill announces the limitation and falls back to a manual
+  Agent-tool loop (grounded mode is unaffected).
 - **superpowers**: recommended — required for the full workflow from v0.2;
   v0.1 works without it. **oh-my-claudecode**: optional (ralph persistence
   mode only). `/ohd-setup` checks both.
@@ -49,12 +49,20 @@ the old plugin installed, remove it to avoid double registration:
     claude plugin uninstall oppenheimerdinger@dipark
 
 To pin an older version: uninstall, `git clone` this repo, `git checkout
-vX.Y.Z`, then `claude plugin marketplace add /path/to/clone` and install —
-a local marketplace installs whatever the working tree contains.
+vX.Y.Z`, then `claude plugin marketplace remove dipark` (the clone's
+marketplace is also named `dipark` and would otherwise conflict) followed by
+`claude plugin marketplace add /path/to/clone` and install — a local
+marketplace installs whatever the working tree contains. To return to the
+live version, remove the local marketplace and re-add
+`Oppenheimerdinger/oppenheimerdinger`.
 
 ## Test
 
     node --test tests/*.test.mjs
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 

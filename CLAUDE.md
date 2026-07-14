@@ -26,7 +26,10 @@ Public Claude Code harness plugin. Development happens on `main` directly
      public by precedent (deep-solve shipped its specs too) — whitelisted
      wholesale against both gates above. They must still never carry
      secrets, credentials, or machine IPs; spot-check on any edit.
-4. Commit, tag `vX.Y.Z`, push with tag.
+4. Commit everything, THEN tag `vX.Y.Z` on the final commit, push with tag
+   (the tag must equal the pushed HEAD).
+   (v0.1.0's tag trails main by one docs commit — known, do not force-move
+   the published tag.)
 5. `claude plugin update oppenheimerdinger@dipark` → restart/reload session
    → verify.
 
@@ -40,9 +43,10 @@ Public Claude Code harness plugin. Development happens on `main` directly
   launcher. `commands/deep-solve.md` inlines its skill via
   `@${CLAUDE_PLUGIN_ROOT}` for exactly this reason — do NOT "simplify" it
   into a Skill-tool call.
-- **Lock-step (두 곳!)**: the superpowers dependency label ("recommended —
+- **Lock-step (세 곳!)**: the superpowers dependency label ("recommended —
   required for the full workflow from v0.2; v0.1 works without it") lives in
-  BOTH `commands/ohd-setup.md` and (from v0.2) the way-of-working skill.
-  Change them together. claude-md-sanity audits this rule.
+  `commands/ohd-setup.md`, `README.md` (Requirements section), and (from
+  v0.2) the way-of-working skill. Change them together. claude-md-sanity
+  audits this rule.
 - Open deviations and carried decisions live in `docs/backlog.md` — do not
   delete entries; mark them resolved with the fixing commit.
