@@ -12,7 +12,8 @@ Public Claude Code harness plugin. Development happens on `main` directly
 3. Release gates (clean before push; run over git-tracked files only):
    - `grep -rniE "the-company|internal-|validation-proj|gpubox|<bigfs>|dipark" $(git ls-files)`
      — allowed hits ONLY: marketplace name `dipark`, plugin.json author,
-     install commands `@dipark` in README/USAGE-ko, ohd-setup's stale-plugin
+     install/rollback commands referencing the `dipark` marketplace in
+     README/USAGE-ko/CHANGELOG, ohd-setup's stale-plugin
      check (`deep-solve@dipark` uninstall command — same exception gate 2
      already grants), the LICENSE copyright line, this §RELEASING section's
      own grep-pattern/whitelist text (self-referential — the rule has to

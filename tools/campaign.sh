@@ -169,8 +169,14 @@ cmd_pin() {
     || die "pin requires CAMPAIGN_DEP_DIR / CAMPAIGN_DEP_TRUNK / CAMPAIGN_PIN_FILE"
   local n="$1"; check_name "$n"
   git -C "$DEP_DIR" fetch origin -q
-  git -C "$DEP_DIR" merge-base --is-ancestor "origin/$n" "origin/$DEP_TRUNK" \
-    || die "'$n' is not merged into dep trunk '$DEP_TRUNK' yet — merge the dep PR first"
+  if git -C "$DEP_DIR" merge-base --is-ancestor "origin/$n" "origin/$DEP_TRUNK"; then
+    :  # ancestry confirms merge
+  elif command -v gh >/dev/null 2>&1 \
+       && (cd "$DEP_DIR" && gh pr list --head "$n" --state merged --json number 2>/dev/null | grep -q '"number"'); then
+    :  # squash-merged — verified through the PR API
+  else
+    die "'$n' not verifiably merged into dep trunk '$DEP_TRUNK' (squash? verify on the dep repo's PR page; ancestry check alone is squash-blind)"
+  fi
   local sha; sha="$(git -C "$DEP_DIR" rev-parse "origin/$DEP_TRUNK")"
   sed -i "s/^PIN=.*/PIN=$sha/" "$PIN_FILE"
   git add "$PIN_FILE"
