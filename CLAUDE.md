@@ -12,10 +12,20 @@ Public Claude Code harness plugin. Development happens on `main` directly
 3. Release gates (clean before push; run over git-tracked files only):
    - `grep -rniE "the-company|internal-|validation-proj|gpubox|<bigfs>|dipark" $(git ls-files)`
      — allowed hits ONLY: marketplace name `dipark`, plugin.json author,
-     install commands `@dipark` in README/USAGE-ko.
+     install commands `@dipark` in README/USAGE-ko, ohd-setup's stale-plugin
+     check (`deep-solve@dipark` uninstall command — same exception gate 2
+     already grants), the LICENSE copyright line, this §RELEASING section's
+     own grep-pattern/whitelist text (self-referential — the rule has to
+     quote the words it's filtering for), and `docs/superpowers/{specs,plans}/`
+     (see note below).
    - `grep -rnE "Oppenheimerdinger/deep-solve|deep-solve@dipark|deep-solve:deep-solve" $(git ls-files)`
      — allowed ONLY: docs/backlog.md history links, README version note,
-     USAGE-ko migration note, ohd-setup's stale-plugin check.
+     USAGE-ko migration note, ohd-setup's stale-plugin check, this
+     section's own text, and `docs/superpowers/{specs,plans}/`.
+   - `docs/superpowers/{specs,plans}/` are tracked internal design docs,
+     public by precedent (deep-solve shipped its specs too) — whitelisted
+     wholesale against both gates above. They must still never carry
+     secrets, credentials, or machine IPs; spot-check on any edit.
 4. Commit, tag `vX.Y.Z`, push with tag.
 5. `claude plugin update oppenheimerdinger@dipark` → restart/reload session
    → verify.

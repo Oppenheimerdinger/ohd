@@ -8,9 +8,11 @@ tool — its full text is inlined here), treating the arguments at the end as th
 problem statement plus any overrides
 (mode / rounds / reviewers / confirm / model).
 
-(The inline exists because the command and skill share the launcher id
-`deep-solve:deep-solve` — re-invoking by name resolves back to this command
-and loops. Do not "simplify" this file to a Skill-tool call.)
+(The inline exists because this command and the bundled skill share the
+name `deep-solve`, so a name-triggered Skill-tool call would resolve to
+`oppenheimerdinger:deep-solve` and re-enter this same flow — re-invoking by
+name resolves back to this command and loops. Do not "simplify" this file
+to a Skill-tool call.)
 
 The skill's "base directory" is `${CLAUDE_PLUGIN_ROOT}/skills/deep-solve/`, so
 the isolated-mode Phase 2 script path is
