@@ -13,7 +13,7 @@ The interview (flag each answer maps to — collect them as you go):
 1. Project name (`--name`, required; `--dir`, default `~/projects/<name>` —
    if the user's convention puts projects elsewhere, propose that instead).
 2. Create a GitHub repo? (`--github <owner/name>` or none; recommend yes —
-   it is created private.)
+   it is created private.) (recommend free)
 3. Trunk branch name (`--trunk`, default main).
 4. Campaign naming: free-form (`--naming free`) or numbered NNN-slug
    (`--naming numbered`).
@@ -34,7 +34,7 @@ The interview (flag each answer maps to — collect them as you go):
 10. Large shared data? (`--data-dir <path>` — the path must already exist;
     becomes a read-only-by-discipline symlink `data/`.)
 11. Deployment shape later? (`--deploy none|snapshot|mirror` — recorded in
-    CLAUDE.md only; tooling comes later.)
+    CLAUDE.md only; tooling comes later.) (recommend none for now)
 
 Then the SUMMARY GATE: show the full flag list you assembled and ask for an
 explicit go (edit / cancel offered). Only on go, run:

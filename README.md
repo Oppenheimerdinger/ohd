@@ -14,7 +14,7 @@ fork, honest gates over enforcement.
 
 Then restart the session (or `/reload-plugins`) and run `/ohd-setup`.
 
-## What's inside (v0.1)
+## What's inside
 
 - `/deep-solve` — user-gated hard-problem convergence harness
   (isolated / grounded modes)

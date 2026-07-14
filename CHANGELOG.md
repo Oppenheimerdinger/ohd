@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.1 (2026-07-14)
+
+- fix: new-project preflight hardening (trunk ref-format, env/node name
+  validation, host-repo whitespace, github format, repo-local-identity probe
+  gap), portable sed (macOS), CLAUDE.md template-comment residue, gh
+  partial-failure guidance, post-mkdir failure hint; backlog carries v0.3
+  exclusions.
+
 ## v0.3.0 (2026-07-14)
 
 - New: `/ohd-new-project` — interview-driven research-project scaffolder

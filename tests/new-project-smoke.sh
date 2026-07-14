@@ -66,6 +66,14 @@ if tools/campaign.sh new badname 2>/dev/null; then fail "p2 numbered accepted ba
 # multi-uv / non-primary uv rejected
 if "$NP" --name bad1 --dir "$TMP/bad1" --env a:conda --env b:uv 2>/dev/null; then fail "non-primary uv accepted"; fi
 [ ! -e "$TMP/bad1" ] || fail "preflight-failed run left files"
+# bad trunk rejected at preflight (no partial dir)
+if "$NP" --name bad2 --dir "$TMP/bad2" --trunk "my branch" 2>/dev/null; then fail "bad trunk accepted"; fi
+[ ! -e "$TMP/bad2" ] || fail "bad-trunk run left files"
+# path-escaping env name rejected
+if "$NP" --name bad3 --dir "$TMP/bad3" --env '../../oops:conda' 2>/dev/null; then fail "path-escape env accepted"; fi
+[ ! -e "$TMP/bad3" ] || fail "bad-env run left files"
+# scaffolded CLAUDE.md does not open with the template comment residue
+head -1 "$P2/CLAUDE.md" | grep -q '^#' || fail "CLAUDE.md opens with residue, not the title"
 
 # ---------- profile 3: patches host + live setup.sh first-run ----------
 # seeded throwaway upstream (unseeded bare = unborn HEAD = no default branch)
