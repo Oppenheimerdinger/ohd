@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.2.0 (2026-07-14)
+
+- New skills: `way-of-working` (quality routing, delegation/review
+  force-multipliers, lightest-first persistence loops, collaboration
+  discipline), `campaign-land` (generalized land ritual), `campaign-status`
+  (squash-safe merge verdicts).
+- New: parameterized `assets/campaign.sh` worktree lifecycle template +
+  `assets/install-hooks.sh` + interview-driven drop-in guide
+  (`docs/campaign-dropin.md`), smoke-tested in CI.
+- Self-hosted: this repo now uses `tools/campaign.sh` (hook skipped —
+  intentional trunk-direct development).
+
 ## v0.1.1 (2026-07-14)
 
 - Release-gate hygiene: untrack the local ops note

@@ -7,6 +7,8 @@ oppenheimerdinger는 연구·개발용 Claude Code 하네스 플러그인이며,
 
 - `/ohd-setup` — 환경 점검·선행 플러그인 설치
 - `/deep-solve` — 어려운 문제 수렴 하네스 (이 문서의 본문 주제)
+- `way-of-working` — 어떤 도구를 언제 쓸지의 라우터 (생산/검증/리뷰/루프)
+- `campaign-land` / `campaign-status` — worktree 캠페인 land 의식과 squash-안전 병합 판정 (+ `assets/campaign.sh` 드롭인: docs/campaign-dropin.md)
 - `review-to-convergence` — 완성된 산출물을 zero-finding까지 검증
 - `claude-md-sanity` — CLAUDE.md/메모리 드리프트 감사
 
