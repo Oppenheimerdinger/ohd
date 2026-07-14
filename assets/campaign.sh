@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# campaign.sh — worktree campaign lifecycle (oppenheimerdinger template)
+# campaign.sh — worktree campaign lifecycle (ohd template)
 # Drop-in: fill the config block per docs/campaign-dropin.md, copy to tools/campaign.sh.
 set -euo pipefail
 

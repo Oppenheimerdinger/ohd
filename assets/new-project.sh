@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# new-project.sh — deterministic research-project scaffolder (oppenheimerdinger).
+# new-project.sh — deterministic research-project scaffolder (ohd).
 # All inputs are flags; /ohd-new-project runs the interview and calls this.
 set -euo pipefail
 
@@ -215,14 +215,14 @@ grep -q '{{' CLAUDE.md && die "internal error: unsubstituted tokens remain in CL
 
 # README stub
 { echo "# $NAME"; echo ""; echo "goal: (한 줄)"; echo ""
-  echo "Worked with the [oppenheimerdinger](https://github.com/Oppenheimerdinger/oppenheimerdinger) harness."; } > README.md
+  echo "Worked with the [ohd](https://github.com/Oppenheimerdinger/ohd) harness."; } > README.md
 
 chmod +x tools/campaign.sh tools/install-hooks.sh
 [ -n "$HOST_NAME" ] && chmod +x "hosts/$HOST_NAME/setup.sh"
 
 # ── commit → hook → github (order is load-bearing) ──────────────────────
 git add -A
-git commit -q -m "chore: scaffold by oppenheimerdinger new-project"
+git commit -q -m "chore: scaffold by ohd new-project"
 if [ "$HOOK" = yes ]; then bash tools/install-hooks.sh; fi
 if [ "$GITHUB" != none ]; then
   if command -v gh >/dev/null 2>&1 && gh repo create "$GITHUB" --private --source=. --push; then

@@ -1,4 +1,4 @@
-# oppenheimerdinger — repo conventions
+# ohd — repo conventions
 
 Public Claude Code harness plugin. Development happens on `main` directly
 (dedicated repo); campaign self-hosting is reconsidered in v0.2.
@@ -31,7 +31,7 @@ Public Claude Code harness plugin. Development happens on `main` directly
    (the tag must equal the pushed HEAD).
    (v0.1.0's tag trails main by one docs commit — known, do not force-move
    the published tag.)
-5. `claude plugin update oppenheimerdinger@dipark` → restart/reload session
+5. `claude plugin update ohd@dipark` → restart/reload session
    → verify.
 
 ## Conventions

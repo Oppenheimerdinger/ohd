@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# campaign.sh — worktree campaign lifecycle (oppenheimerdinger template)
+# campaign.sh — worktree campaign lifecycle (ohd template)
 # Drop-in: fill the config block per docs/campaign-dropin.md, copy to tools/campaign.sh.
-# instantiated 2026-07-14 for oppenheimerdinger: all defaults, hook skipped
+# instantiated 2026-07-14 for ohd (this repo): all defaults, hook skipped
 set -euo pipefail
 
 # ── config (drop-in interview fills these; CAMPAIGN_* env vars override) ──

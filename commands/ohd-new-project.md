@@ -3,7 +3,7 @@ description: Interview-driven scaffolder for a new research project — campaign
 argument-hint: [project-name]
 ---
 
-Run oppenheimerdinger's new-project interview, then scaffold. The target user
+Run ohd's new-project interview, then scaffold. The target user
 may be research-strong but dev-weak: for EVERY question give one line of WHY
 it matters, exactly ONE recommendation, and accept enter-for-default. Ask the
 questions ONE AT A TIME; re-ask on ambiguous answers.

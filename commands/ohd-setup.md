@@ -1,8 +1,8 @@
 ---
-description: Check (and on approval install) the plugins oppenheimerdinger builds on, verify the Workflow tool, and report an environment checklist
+description: Check (and on approval install) the plugins ohd builds on, verify the Workflow tool, and report an environment checklist
 ---
 
-Run oppenheimerdinger's environment checkup. Interview tone throughout:
+Run ohd's environment checkup. Interview tone throughout:
 recommend, ask before acting, never force. Do the steps in order; end with
 the checklist.
 

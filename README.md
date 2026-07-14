@@ -1,4 +1,7 @@
-# oppenheimerdinger
+# ohd
+
+*(short for **oppenheimerdinger** — the author's handle; the plugin id, install
+name, and skill prefix are all just `ohd`.)*
 
 A research-and-development harness plugin for Claude Code, built for people
 who are strong researchers but not professional developers. It encodes one
@@ -9,8 +12,8 @@ fork, honest gates over enforcement.
 
 ## Install
 
-    claude plugin marketplace add Oppenheimerdinger/oppenheimerdinger
-    claude plugin install oppenheimerdinger@dipark
+    claude plugin marketplace add Oppenheimerdinger/ohd
+    claude plugin install ohd@dipark
 
 Then restart the session (or `/reload-plugins`) and run `/ohd-setup`.
 
@@ -36,7 +39,7 @@ Design docs live in `docs/superpowers/specs/`.
 
 ## Version note
 
-oppenheimerdinger 0.1.0 includes **deep-solve v0.2.2 verbatim** (formerly the
+ohd 0.1.0 (as `oppenheimerdinger`) includes **deep-solve v0.2.2 verbatim** (formerly the
 standalone `deep-solve@dipark` plugin — history:
 https://github.com/Oppenheimerdinger/deep-solve, archived). If you still have
 the old plugin installed, remove it to avoid double registration:
@@ -54,7 +57,7 @@ the old plugin installed, remove it to avoid double registration:
 
 ## Uninstall / rollback
 
-    claude plugin uninstall oppenheimerdinger@dipark
+    claude plugin uninstall ohd@dipark
 
 To pin an older version: uninstall, `git clone` this repo, `git checkout
 vX.Y.Z`, then `claude plugin marketplace remove dipark` (the clone's
@@ -62,7 +65,7 @@ marketplace is also named `dipark` and would otherwise conflict) followed by
 `claude plugin marketplace add /path/to/clone` and install — a local
 marketplace installs whatever the working tree contains. To return to the
 live version, remove the local marketplace and re-add
-`Oppenheimerdinger/oppenheimerdinger`.
+`Oppenheimerdinger/ohd`.
 
 ## Test
 

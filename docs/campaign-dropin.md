@@ -20,7 +20,7 @@ standard single-repo project.
 
 1. Copy `assets/campaign.sh` from the plugin into the repo as
    `tools/campaign.sh` (the plugin's files live under
-   `~/.claude/plugins/cache/dipark/oppenheimerdinger/<version>/assets/` after
+   `~/.claude/plugins/cache/dipark/ohd/<version>/assets/` after
    install, or clone the repo); edit the config block at the top with the
    interview answers (env `CAMPAIGN_*` variables override at runtime);
    `chmod +x`. If the defaults already match your answers, no edits are
