@@ -106,6 +106,10 @@ campaign.sh(무거움)와 milestone.sh(가벼움)는 같은 라이프사이클
   우선). 마이그레이션 절차·릴리스 게이트·repo 규약 포함.
 - **v0.2 way-of-working + campaign-land/status**: 기존 스킬 이식·일반화라 싸고
   매일 쓰임. campaign.sh 파라미터화의 공유 커널도 여기서 (new-project가 소비).
+  way-of-working에 **멀티노드/GitHub-truth 규율**(코드는 git으로만 이동, scp
+  금지, 노드 간 <bigfs> 비공유 전제) 포함. 백로그: `ohd-share`(가칭) — <shared-storage>
+  배포 레시피(rsync 제외목록, 그룹 권한, latest 스왑, env -i 신선 셸 검증)의
+  실행 스킬. new-project의 SessionStart 브리프 훅 스캐폴드 옵션도 v0.3에서 검토.
 - **v0.3 new-project**: land 의식이 존재하는 세상에 스캐폴더가 태어나도록 마지막.
 
 ## 열린 질문 (탐색하며 채움)
