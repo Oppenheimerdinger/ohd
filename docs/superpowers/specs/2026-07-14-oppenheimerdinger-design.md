@@ -26,7 +26,7 @@
 - 설치: `claude plugin marketplace add Oppenheimerdinger/oppenheimerdinger`
   → `claude plugin install oppenheimerdinger@dipark`.
 
-### deep-solve 흡수 마이그레이션
+### deep-solve 흡수 마이그레이션 (개요 — 확정 절차는 v0.1 spec §마이그레이션이 우선)
 
 1. `skills/deep-solve/` (SKILL.md + solve-converge.js) + `commands/deep-solve.md`
    + `tests/` 를 이 repo로 이식 (v0.2.2 기준, 히스토리는 커밋 메시지로 출처 표기).
@@ -43,7 +43,7 @@
 
 | 이름 | 종류 | 내용 | 원천 |
 |---|---|---|---|
-| `setup` | 커맨드+스킬 | 선행 플러그인(superpowers, oh-my-claudecode, code-review) 설치 점검 → 미설치 시 추천 + 설치 커맨드 안내. 개발지식 부족 사용자의 첫 관문 | 신규 |
+| `ohd-setup` | **커맨드 전용** (스킬 없음 — 상시 컨텍스트 0, 동명충돌 0) | 선행 플러그인 점검(정직한 라벨: superpowers=권장→v0.2부터 필수, OMC=선택) → 승인받아 대신 설치 → 재시작 안내 고정. `ohd-` = 범용단어 커맨드 접두어 관례 | 신규 |
 | `new-project` | 커맨드+스킬 | 인터뷰 주도 프로젝트 스캐폴더 (아래 §인터뷰) | 신규 (umbrella-proj/validation-proj 패턴 일반화) |
 | `campaign-land` | 스킬 | land 의식: 게이트 체크리스트 → push+PR → 병합 순서(포크 먼저→pin→본체) → clean → 교훈 증류 + md-sanity. squash-merge/스택PR/living-doc union 함정 포함 | umbrella-proj 스킬 일반화 |
 | `campaign-status` | 스킬 | git refs + PR API로 병합상태 판정 (기억이 아니라 refs가 진실) | umbrella-proj 스킬 승격 (거의 그대로) |
@@ -99,22 +99,26 @@ campaign.sh(무거움)와 milestone.sh(가벼움)는 같은 라이프사이클
 | 산출물이 코드 diff | review-to-convergence가 /code-review를 계기로 호출 |
 | 창의적/구조적 작업 직후 | workflow 리뷰 (multi-agent) — 규모 기준 명시 필요(열린 질문) |
 
+## 슬라이스 로드맵 (2026-07-14 확정 — 리뷰 권고로 v0.2↔v0.3 스왑)
+
+- **v0.1 그릇+이식**: 별도 spec `2026-07-14-v0.1-vessel-design.md` (승인 대기).
+  단일 플러그인 완전 흡수 확정 (2-플러그인 대안은 검토 후 기각 — 통합 온보딩
+  우선). 마이그레이션 절차·릴리스 게이트·repo 규약 포함.
+- **v0.2 way-of-working + campaign-land/status**: 기존 스킬 이식·일반화라 싸고
+  매일 쓰임. campaign.sh 파라미터화의 공유 커널도 여기서 (new-project가 소비).
+- **v0.3 new-project**: land 의식이 존재하는 세상에 스캐폴더가 태어나도록 마지막.
+
 ## 열린 질문 (탐색하며 채움)
 
-- [ ] "더 챙겨야 할 부분" — 사용자가 아직 다 알려주지 않음. 실사용 시나리오
-      워크스루로 발굴.
+- [ ] "더 챙겨야 할 부분" — 사용자가 아직 다 알려주지 않음. 실사용에서 발굴.
 - [ ] `deep-research` 스킬의 소재 불명 (~/.claude/skills에 없음) — 추적 후
       포함 여부 결정.
-- [ ] ralph 글루의 구체 내용: 언제 ralph가 적절한가 / 오발동 방지(2026-07-14
-      키워드 훅 사건) / cancel 절차. way-of-working에 넣을지 별도 스킬인지.
-- [ ] workflow 리뷰의 트리거 기준 ("창의적 작업 뒤" — 규모/비용 기준).
-- [ ] campaign.sh 템플릿의 파라미터화 방식: 생성 시 sed 인스턴스화 vs 런타임
-      설정파일(env) 읽기.
-- [ ] 버전/릴리스 흐름: 이 플러그인 자신의 개발도 campaign 방식으로? (셀프
-      호스팅 — repo에 tools/campaign.sh 깔기)
-- [ ] 테스트 전략: deep-solve 테스트는 이식; new-project 스캐폴더는 스모크
-      (임시 dir에 생성 → 구조 검증) 가능. 스킬 텍스트는 plugin-dev 리뷰로.
-- [ ] marketplace `dipark` 이사 시점과 deep-solve repo archive 시점 (플러그인
-      v0.1이 deep-solve 기능 동등성 확보한 후).
-- [ ] CLAUDE.md 템플릿의 내용 수위 — 글로벌 CLAUDE.md에서 무엇을 프로젝트
-      템플릿으로 내리고 무엇을 way-of-working 스킬로 올릴지.
+- [ ] ralph 글루의 구체 내용 (v0.2): 언제 적절한가 / 오발동 방지(2026-07-14
+      키워드 훅 사건) / cancel 절차. way-of-working 내장으로 가닥.
+- [ ] workflow 리뷰의 트리거 기준 ("창의적 작업 뒤" — 규모/비용 기준) (v0.2).
+- [ ] campaign.sh 템플릿의 파라미터화 방식: sed 인스턴스화 vs 런타임 설정
+      (v0.2에서 결정).
+- [ ] 셀프 호스팅 (이 repo도 campaign 방식?) — v0.2에서 재검토.
+- [ ] CLAUDE.md 템플릿의 내용 수위 (v0.3).
+- [ ] v0.2의 회사 인프라 일반화: 공유배포 형태·hosts 관례 설명에서 사내 경로/
+      레이아웃 노출 방지 (아키텍처 리뷰 지적 — v0.2 릴리스 게이트에 포함).
