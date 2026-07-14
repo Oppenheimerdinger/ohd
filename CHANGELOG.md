@@ -1,3 +1,18 @@
+## v0.4.1 (2026-07-14)
+
+Activation-wiring fixes, driven by a 5-probe live simulation of a fresh
+colleague session (3 FIRED / 2 PARTIAL / 0 MISSED) plus a wiring audit:
+
+- deep-solve description: the "mention /deep-solve when stuck" fallback is now
+  affirmative (was "at most briefly mention" — measured not to fire).
+- review-to-convergence description: carries the multi-reviewer workflow
+  escalation rule (3+ files / ~100+ lines) — moved to where activation
+  actually happens (was 2 hops deep inside way-of-working's body).
+- way-of-working: completed implementation is explicitly a deliverable
+  (outside subagent-driven flows it gets an explicit review-to-convergence
+  pass); **loop termination is judged by an independent evaluator agent,
+  never by the looping session itself**.
+
 ## v0.4.0 (2026-07-14)
 
 - **Plugin renamed: `oppenheimerdinger` → `ohd`** (repo:

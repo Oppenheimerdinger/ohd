@@ -1,6 +1,6 @@
 ---
 name: review-to-convergence
-description: Use when about to finalize or hand off ANY substantive deliverable — a math problem statement, a handoff/session summary, a design or plan doc, an experiment analysis, a research-informed decision, or non-trivial code — especially when it feels "simple enough", "ready as-is", or you are under time pressure to just ship it.
+description: Use when about to finalize or hand off ANY substantive deliverable — a math problem statement, a handoff/session summary, a design or plan doc, an experiment analysis, a research-informed decision, or non-trivial code — especially when it feels "simple enough", "ready as-is", or you are under time pressure to just ship it. For creative/structural work spanning 3+ files or ~100+ lines of new logic, escalate to a multi-reviewer workflow pass instead of a single reviewer.
 ---
 
 # Review to Convergence

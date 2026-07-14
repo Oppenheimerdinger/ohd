@@ -53,6 +53,11 @@ findings before banking.
 | Scheduled / cron | built-in `schedule` |
 | "Keep going until done" in-session | only then a persistence mode such as oh-my-claudecode's ralph — a heavy install with a known keyword-misfire history |
 
+**Loop termination is judged by an independent evaluator agent, never by the
+looping session itself** — a session grading its own loop quits (or declares
+victory) far too easily. The evaluator gets the goal + concrete evidence and
+returns done / not-done with reasons.
+
 If ralph (or similar) is used: ① mentioning the word in a design conversation
 can auto-register its state — a status question is not a task; cancel misfired
 modes instead of "continuing" them. ② Cancel path: the mode's cancel command →
@@ -81,5 +86,8 @@ autonomous loop always gets a termination condition and an iteration cap.
 
 Creative work starts at brainstorming; multi-step work gets a written plan
 (writing-plans) and subagent-driven execution; nothing is declared complete
-without verification-before-completion. This is why superpowers is
+without verification-before-completion. **Completed implementation is itself
+a deliverable**: subagent-driven execution's final whole-branch review covers
+it; anything built outside that flow gets an explicit review-to-convergence
+pass before it is trusted. This is why superpowers is
 required for the full workflow from v0.2 (see `/ohd-setup`).
