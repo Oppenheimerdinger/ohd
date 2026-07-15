@@ -35,3 +35,12 @@ deferred from v0.3 spec.
 ## 5. Multi-host scaffolding — OPEN
 
 v0.3 scaffolds at most one host; additional hosts are manual.
+
+## 6. /ohd-adopt — existing-project adoption command — OPEN
+
+new-project covers greenfield; existing repos get the lifecycle via the
+drop-in guide but the CLAUDE.md harness wiring (anchor line, machine×env
+matrix, pointers — the measured activation surface) is a manual merge today
+(campaign-dropin.md §Adopting an EXISTING project). An interview-driven
+command that merges those sections into an existing CLAUDE.md (judgment task
+— prose-driven, not scripted) would close the gap. (2026-07-15)
