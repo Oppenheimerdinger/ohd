@@ -40,6 +40,22 @@ merge, re-run this campaign's validation against the new trunk — but only the
 conflict set, not a blanket full pass.**
 Raw overlap check: `comm -12 <(git diff --name-only <base>...origin/<trunk> | sort) <(git diff --name-only <base>...HEAD | sort)` — empty output = disjoint.
 
+## Phase 2.5 — reachability / graduation (dormant-feature guard)
+
+"Merged" is not "enabled." Optimized or new code that ships behind a flag,
+env gate, or non-default config can land cleanly and then NEVER RUN — the
+classic silent waste: someone pulls trunk, runs the default path, and the
+work they were waiting for isn't engaged.
+
+- If the work shipped gated (flag/env/config), **graduation to default-ON
+  happens AS PART OF this land** — the gate is demoted to a kill-switch, not
+  left as an opt-in. "Graduate later" = dormant feature; it does not happen.
+- If it deliberately stays gated (genuinely experimental), say so explicitly
+  in the state doc — a conscious exception, not a default.
+- **Positively assert the new path fires post-merge**: a smoke run, log line,
+  or counter that proves the landed code actually executes on the default
+  path. Pulling on another machine? Same assertion there before trusting it.
+
 ## Phase 3 — quality gate on the diff
 
 Run `/code-review` on the final diff; fix real findings; **re-run the checks

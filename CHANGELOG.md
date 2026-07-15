@@ -1,3 +1,10 @@
+## v0.4.5 (2026-07-15)
+
+- campaign-land: restored the reachability/graduation gate (Phase 2.5) that
+  was dropped during generalization — "merged is not enabled": gated work
+  graduates to default-ON as part of the land (gate becomes a kill-switch),
+  and the new path's engagement is positively asserted post-merge/post-pull.
+
 ## v0.4.4 (2026-07-15)
 
 - Drop-in guide: new "Adopting an EXISTING project" section — full harness
