@@ -47,3 +47,29 @@ campaign-land skill carries the full ritual) → merge per your model →
 `status <name>` to verify (squash-safe) → `clean <name>`. Stuck/abandoned?
 `abort <name>` (keeps the remote branch unless `--purge`). `list` shows open
 campaigns so none go stale silently.
+
+## Adopting an EXISTING project (full harness, not just the lifecycle)
+
+The steps above give an existing repo the campaign lifecycle. To get the FULL
+harness — the part that measurably drives good session behavior — also wire
+the project's CLAUDE.md (merge INTO the existing one; don't replace it):
+
+1. **Session anchor line** (top of a "How we work" section): open Claude Code
+   sessions at the trunk-checkout root, never inside a campaign worktree;
+   drive worktree work from the anchor (cd or `git -C <worktree>`).
+2. **Machine × environment matrix**: one row per machine (name / role / ssh /
+   fs shared-or-separate), its environments underneath (name / type /
+   activation command). If filesystems are separate, add: "code moves between
+   machines by commit→push→pull only — no scp of repo files."
+3. **Harness pointer**: "Working discipline lives in the ohd plugin
+   (way-of-working · campaign-land · campaign-status · claude-md-sanity);
+   lifecycle tooling is `tools/campaign.sh`."
+4. **Facts block**: trunk / campaign naming / merge model / data location /
+   deploy shape — whatever applies.
+
+`assets/CLAUDE.md.template` in the plugin is the reference shape for all four.
+After merging, run the claude-md-sanity skill once — it audits the result and
+will keep auditing it as the project drifts.
+
+(An interview-driven `/ohd-adopt` command that automates this merge is on the
+backlog — until then this is a 10-minute manual step.)

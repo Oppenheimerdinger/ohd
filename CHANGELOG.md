@@ -1,3 +1,10 @@
+## v0.4.4 (2026-07-15)
+
+- Drop-in guide: new "Adopting an EXISTING project" section — full harness
+  wiring for existing repos (session anchor, machine×env matrix, pointers,
+  facts), merged into the existing CLAUDE.md and audited by claude-md-sanity.
+  /ohd-adopt automation added to the backlog.
+
 ## v0.4.3 (2026-07-14)
 
 - Session-anchor guidance in four places (scaffolded CLAUDE.md "How we work"
