@@ -1,3 +1,10 @@
+## v0.4.9 (2026-07-16)
+
+- Security/privacy: scrubbed internal project, company, and machine names
+  from the tracked design docs (docs/superpowers/specs+plans) — replaced with
+  neutral placeholders. Release-gate policy hardened: those directories are no
+  longer whitelisted; internal NAMES (not just secrets/IPs) are gate failures.
+
 ## v0.4.8 (2026-07-16)
 
 - /ohd-new-project: objective-options principle — populate options from
