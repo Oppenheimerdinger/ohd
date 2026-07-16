@@ -10,7 +10,7 @@ Public Claude Code harness plugin. Development happens on `main` directly
 2. `node --test tests/*.test.mjs` → all pass. NEVER `node --test tests/`
    (directory form fails on some Node versions).
 3. Release gates (clean before push; run over git-tracked files only):
-   - `grep -rniE "the-company|internal-|validation-proj|gpubox|<bigfs>|dipark" $(git ls-files)`
+   - `grep -rniE "nanof[o]rge|f[o]rge-|xrd2xt[a]l|sr[u]uk|/f[s]x|dip[a]rk" $(git ls-files)`
      — allowed hits ONLY: marketplace name `dipark`, plugin.json author,
      install/rollback commands referencing the `dipark` marketplace in
      README/USAGE-ko/CHANGELOG, ohd-setup's stale-plugin
