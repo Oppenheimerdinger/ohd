@@ -23,6 +23,19 @@ Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial 
 
 **Violating the letter of this rule violates the spirit.** Do not stop at one pass; the last pass must be clean.
 
+**Finding closure — the author never closes a finding by fiat.** A finding
+closes exactly two ways: (a) fix it, and the NEXT review pass sees the fixed
+artifact; or (b) you believe the finding is wrong — write the rebuttal INTO
+the next reviewer's input and let that reviewer close or uphold it. Severity
+(Critical/Important/Minor) is the reviewer's classification; downgrading a
+finding yourself to avoid a fix is closure by fiat. "The reviewer
+misunderstood" is itself a finding — against your artifact's clarity.
+
+**Convergence log (artifact, hand-off blocker):** when declaring done, print
+one line per round — `round N: X findings → fixed/rebutted-upheld/minor-logged`
+— ending in the clean pass. No log line for a clean final pass = not
+converged; go run it.
+
 ## Scope guard
 
 Use this loop only on a FIXED deliverable. If review findings start driving a

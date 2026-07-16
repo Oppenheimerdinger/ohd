@@ -1,3 +1,18 @@
+## v0.4.11 (2026-07-16)
+
+- Anti-rationalization audit across all skills (follow-up to v0.4.10's
+  land-report gate). Two gaps closed:
+  - review-to-convergence: finding-closure rule (author never closes a finding
+    by fiat — fix+re-review, or rebuttal adjudicated by the NEXT reviewer;
+    severity is the reviewer's call) + mandatory per-round convergence log as
+    the hand-off artifact.
+  - way-of-working: loop termination requires the independent evaluator's
+    verdict QUOTED verbatim ("the evaluator would agree" = self-grading);
+    completion claims must name their review pass or be treated as unreviewed.
+  - Audited clean: campaign-status, claude-md-sanity, deep-solve (verdict
+    table / findings / user-gate+script are already artifact- or
+    mechanically-enforced).
+
 ## v0.4.10 (2026-07-16)
 
 - campaign-land: mandatory land-report table (phase | ran? | evidence) gates
