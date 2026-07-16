@@ -1,3 +1,14 @@
+## v0.4.7 (2026-07-16)
+
+- /ohd-new-project interview redesigned (fable-designed question set):
+  AskUserQuestion tool mandatory (no plain-text interviews); 11 questions cut
+  to 5-6 in 2-3 batched calls (conventions auto-decided, flippable at the
+  gate); NEW structure elicitation via the growth-axis question ("what piles
+  up in the repo?") with 4 shape skeletons + umbrella derived from the
+  external-code answer; similar-project accelerator (name an existing project,
+  its layout is read and adapted); annotated tree proposal approved at the
+  gate and committed as a second `layout:` commit. new-project.sh unchanged.
+
 ## v0.4.6 (2026-07-16)
 
 - deep-solve: new `effort` arg (low|medium|high|xhigh|max, default max) — sets
