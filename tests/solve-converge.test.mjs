@@ -253,3 +253,24 @@ test('premise-challenge: dead round-1 solver, round-2 first-real-solve challenge
   assert.equal(out.premiseChallenge, 'premise X untested; run test Y')
   assert.equal(out.roundsUsed, 2)   // dead slot + the challenging solve
 })
+
+test('effort override: solver+confirm use it; reviewer is capped down to it when lower than high', async () => {
+  const mock = makeMock({
+    solves: [S('42')],
+    reviews: [R()],
+    confirms: [S('42')],
+  })
+  const out = await run(mock, { brief: BRIEF, effort: 'medium' })
+  assert.equal(out.converged, true)
+  assert.deepEqual(mock.calls.map(c => c.opts.effort), ['medium', 'medium', 'medium'])
+})
+
+test('effort high: reviewer keeps its high ceiling; invalid effort falls back to max', async () => {
+  const highMock = makeMock({ solves: [S('42')], reviews: [R()], confirms: [S('42')] })
+  await run(highMock, { brief: BRIEF, effort: 'high' })
+  assert.deepEqual(highMock.calls.map(c => c.opts.effort), ['high', 'high', 'high'])
+
+  const badMock = makeMock({ solves: [S('42')], reviews: [R()], confirms: [S('42')] })
+  await run(badMock, { brief: BRIEF, effort: 'ultra' })
+  assert.deepEqual(badMock.calls.map(c => c.opts.effort), ['max', 'high', 'max'])
+})
