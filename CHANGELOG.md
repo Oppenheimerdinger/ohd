@@ -1,3 +1,12 @@
+## v0.4.10 (2026-07-16)
+
+- campaign-land: mandatory land-report table (phase | ran? | evidence) gates
+  Phase 7 cleanup. Counters the observed skip-by-rationalization failure
+  ("earlier review covers Phase 3", "low risk") — substitution rationales are
+  declared invalid; skip rows must quote a skill-named condition; empty
+  evidence = the phase did not happen. Silent omission becomes explicit
+  misstatement, which does not survive.
+
 ## v0.4.9 (2026-07-16)
 
 - Security/privacy: scrubbed internal project, company, and machine names
