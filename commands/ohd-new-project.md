@@ -13,14 +13,33 @@ the conversation's language (Korean UI text for a Korean conversation). If
 $ARGUMENTS contains a project name, that answers the name (never ask it;
 `--dir` default `~/projects/<name>`, or the user's known convention).
 
-## Interview — 5 questions in 2 calls (6 in 3 only if external code)
+**Objective-options principle**: everywhere a value is needed, prefer
+CONCRETE plausible options over open-ended asks — use the full 4-option
+budget, populate options from what you can detect (sibling projects, existing
+paths, installed env managers). "Other" free text is the escape hatch, never
+the designed path.
 
-### Call 1 — the work (batch Q1+Q2)
+## Interview — ≤6 questions in 2–3 calls
 
-**Q1 STRUCT** (header "Project shape"): "As this project moves forward, what
-will mostly pile up inside it? Think a year ahead, not this week. (If it
-resembles a project you already have, pick Other and just name it — I'll read
-its layout.)"
+### Call 1 — anchor + external code (batch Q0+Q2)
+
+**Q0 SIMILAR** (header "Similar project"; ONLY if scanning the user's project
+roots — the parent of `--dir`, plus any known projects directory — finds
+existing projects): "Is this project shaped like one you already have?"
+Options: up to 3 detected project names most likely to be relevant (label =
+name; description = one line read from its top-level layout or CLAUDE.md), plus
+**"No — new shape (Recommended)"**. If a project is picked: read its top two
+directory levels + CLAUDE.md, infer which shape 1–4 it is, SKIP Q1, and adapt
+its layout (see accelerator below). If no projects are found, skip Q0.
+
+**Q2 EXTERNAL** — asked here (see below).
+
+### Call 2 — shape (Q1, ONLY if Q0 skipped or answered "No"; batch with Q2b
+when applicable)
+
+**Q1 STRUCT** (header "Project shape"): "Once this project is up and running,
+what will mostly pile up inside the repo? Answer for what accumulates over
+time — not what exists this week."
 
 1. **One growing program** — a single tool/library gaining features; most work
    improves that one codebase. → `src/<pkg>/`, `tests/`, optional `bench/`.
@@ -42,7 +61,7 @@ run ledger onto a code-only layout is the migration that never happens).
 Deliberately NOT options: "umbrella around external code" (derived from Q2/Q2b,
 not self-diagnosable) and "paper" (papers are outputs of shapes 1–4).
 
-**Q2 EXTERNAL** (header "External code"): "Does this project build on someone
+**Q2 EXTERNAL** (in Call 1; header "External code"): "Does this project build on someone
 else's SOURCE code? Libraries you just install with pip/conda do NOT count —
 only source you'll keep a copy of and change."
 
@@ -54,7 +73,7 @@ only source you'll keep a copy of and change."
 3. **Yes — small fixes only** — used as-is, occasional small patch. →
    patch-type host (`--host-vehicle patches`, needs `--host-name --host-repo`).
 
-### Call 2 — ONLY if Q2 = 2 or 3
+### Q2b — ONLY if Q2 = 2 or 3 (batch into Call 2, or its own call if Q1 was skipped)
 
 **Q2b UMBRELLA** (header "Where edits land"): "Where will most of your
 day-to-day changes actually happen?"
@@ -68,7 +87,7 @@ day-to-day changes actually happen?"
 Recommendation is dynamic: #1 when Q2 was "I'll modify it", #2 when "small
 fixes only".
 
-### Call 3 — logistics (batch Q3+Q4+Q5)
+### Final call — logistics (batch Q3+Q4+Q5)
 
 **Q3 COLLAB+GITHUB** (header "Who works here"): "Who will work on this repo?"
 
@@ -103,7 +122,9 @@ over ~50 MB per file or gigabytes total? Reference data you only read counts."
 1. **No big files** (Recommended when Q1 ∈ {1,2}) → no data link.
 2. **Yes — they live on a shared disk** (Recommended when Q1 ∈ {3,4}) —
    datasets, checkpoints, or reference data; exact path confirmed at the gate.
-   → `--data-dir <path>` (propose the path from house conventions).
+   → `--data-dir <path>` — at the gate, offer DETECTED candidate paths as
+   options (existing large-storage dirs matching house conventions), not an
+   open-ended "type the path".
 3. **Yes — but no home for them yet** → create `<shared-storage>/<proj>/`,
    then `--data-dir` it; document in CLAUDE.md.
 
@@ -112,7 +133,7 @@ NOT interviewed — draft the machine×env matrix from Q4's answers plus what yo
 can detect on this machine, and let the user fill/fix it at the gate
 (`--env name:uv|conda|module|none[@machine]`, first = primary, uv primary-only).
 
-## Similar-project accelerator (when Q1's Other names a project)
+## Similar-project accelerator (when Q0 picks a project, or Other names one)
 
 1. Resolve the path (user's known project roots), read its top two directory
    levels + its CLAUDE.md if present.
@@ -135,8 +156,11 @@ it isn't"); state the language guess ("assuming Python — flip below if not").
 
 Show: the annotated ASCII tree, then the flag list, then the auto-decisions
 table — trunk=main, campaign naming (numbered), hook, merge model,
-deploy=none, GitHub owner, language guess, drafted machine×env matrix. Every
-row flippable by free text. Only on an explicit go, run:
+deploy=none, GitHub owner, language guess, drafted machine×env matrix. Then
+ask for the verdict via AskUserQuestion: **launch as-is (Recommended)** /
+edit the tree / flip an auto-decision / cancel — with any slot still needing
+a value (data path, env manager per machine) offered as detected-candidate
+options in the same call. Loop until an explicit go, then run:
 
     bash "${CLAUDE_PLUGIN_ROOT}/assets/new-project.sh" <flags...>
 

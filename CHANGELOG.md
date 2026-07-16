@@ -1,3 +1,11 @@
+## v0.4.8 (2026-07-16)
+
+- /ohd-new-project: objective-options principle — populate options from
+  detection (Q0 offers scanned sibling projects as choices and skips the shape
+  question on a match; data paths and gate slots offer detected candidates;
+  gate verdict itself is an AskUserQuestion). Q1 anchor rephrased to
+  steady-state ("once up and running") — the "a year ahead" phrasing is gone.
+
 ## v0.4.7 (2026-07-16)
 
 - /ohd-new-project interview redesigned (fable-designed question set):
