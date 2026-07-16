@@ -97,10 +97,13 @@ chosen during Phase 1:
 | "패널로", "as a panel" (no number given) | `reviewers: 3` |
 | "확증 생략", "skip confirmation", "--no-confirm" | `confirm: false` |
 | "fable로", "use fable", "--model fable" | `model: "fable"` |
+| "effort high로", "--effort high" (low\|medium\|high\|xhigh\|max) | `effort: "high"` |
 | "--mode isolated\|grounded", "격리로", "grounded로" | mode override (beats the Phase-1 recommendation) |
 
-Defaults: `maxRounds: 4`, `reviewers: 1`, `confirm: true`, `model: "opus"`.
-**fable ONLY on explicit user request — never by default.**
+Defaults: `maxRounds: 4`, `reviewers: 1`, `confirm: true`, `model: "opus"`,
+`effort: "max"`. **fable ONLY on explicit user request — never by default.**
+`effort` sets the solver/confirmation tier; reviewers run at `high`, or at
+`effort` when it is lower (a reviewer never outspends its solver).
 
 ## User gate — approve the brief (MANDATORY, blocks Phase 2)
 
@@ -113,14 +116,14 @@ After the brief review loop converges, present to the user in ONE message:
 ```
 ▶ deep-solve
   mode     : {isolated|grounded} — {the specific facts that forced the mode, or "fully closed brief"}
-  model    : {model} (max effort)
+  model    : {model} ({effort} effort)
   budget   : up to {maxRounds} solves (incl. confirmation)
   schedule : {expanded}  (may exit early; a good brief finishes in 2)
   reviewers: {reviewers} / confirmation solve: {on|off}
 ```
 
 In grounded mode the budget/schedule/reviewers lines are replaced by
-`run : 1 solver (max effort) · max 1 continuation · 1 verifying reviewer`
+`run : 1 solver ({effort} effort) · max 1 continuation · 1 verifying reviewer`
 (`maxRounds` / `confirm` / `reviewers` args are ignored — say so if the user
 set them).
 
@@ -159,7 +162,7 @@ Invoke the Workflow tool with the script that ships next to this skill:
 ```
 Workflow({
   scriptPath: "<this skill's base directory>/solve-converge.js",
-  args: { brief, maxRounds, confirm, reviewers, model }
+  args: { brief, maxRounds, confirm, reviewers, model, effort }
 })
 ```
 
@@ -174,7 +177,7 @@ schedule and honesty rules.
 
 ## Phase 2, grounded mode (attended; no Workflow; only after user approval)
 
-1. **Solver**: one fresh agent, max effort, read tools + sandboxed Bash, no
+1. **Solver**: one fresh agent, the resolved effort, read tools + sandboxed Bash, no
    write/edit (the attended permission system is the write barrier). Returns:
    answer + reasoning + an **evidence appendix** — verbatim command output or
    `file:line` excerpt for EVERY newly established load-bearing fact — plus

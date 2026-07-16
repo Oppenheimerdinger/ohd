@@ -122,6 +122,10 @@ const MAX = Number.isInteger(args.maxRounds) && args.maxRounds > 0 ? args.maxRou
 const CONFIRM = args.confirm !== false
 const REVIEWERS = Number.isInteger(args.reviewers) && args.reviewers > 0 ? args.reviewers : 1
 const MODEL = typeof args.model === 'string' ? args.model : 'opus'
+const EFFORT_TIERS = ['low', 'medium', 'high', 'xhigh', 'max']
+const EFFORT = EFFORT_TIERS.includes(args.effort) ? args.effort : 'max'
+// Reviewers keep their historical 'high' ceiling but never outspend the solver.
+const REVIEW_EFFORT = EFFORT_TIERS.indexOf(EFFORT) < EFFORT_TIERS.indexOf('high') ? EFFORT : 'high'
 
 // ---------- state ----------
 const history = []      // { round, mode, answer: {answer, conclusion}|null, findings: [...]|null }
@@ -147,7 +151,7 @@ while (slotsUsed < MAX) {
 
   const solved = await agent(buildSolverPrompt(mode, BRIEF, history, allFindings), {
     label: `solve:${mode}:r${round}`, phase: 'Solve',
-    schema: SOLVE_SCHEMA, model: MODEL, effort: 'max',
+    schema: SOLVE_SCHEMA, model: MODEL, effort: EFFORT,
   })
   slotsUsed++
   if (!solved) {
@@ -176,7 +180,7 @@ while (slotsUsed < MAX) {
   const reviews = (await parallel(Array.from({ length: REVIEWERS }, (_, i) => () =>
     agent(buildReviewerPrompt(BRIEF, solved), {
       label: `review:r${round}:${i + 1}`, phase: 'Review',
-      schema: REVIEW_SCHEMA, model: MODEL, effort: 'high',
+      schema: REVIEW_SCHEMA, model: MODEL, effort: REVIEW_EFFORT,
     })))).filter(Boolean)
 
   if (reviews.length === 0) {
@@ -201,7 +205,7 @@ while (slotsUsed < MAX) {
       // Cold confirmation: brief only — upgrades "reviewer-silence" to "independent-agreement".
       const confirm = await agent(buildSolverPrompt('COLD', BRIEF, [], []), {
         label: 'confirm:cold', phase: 'Confirm',
-        schema: SOLVE_SCHEMA, model: MODEL, effort: 'max',
+        schema: SOLVE_SCHEMA, model: MODEL, effort: EFFORT,
       })
       slotsUsed++
       if (confirm) {

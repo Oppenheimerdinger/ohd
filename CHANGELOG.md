@@ -1,3 +1,9 @@
+## v0.4.6 (2026-07-16)
+
+- deep-solve: new `effort` arg (low|medium|high|xhigh|max, default max) — sets
+  the solver/confirmation reasoning tier; reviewers keep their `high` ceiling
+  but never outspend the solver. Override via "--effort high" / "effort high로".
+
 ## v0.4.5 (2026-07-15)
 
 - campaign-land: restored the reachability/graduation gate (Phase 2.5) that
