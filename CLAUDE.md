@@ -17,16 +17,17 @@ Public Claude Code harness plugin. Development happens on `main` directly
      check (`deep-solve@dipark` uninstall command — same exception gate 2
      already grants), the LICENSE copyright line, this §RELEASING section's
      own grep-pattern/whitelist text (self-referential — the rule has to
-     quote the words it's filtering for), and `docs/superpowers/{specs,plans}/`
-     (see note below).
+     quote the words it's filtering for).
    - `grep -rnE "Oppenheimerdinger/deep-solve|deep-solve@dipark|deep-solve:deep-solve" $(git ls-files)`
      — allowed ONLY: docs/backlog.md and CHANGELOG.md history links, README
      version note, USAGE-ko migration note, ohd-setup's stale-plugin check,
-     this section's own text, and `docs/superpowers/{specs,plans}/`.
-   - `docs/superpowers/{specs,plans}/` are tracked internal design docs,
-     public by precedent (deep-solve shipped its specs too) — whitelisted
-     wholesale against both gates above. They must still never carry
-     secrets, credentials, or machine IPs; spot-check on any edit.
+     and this section's own text.
+   - `docs/superpowers/{specs,plans}/` have NO whitelist (policy hardened
+     2026-07-16 — internal project/company/machine NAMES are sensitive, not
+     just secrets/IPs; the 2026-07-14 wholesale whitelist leaked 45 name
+     hits, scrubbed in v0.4.9). New design docs must be written anonymized
+     from the start (umbrella-proj, pkg-proj, gpubox-style placeholders);
+     quoted grep patterns in docs use `internal-` in place of real prefixes.
 4. Commit everything, THEN tag `vX.Y.Z` on the final commit, push with tag
    (the tag must equal the pushed HEAD).
    (v0.1.0's tag trails main by one docs commit — known, do not force-move
