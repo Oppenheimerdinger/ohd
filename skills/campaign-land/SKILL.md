@@ -93,6 +93,39 @@ the change touches, now — not "later".
 - Run `claude-md-sanity` at land time (dangling pointers, half-landed
   lock-steps).
 
+## Land report — MANDATORY gate before Phase 7
+
+Skipping a mandated phase by rationalizing is the known failure mode of this
+skill ("the whole-branch review already covers Phase 3", "low-risk, skip
+sanity"). Rules that live only as prose get skipped; artifacts don't. So:
+
+**Before any Phase-7 cleanup, print the land report table:**
+
+```
+| phase | ran? | evidence |
+|-------|------|----------|
+| 0 preconditions      | yes/skip | <command or output ref> |
+| 1 working-tree safety| yes/skip | ... |
+| 2 re-validation      | yes/skip | ... |
+| 2.5 reachability     | yes/skip | ... |
+| 3 quality gate       | yes/skip | ... |
+| 4 docs same-land     | yes/skip | ... |
+| 5 merge mechanics    | yes/skip | ... |
+| 6 distill + hygiene  | yes/skip | ... |
+```
+
+- `evidence` must reference something that actually happened this land — a
+  command you ran, an output you saw, a diff/commit hash. An empty or vague
+  evidence cell means the phase DID NOT HAPPEN — go run it.
+- **Substitution rationales are invalid.** A review that happened during
+  implementation does not satisfy Phase 3 (it saw a different, earlier tree).
+  "Low risk" is not an exemption. The ONLY valid `skip` rows are conditions
+  this skill itself names (e.g. "no dependent-repo pin", "single campaign —
+  no overlap", "nothing gated — 2.5 trivially clean"), and the skip row must
+  quote that condition as its evidence.
+- Phase 7 deletes branches and worktrees — it is the point of no return. A
+  land with a missing or hand-waved report row is not ready to clean.
+
 ## Phase 7 — cleanup (only after ALL PRs merged)
 
 `campaign.sh clean <name>` (verifies merge before deleting) — or manually:
