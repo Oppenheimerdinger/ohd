@@ -56,7 +56,11 @@ findings before banking.
 **Loop termination is judged by an independent evaluator agent, never by the
 looping session itself** — a session grading its own loop quits (or declares
 victory) far too easily. The evaluator gets the goal + concrete evidence and
-returns done / not-done with reasons.
+returns done / not-done with reasons. **The verdict is an artifact**: a loop
+may only be declared finished by quoting the evaluator's verdict verbatim
+(who evaluated, what evidence it saw, done/not-done, reasons). No quoted
+verdict = the loop is not done — "the evaluator would agree" is the looping
+session grading itself with extra steps.
 
 If ralph (or similar) is used: ① mentioning the word in a design conversation
 can auto-register its state — a status question is not a task; cancel misfired
@@ -89,5 +93,7 @@ Creative work starts at brainstorming; multi-step work gets a written plan
 without verification-before-completion. **Completed implementation is itself
 a deliverable**: subagent-driven execution's final whole-branch review covers
 it; anything built outside that flow gets an explicit review-to-convergence
-pass before it is trusted. This is why superpowers is
+pass before it is trusted. A completion claim NAMES its review pass (what
+reviewed it, verdict) — a claim that names none is unreviewed work, whatever
+its confidence. This is why superpowers is
 required for the full workflow from v0.2 (see `/ohd-setup`).
