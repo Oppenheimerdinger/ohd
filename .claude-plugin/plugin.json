@@ -1,6 +1,6 @@
 {
   "name": "ohd",
-  "version": "0.4.12",
+  "version": "0.4.13",
   "description": "Research-and-development harness for Claude Code: user-gated hard-problem solving (deep-solve), deliverable review to convergence, CLAUDE.md drift audits, and guided environment setup",
   "author": {
     "name": "dipark"
