@@ -1,3 +1,10 @@
+## v0.4.12 (2026-07-20)
+
+- deep-solve: defaults changed to `model: "fable"`, `effort: "high"` (was
+  opus/max). The old "fable only on explicit request" rule is retired; opus is
+  now the explicit override (`--model opus`). Banner hint now advertises
+  deeper effort tiers instead of fable.
+
 ## v0.4.11 (2026-07-16)
 
 - Anti-rationalization audit across all skills (follow-up to v0.4.10's

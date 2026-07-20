@@ -121,9 +121,9 @@ const BRIEF = args.brief
 const MAX = Number.isInteger(args.maxRounds) && args.maxRounds > 0 ? args.maxRounds : 4
 const CONFIRM = args.confirm !== false
 const REVIEWERS = Number.isInteger(args.reviewers) && args.reviewers > 0 ? args.reviewers : 1
-const MODEL = typeof args.model === 'string' ? args.model : 'opus'
+const MODEL = typeof args.model === 'string' ? args.model : 'fable'
 const EFFORT_TIERS = ['low', 'medium', 'high', 'xhigh', 'max']
-const EFFORT = EFFORT_TIERS.includes(args.effort) ? args.effort : 'max'
+const EFFORT = EFFORT_TIERS.includes(args.effort) ? args.effort : 'high'
 // Reviewers keep their historical 'high' ceiling but never outspend the solver.
 const REVIEW_EFFORT = EFFORT_TIERS.indexOf(EFFORT) < EFFORT_TIERS.indexOf('high') ? EFFORT : 'high'
 
