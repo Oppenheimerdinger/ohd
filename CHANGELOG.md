@@ -1,3 +1,8 @@
+## v0.4.13 (2026-07-20)
+
+- /deep-solve argument-hint: `--model opus` (fable is now the default) +
+  `--effort` tier listed.
+
 ## v0.4.12 (2026-07-20)
 
 - deep-solve: defaults changed to `model: "fable"`, `effort: "high"` (was

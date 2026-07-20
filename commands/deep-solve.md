@@ -1,6 +1,6 @@
 ---
 description: Solve a hard self-contained problem via the deep-solve convergence harness
-argument-hint: <problem> [--mode isolated|grounded] [--rounds N] [--reviewers N] [--no-confirm] [--model fable]
+argument-hint: <problem> [--mode isolated|grounded] [--rounds N] [--reviewers N] [--no-confirm] [--model opus] [--effort low|medium|high|xhigh|max]
 ---
 
 Follow the deep-solve skill below EXACTLY (do not re-invoke it via the Skill
