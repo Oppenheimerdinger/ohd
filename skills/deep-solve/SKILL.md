@@ -96,14 +96,14 @@ chosen during Phase 1:
 | "리뷰어 N", "N reviewers", "--reviewers N" | `reviewers: N` |
 | "패널로", "as a panel" (no number given) | `reviewers: 3` |
 | "확증 생략", "skip confirmation", "--no-confirm" | `confirm: false` |
-| "fable로", "use fable", "--model fable" | `model: "fable"` |
+| "opus로", "use opus", "--model opus" | `model: "opus"` |
 | "effort high로", "--effort high" (low\|medium\|high\|xhigh\|max) | `effort: "high"` |
 | "--mode isolated\|grounded", "격리로", "grounded로" | mode override (beats the Phase-1 recommendation) |
 
-Defaults: `maxRounds: 4`, `reviewers: 1`, `confirm: true`, `model: "opus"`,
-`effort: "max"`. **fable ONLY on explicit user request — never by default.**
-`effort` sets the solver/confirmation tier; reviewers run at `high`, or at
-`effort` when it is lower (a reviewer never outspends its solver).
+Defaults: `maxRounds: 4`, `reviewers: 1`, `confirm: true`, `model: "fable"`,
+`effort: "high"`. `effort` sets the solver/confirmation tier; reviewers run
+at `high`, or at `effort` when it is lower (a reviewer never outspends its
+solver).
 
 ## User gate — approve the brief (MANDATORY, blocks Phase 2)
 
@@ -146,9 +146,10 @@ an attended session, and stop — do NOT switch modes yourself; the user must
 explicitly choose isolated mode.
 
 Render everything — banner labels included — in the conversation language (e.g.
-Korean labels for a Korean conversation). When `model` is opus, append a short
-hint on the model line that the user may request the strongest model (e.g.
-`← say "use fable" / "fable로" for the strongest model`); omit the hint otherwise.
+Korean labels for a Korean conversation). When `effort` is high (the default),
+append a short hint on the model line that deeper tiers exist on request (e.g.
+`← say "--effort max" / "effort max로" for the deepest reasoning`); omit the
+hint otherwise.
 
 `{expanded}` = the schedule written out in full: last slot SYNTH, odd COLD, even
 REPAIR — e.g. maxRounds 4 → `COLD → REPAIR → COLD → SYNTH`; maxRounds 6 →

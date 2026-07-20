@@ -21,8 +21,8 @@ test('happy path: COLD → zero findings → confirmation agrees → independent
   assert.equal(out.answer, 'full answer (42)')
   assert.deepEqual(mock.calls.map(c => c.kind), ['solve', 'review', 'confirm'])
   assert.equal(mock.calls[0].label, 'solve:COLD:r1')
-  assert.equal(mock.calls[0].opts.effort, 'max')
-  assert.equal(mock.calls[0].opts.model, 'opus')   // default model
+  assert.equal(mock.calls[0].opts.effort, 'high')  // default effort
+  assert.equal(mock.calls[0].opts.model, 'fable')  // default model
   assert.equal(mock.calls[1].opts.effort, 'high')
 })
 
@@ -265,12 +265,12 @@ test('effort override: solver+confirm use it; reviewer is capped down to it when
   assert.deepEqual(mock.calls.map(c => c.opts.effort), ['medium', 'medium', 'medium'])
 })
 
-test('effort high: reviewer keeps its high ceiling; invalid effort falls back to max', async () => {
+test('effort high: reviewer keeps its high ceiling; invalid effort falls back to the high default', async () => {
   const highMock = makeMock({ solves: [S('42')], reviews: [R()], confirms: [S('42')] })
   await run(highMock, { brief: BRIEF, effort: 'high' })
   assert.deepEqual(highMock.calls.map(c => c.opts.effort), ['high', 'high', 'high'])
 
   const badMock = makeMock({ solves: [S('42')], reviews: [R()], confirms: [S('42')] })
   await run(badMock, { brief: BRIEF, effort: 'ultra' })
-  assert.deepEqual(badMock.calls.map(c => c.opts.effort), ['max', 'high', 'max'])
+  assert.deepEqual(badMock.calls.map(c => c.opts.effort), ['high', 'high', 'high'])
 })
