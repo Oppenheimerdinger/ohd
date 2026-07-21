@@ -1,3 +1,12 @@
+## v0.4.15 (2026-07-21)
+
+- CI smoke hardening for the v0.4.14 submodule test (no functional change):
+  file-protocol allowance must travel via GIT_CONFIG_* env (repo config does
+  not reach the submodule's inner clone), and the bare fixture's default
+  branch is pinned with `init -b main` (git-2.54 runners init a different
+  HEAD → "branch yet to be born" on submodule add). v0.4.14's tag points at a
+  red-CI commit; this tag is the green one.
+
 ## v0.4.14 (2026-07-21)
 
 - campaign.sh (assets + tools, from a real two-campaign field report;
