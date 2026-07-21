@@ -78,17 +78,17 @@ CAMPAIGN_WORKTREE_HINT='test: run {wt}/go' "$CS" new c5 | grep -q "test: run $TM
 "$CS" abort c5 >/dev/null
 
 # submodule init: a fresh worktree must have populated submodules
-# (modern git blocks file-protocol submodule clones; allow it via the throwaway
-# repo's own config — worktrees share it, so campaign.sh's inner
-# 'submodule update' inherits the allowance too)
-git config protocol.file.allow always
+# (modern git blocks file-protocol submodule clones; the env-var config
+# reaches every child git process, including campaign.sh's inner
+# 'submodule update' — repo config does NOT reach the inner clone)
+export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
+git version
 git init -q --bare "$TMP/sub.git"
-git clone -q "$TMP/sub.git" "$TMP/subwork" 2>/dev/null
+git clone -q "$TMP/sub.git" "$TMP/subwork"
 ( cd "$TMP/subwork" && git config user.email s@t && git config user.name s \
   && echo subfile > sub.txt && git add . && git commit -qm sub && git push -q origin HEAD:main ) \
   || fail "sub fixture setup failed"
-git -c protocol.file.allow=always submodule add -q "$TMP/sub.git" external/sub >/dev/null \
-  || fail "submodule add failed"
+git submodule add -q "$TMP/sub.git" external/sub || fail "submodule add failed"
 git commit -qm add-submodule && git push -q origin main
 "$CS" new c6 >/dev/null || fail "new failed on submodule repo"
 [ -f "$TMP/wt/c6/external/sub/sub.txt" ] || fail "submodule not initialized in fresh worktree"
