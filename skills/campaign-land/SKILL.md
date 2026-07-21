@@ -128,7 +128,9 @@ sanity"). Rules that live only as prose get skipped; artifacts don't. So:
 
 ## Phase 7 — cleanup (only after ALL PRs merged)
 
-`campaign.sh clean <name>` (verifies merge before deleting) — or manually:
+`campaign.sh clean <name>` (verifies merge AND a filled verdict/result line in
+the state doc before deleting — Phase 4's on-disk artifact; `FORCE_CLEAN=1`
+bypasses) — or manually:
 verify with the campaign-status verdict first, then remove worktree + local +
 remote branch: `git worktree remove <wt> && git branch -D <br> && git push origin --delete <br> && git worktree prune`.
 Whoever spawned the worktree owns its teardown. ⚠ Parallel

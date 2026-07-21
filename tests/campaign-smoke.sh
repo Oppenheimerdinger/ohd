@@ -51,6 +51,11 @@ if "$CS" clean c3 2>/dev/null; then fail "clean destroyed a never-pushed campaig
 git fetch -q origin && git merge -q --no-ff origin/c1 -m merge && git push -q origin main
 "$CS" status c1 | grep -q "MERGED (ancestry)" || fail "expected MERGED after merge"
 
+# verdict gate: merged but state doc verdict still empty → clean must refuse
+if "$CS" clean c1 2>/dev/null; then fail "clean accepted a land with an empty verdict line"; fi
+[ -d "$TMP/wt/c1" ] || fail "worktree destroyed by verdict-refused clean"
+sed -i 's|- result / verdict:|- result / verdict: LANDS — smoke ok|' docs/campaigns/c1.md
+
 # clean now succeeds; worktree and branches gone
 "$CS" clean c1 >/dev/null
 [ ! -d "$TMP/wt/c1" ]                          || fail "worktree survived clean"
@@ -66,5 +71,25 @@ git push -q origin --delete c2
 
 # list runs without error on empty set
 "$CS" list >/dev/null || fail "list errored"
+
+# worktree hint: {wt} substituted when set, silent when empty
+CAMPAIGN_WORKTREE_HINT='test: run {wt}/go' "$CS" new c5 | grep -q "test: run $TMP/wt/c5/go" \
+  || fail "worktree hint not printed/substituted"
+"$CS" abort c5 >/dev/null
+
+# submodule init: a fresh worktree must have populated submodules
+export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=protocol.file.allow GIT_CONFIG_VALUE_0=always
+git init -q --bare "$TMP/sub.git"
+git clone -q "$TMP/sub.git" "$TMP/subwork"
+( cd "$TMP/subwork" && git config user.email s@t && git config user.name s \
+  && echo subfile > sub.txt && git add . && git commit -qm sub && git push -q origin HEAD:main )
+git submodule add -q "$TMP/sub.git" external/sub >/dev/null 2>&1
+git commit -qm add-submodule && git push -q origin main
+"$CS" new c6 >/dev/null
+[ -f "$TMP/wt/c6/external/sub/sub.txt" ] || fail "submodule not initialized in fresh worktree"
+CAMPAIGN_INIT_SUBMODULES=0 "$CS" new c7 >/dev/null
+[ -f "$TMP/wt/c7/external/sub/sub.txt" ] && fail "CAMPAIGN_INIT_SUBMODULES=0 still initialized"
+"$CS" abort c6 >/dev/null && "$CS" abort c7 >/dev/null
+unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
 
 echo "SMOKE PASS"

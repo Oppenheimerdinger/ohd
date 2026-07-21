@@ -12,6 +12,7 @@ STATE_DIR="${CAMPAIGN_STATE_DIR:-docs/campaigns}"
 DEP_DIR="${CAMPAIGN_DEP_DIR:-}"       # local clone of a dependent/fork repo ("" = none)
 DEP_TRUNK="${CAMPAIGN_DEP_TRUNK:-}"   # dependent repo's trunk branch
 PIN_FILE="${CAMPAIGN_PIN_FILE:-}"     # file in THIS repo carrying a PIN=<sha> line
+WORKTREE_HINT="${CAMPAIGN_WORKTREE_HINT:-}"  # optional; printed by 'new' with {wt} → worktree path (e.g. how to run tests there)
 # ──────────────────────────────────────────────────────────────────────────
 
 die() { echo "campaign.sh: $*" >&2; exit 1; }
@@ -52,6 +53,13 @@ cmd_new() {
   git fetch origin -q
   mkdir -p "$WT_ROOT" "$STATE_DIR"
   git worktree add "$wt" -b "$n" "origin/$TRUNK"
+  # git worktree add does NOT populate submodules — an uninitialized submodule
+  # worktree fails tests in ways that masquerade as pre-existing failures.
+  if [ "${CAMPAIGN_INIT_SUBMODULES:-1}" != "0" ] && [ -f "$ROOT/.gitmodules" ]; then
+    echo "init submodules in worktree (set CAMPAIGN_INIT_SUBMODULES=0 to skip)…"
+    git -C "$wt" submodule update --init --recursive || \
+      echo "WARN: submodule init failed — run 'git -C $wt submodule update --init --recursive' manually" >&2
+  fi
   local doc="$STATE_DIR/$n.md"
   if [ ! -f "$doc" ]; then
     cat > "$doc" <<DOC
@@ -65,6 +73,7 @@ DOC
     echo "state doc: $doc  (commit it on trunk — docs are allowed there)"
   fi
   echo "worktree: $wt  (branch '$n' off origin/$TRUNK)"
+  [ -n "$WORKTREE_HINT" ] && echo "${WORKTREE_HINT//\{wt\}/$wt}"
   echo "work INSIDE the worktree, commit only there; run 'campaign.sh land $n' when validated."
 }
 
@@ -161,6 +170,15 @@ cmd_clean() {
   elif git rev-parse -q --verify "$n" >/dev/null 2>&1 \
        && ! git merge-base --is-ancestor "$n" "origin/$TRUNK"; then
     die "refusing clean: '$n' was never pushed and is not merged — its commits exist only here. Use 'abort $n' if you really mean to discard."
+  fi
+  # Land-report gate: the state doc must carry a filled verdict/result line
+  # (campaign-land Phase 4, "docs in the SAME land") BEFORE the worktree is
+  # destroyed. Content after the colon is required — the scaffold's empty
+  # '- result / verdict:' line does not count.
+  local doc="$STATE_DIR/$n.md"
+  if [ "${FORCE_CLEAN:-0}" != "1" ] && [ -f "$doc" ] && \
+     ! grep -qiE '(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|LANDS|LANDED|ABANDONED' "$doc"; then
+    die "refusing clean: '$doc' has no filled verdict/result line — update the state doc (campaign-land Phase 4) first. Bypass: FORCE_CLEAN=1 campaign.sh clean $n"
   fi
   teardown "$n" yes
   echo "cleaned $n (worktree + local & remote branch)"

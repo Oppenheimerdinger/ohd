@@ -14,6 +14,7 @@ standard single-repo project.
 | Who merges? One anchored coordinator session, or a GitHub review gate? | `MERGE_MODEL` | `coordinator` for a single-owner repo; `review-gate` for collaborative repos |
 | Where do campaign state docs live? | `STATE_DIR` | `docs/campaigns` |
 | Is there a pinned dependent/fork repo? | `DEP_DIR`, `DEP_TRUNK`, `PIN_FILE` | none (enables the `pin` subcommand when set) |
+| How does one run tests inside a fresh worktree? | `WORKTREE_HINT` | empty (`{wt}` substitutes the worktree path — e.g. `test: PYTHONPATH={wt}/src <trunk-venv>/bin/pytest`; worktrees have no `.venv`) |
 | Protect the trunk with a docs-only pre-commit hook? | — | yes for shared repos; **skip** for repos that intentionally develop on trunk (this plugin repo itself skips it) |
 
 ## Install

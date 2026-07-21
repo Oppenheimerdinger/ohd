@@ -1,3 +1,21 @@
+## v0.4.14 (2026-07-21)
+
+- campaign.sh (assets + tools, from a real two-campaign field report;
+  spec docs/superpowers/specs/2026-07-21-worktree-submodule-venv-land-gates.md):
+  - `new` initializes git submodules in the fresh worktree (`git worktree add`
+    leaves them empty — uninitialized submodules masquerade as pre-existing
+    test failures). `CAMPAIGN_INIT_SUBMODULES=0` skips; no-op without
+    `.gitmodules`; non-fatal on failure.
+  - `new` prints `WORKTREE_HINT` (`{wt}` substituted) when set — tells the
+    operator/subagent how to run tests in a venv-less worktree.
+  - `clean` refuses (before teardown, after merge verification) when the state
+    doc's verdict/result line is unfilled — the Phase-4 on-disk artifact now
+    has a mechanical gate at the point of no return. `FORCE_CLEAN=1` bypasses.
+    (The spec's suggested pattern was hardened: the scaffold always contains
+    the literal word "verdict", so the gate requires content after the colon.)
+- Smoke: submodule fixture (populated worktree + =0 skip), hint substitution,
+  verdict-gate refusal→fill→success. plugin-validator: CLEAN.
+
 ## v0.4.13 (2026-07-20)
 
 - /deep-solve argument-hint: `--model opus` (fable is now the default) +
