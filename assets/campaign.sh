@@ -21,7 +21,8 @@ usage() {
   cat <<USG
 usage: campaign.sh <new|land|status|list|clean|abort${DEP_DIR:+|pin}> [name] [flags]
   new <name>              worktree + branch off origin/$TRUNK + state doc scaffold
-  land <name>             push + PR toward $TRUNK (merge model: $MERGE_MODEL)
+  land <name> [--report]  push + PR toward $TRUNK (merge model: $MERGE_MODEL); requires a
+                          land-report in the state doc (--report appends the blank table)
   status <name>           merge verdict from git refs + PR API — never from memory
   list                    open campaign worktrees (staleness guard)
   clean <name>            teardown after VERIFIED merge (refuses otherwise)
@@ -94,7 +95,40 @@ cmd_land() {
   local n="$1"; check_name "$n"
   local wt; wt="$(wt_path "$n")"
   [ -d "$wt" ] || die "no worktree at $wt"
-  echo "land gates (see the campaign-land skill): validation green? code review run? state doc updated?"
+  local doc="$STATE_DIR/$n.md"
+  # --report: append the blank land-report table to the state doc and stop —
+  # the artifact the gate below requires, scaffolded so filling it is the
+  # only remaining work.
+  if [ "${2:-}" = "--report" ]; then
+    [ -f "$doc" ] || die "no state doc at $doc (run 'campaign.sh new' first?)"
+    grep -qi '| phase |' "$doc" && die "$doc already has a land-report table"
+    cat >> "$doc" <<'TBL'
+
+## land report
+| phase | ran? | evidence |
+|-------|------|----------|
+| 0 preconditions      | | |
+| 1 working-tree safety| | |
+| 2 re-validation      | | |
+| 2.5 reachability     | | |
+| 3 quality gate       | | |
+| 4 docs same-land     | | |
+| 5 merge mechanics    | | |
+| 6 distill + hygiene  | | |
+TBL
+    echo "appended land-report table to $doc — fill it per the campaign-land skill, then run 'campaign.sh land $n'"
+    return 0
+  fi
+  # Land gate (die, not advice): the state doc must carry the land-report
+  # artifact BEFORE push+PR. Prose reminders here were skipped twice in the
+  # field; die-gates never were. Existence-only check — content honesty stays
+  # with the campaign-land skill (re-load it on EVERY land; do not re-enact
+  # from memory).
+  if [ "${LAND_GUARD:-1}" != "0" ] \
+     && ! grep -qi '| phase |' "$doc" 2>/dev/null \
+     && ! grep -qiE '^[[:space:]]*-?[[:space:]]*land-report[[:space:]]*:' "$doc" 2>/dev/null; then
+    die "refusing land: '$doc' has no land-report (load the campaign-land skill; scaffold the table with 'campaign.sh land $n --report'). Bypass: LAND_GUARD=0 campaign.sh land $n"
+  fi
   git -C "$wt" push -u origin "$n"
   if command -v gh >/dev/null 2>&1; then
     gh pr create --base "$TRUNK" --head "$n" --fill 2>/dev/null \
@@ -245,7 +279,7 @@ cmd_pin() {
 cmd="${1:-}"; shift || true
 case "$cmd" in
   new)    cmd_new    "${1:-}" ;;
-  land)   cmd_land   "${1:-}" ;;
+  land)   cmd_land   "${1:-}" "${2:-}" ;;
   status) cmd_status "${1:-}" ;;
   list)   cmd_list ;;
   clean)  cmd_clean  "${1:-}" ;;

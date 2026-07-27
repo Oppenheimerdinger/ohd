@@ -17,6 +17,7 @@ router — which tool, when.
 | A deliverable exists and must be checked | `review-to-convergence` |
 | The deliverable is a code diff | `review-to-convergence`, using `/code-review` as the instrument |
 | A creative/structural piece of work just completed | workflow review (below) |
+| Landing/merging a campaign branch (incl. after push+PR) | `campaign-land` — re-load on EVERY land; never re-enact from memory |
 | CLAUDE.md / memory hygiene check | `claude-md-sanity` |
 | Starting a new research project | `/ohd-new-project` (interview-driven scaffolder) |
 
