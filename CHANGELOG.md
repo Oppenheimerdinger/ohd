@@ -1,3 +1,22 @@
+## v0.4.16 (2026-07-27)
+
+- campaign.sh (assets + tools): merge-verdict hardening in `clean`/`status`,
+  from a field report on the sibling validation-proj `milestone.sh` (an independent
+  review reproduced both edge cases against throwaway repos):
+  - **Squash + auto-deleted head branch**: `clean` now judges the branch TIP
+    (the pushed `origin/<n>` if present, else the local branch) and consults the
+    PR API for that tip. Previously, when GitHub auto-deleted the head branch on
+    a squash merge, the absent-remote path checked only local ancestry and
+    refused already-merged work as "never pushed" — reviving the `abort --purge`
+    workaround the PR-API check was meant to remove.
+  - **Reused branch name (destructive path)**: the merged-PR check now requires
+    the PR's `headRefOid` to equal the tip (new `pr_merged_tip` helper). A stale
+    same-name MERGED PR no longer green-lights `clean`'s teardown of genuinely
+    unmerged work; `status` reports such a tip as `UNMERGED?` instead of MERGED.
+- Smoke: mock-gh section covering squash+head-deleted (allow), reused-name
+  (refuse; worktree + remote branch survive), and status tip-match (MERGED via
+  PR for a matching tip vs UNMERGED? for a stale-tip PR).
+
 ## v0.4.15 (2026-07-21)
 
 - CI smoke hardening for the v0.4.14 submodule test (no functional change):

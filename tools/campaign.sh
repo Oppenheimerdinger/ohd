@@ -47,6 +47,19 @@ check_name() {
 
 wt_path() { echo "$WT_ROOT/$1"; }
 
+# pr_merged_tip <name> <tip-sha> — true iff a MERGED PR into TRUNK exists whose head
+# commit == <tip-sha>. The headRefOid match is load-bearing: it stops a stale
+# same-name merged PR from green-lighting a genuinely-unmerged reused branch, and it
+# is how squash/rebase merges (which break ancestry) get recognized as merged at all.
+pr_merged_tip() {
+  local nm="$1" tip="$2"
+  command -v gh >/dev/null 2>&1 || return 1
+  gh pr list --head "$nm" --state merged --json number,baseRefName,headRefOid 2>/dev/null \
+    | grep -o '{[^}]*}' \
+    | grep -F "\"baseRefName\":\"$TRUNK\"" \
+    | grep -qF "\"headRefOid\":\"$tip\""
+}
+
 cmd_new() {
   local n="$1"; check_name "$n"
   local wt; wt="$(wt_path "$n")"
@@ -105,17 +118,25 @@ cmd_status() {
   if ! git rev-parse -q --verify "origin/$n" >/dev/null; then
     echo "NO-BRANCH: origin/$n absent (cleaned after merge, or never pushed)"; return 0
   fi
+  local tip; tip="$(git rev-parse "origin/$n")"
   if git merge-base --is-ancestor "origin/$n" "origin/$TRUNK"; then
     echo "MERGED (ancestry): origin/$n is an ancestor of origin/$TRUNK"; return 0
   fi
+  # Not an ancestor: squash/rebase merges break ancestry — ask the PR API. A MERGED PR
+  # counts as merged ONLY if its head commit matches THIS tip (else it is a stale
+  # same-name PR from a reused branch name, not this work).
   if command -v gh >/dev/null 2>&1; then
     local prs
-    if prs="$(gh pr list --head "$n" --state all --json number,state,mergedAt,baseRefName 2>/dev/null)"; then
+    if prs="$(gh pr list --head "$n" --state all --json number,state,baseRefName,headRefOid 2>/dev/null)"; then
+      if pr_merged_tip "$n" "$tip"; then
+        echo "MERGED (via PR — squash/merge-commit; non-ancestry is NORMAL for squash)"; return 0
+      fi
       local merged_objs
       merged_objs="$(echo "$prs" | grep -o '{[^}]*}' | grep '"state":"MERGED"' || true)"
       if [ -n "$merged_objs" ]; then
         if echo "$merged_objs" | grep -qF "\"baseRefName\":\"$TRUNK\""; then
-          echo "MERGED (via PR — squash/merge-commit; non-ancestry is NORMAL for squash)"
+          echo "UNMERGED?: a MERGED PR into $TRUNK exists but its head ≠ this tip — a stale"
+          echo "same-name PR from a reused branch, not this work. Verify on the PR page."
         else
           echo "STACKED?: MERGED PR exists but its base ≠ $TRUNK — content may not be on trunk."
           echo "prove content reach: git show origin/$TRUNK:<file> | grep <token-unique-to-this-diff>"
@@ -158,20 +179,28 @@ teardown() {
 cmd_clean() {
   local n="$1"; check_name "$n"
   git fetch origin -q --prune
-  if git rev-parse -q --verify "origin/$n" >/dev/null; then
-    if ! git merge-base --is-ancestor "origin/$n" "origin/$TRUNK"; then
-      if command -v gh >/dev/null 2>&1 \
-         && gh pr list --head "$n" --state merged --json number,baseRefName 2>/dev/null \
-              | grep -o '{[^}]*}' | grep -F "\"baseRefName\":\"$TRUNK\"" | grep -q '"number"'; then
-        :  # merged via squash into $TRUNK — verified through the PR API
-      else
-        die "refusing clean: '$n' is not verifiably merged (run 'campaign.sh status $n'; use abort to discard)"
-      fi
-    fi
-  elif git rev-parse -q --verify "$n" >/dev/null 2>&1 \
-       && ! git merge-base --is-ancestor "$n" "origin/$TRUNK"; then
-    die "refusing clean: '$n' was never pushed and is not merged — its commits exist only here. Use 'abort $n' if you really mean to discard."
+  # The tip we judge: the pushed branch if it still exists, else the local branch —
+  # GitHub may auto-delete the head branch on merge, so origin/$n can be gone even
+  # though the work IS merged.
+  local tip=""
+  if git rev-parse -q --verify "origin/$n" >/dev/null 2>&1; then
+    tip="$(git rev-parse "origin/$n")"
+  elif git rev-parse -q --verify "$n" >/dev/null 2>&1; then
+    tip="$(git rev-parse "$n")"
   fi
+  # Verdict for that tip = ancestry OR a MERGED PR into TRUNK for THIS exact tip.
+  # Squash/rebase break ancestry; pr_merged_tip's headRefOid match keeps a stale
+  # same-name merged PR from green-lighting genuinely-unmerged reused work.
+  if [ -n "$tip" ]; then
+    if git merge-base --is-ancestor "$tip" "origin/$TRUNK" 2>/dev/null; then
+      :  # merge-commit merge — ancestry intact
+    elif pr_merged_tip "$n" "$tip"; then
+      :  # squash/rebase-merged into TRUNK — verified by PR headRefOid == our tip
+    else
+      die "refusing clean: '$n' is not verifiably merged into '$TRUNK' (tip ${tip:0:9}; run 'campaign.sh status $n'; use abort to discard)"
+    fi
+  fi
+  # tip empty => both origin and local refs already gone => idempotent cleanup.
   # Land-report gate: the state doc must carry a filled verdict/result line
   # (campaign-land Phase 4, "docs in the SAME land") BEFORE the worktree is
   # destroyed. Content after the colon is required — the scaffold's empty
