@@ -1,7 +1,7 @@
 ## v0.4.16 (2026-07-27)
 
 - campaign.sh (assets + tools): merge-verdict hardening in `clean`/`status`,
-  from a field report on the sibling xrd2xtal `milestone.sh` (an independent
+  from a field report on a sibling project's milestone tool (an independent
   review reproduced both edge cases against throwaway repos):
   - **Squash + auto-deleted head branch**: `clean` now judges the branch TIP
     (the pushed `origin/<n>` if present, else the local branch) and consults the
