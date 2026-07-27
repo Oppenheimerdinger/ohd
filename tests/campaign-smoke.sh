@@ -146,4 +146,22 @@ sed -i 's|- result / verdict:|- result / verdict: LANDS|' docs/campaigns/f3.md
 GH_MOCK="$(merged_pr 3 "$f3tip")" PATH="$ghp" "$CS" clean f3 >/dev/null \
   || fail "F3: clean refused a squash-merged branch (matching tip)"
 
+
+
+# ---- land gate: state doc must carry the land-report artifact before push ----
+"$CS" new g1 >/dev/null
+( cd "$TMP/wt/g1" && echo w > g1.txt && git add . && git commit -qm g1 )
+if PATH="/usr/bin:/bin" "$CS" land g1 2>/dev/null; then fail "land pushed without a land-report"; fi
+git ls-remote --exit-code origin g1 >/dev/null 2>&1 && fail "land gate died AFTER pushing"
+PATH="/usr/bin:/bin" "$CS" land g1 --report >/dev/null || fail "land --report failed"
+grep -q '| phase |' docs/campaigns/g1.md || fail "--report did not append the table"
+PATH="/usr/bin:/bin" "$CS" land g1 >/dev/null 2>&1 || fail "land refused despite land-report table"
+git ls-remote --exit-code origin g1 >/dev/null 2>&1 || fail "land did not push with table present"
+"$CS" abort g1 --purge >/dev/null
+
+# LAND_GUARD=0 bypass
+"$CS" new g2 >/dev/null
+( cd "$TMP/wt/g2" && echo w > g2.txt && git add . && git commit -qm g2 )
+LAND_GUARD=0 PATH="/usr/bin:/bin" "$CS" land g2 >/dev/null 2>&1 || fail "LAND_GUARD=0 bypass failed"
+"$CS" abort g2 --purge >/dev/null
 echo "SMOKE PASS"

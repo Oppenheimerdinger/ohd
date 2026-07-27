@@ -1,3 +1,19 @@
+## v0.4.17 (2026-07-27)
+
+- campaign.sh `land`: the advisory echo became a die-gate (field postmortem:
+  two land-ritual skips in one project; every die-gate held, every prose
+  reminder was ignored). `land` now refuses to push+PR unless the state doc
+  carries the land-report artifact (`| phase |` table or a `land-report:`
+  line); `land <n> --report` scaffolds the blank table into the state doc;
+  `LAND_GUARD=0` bypasses. Existence-only check — content honesty stays with
+  the campaign-land skill.
+- campaign-land: the land report LIVES IN THE STATE DOC now, not chat (a
+  chat-printed table gated nothing, twice); re-load the skill from file on
+  EVERY land — re-enacting phases from memory is itself a violation.
+- way-of-working: routing row for landing/merging a campaign branch.
+- Smoke: gate refusal (no push occurs), --report scaffold→land proceeds,
+  LAND_GUARD=0 bypass.
+
 ## v0.4.16 (2026-07-27)
 
 - campaign.sh (assets + tools): merge-verdict hardening in `clean`/`status`,

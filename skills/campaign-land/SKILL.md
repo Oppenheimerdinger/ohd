@@ -97,9 +97,13 @@ the change touches, now — not "later".
 
 Skipping a mandated phase by rationalizing is the known failure mode of this
 skill ("the whole-branch review already covers Phase 3", "low-risk, skip
-sanity"). Rules that live only as prose get skipped; artifacts don't. So:
+sanity"). Rules that live only as prose get skipped; artifacts don't. Two
+field recurrences proved a chat-printed table gates nothing — so:
 
-**Before any Phase-7 cleanup, print the land report table:**
+**The land report lives IN the state doc (`docs/campaigns/<name>.md`), not in
+chat.** Scaffold it with `campaign.sh land <name> --report` (appends the blank
+table); `campaign.sh land` REFUSES to push without it, and Phase-7 cleanup
+still requires the filled verdict line. Fill rows as phases complete:
 
 ```
 | phase | ran? | evidence |
@@ -113,6 +117,11 @@ sanity"). Rules that live only as prose get skipped; artifacts don't. So:
 | 5 merge mechanics    | yes/skip | ... |
 | 6 distill + hygiene  | yes/skip | ... |
 ```
+
+**Re-load this skill from file on EVERY land.** Re-enacting the phases from a
+previous land's memory is itself a violation — both field recurrences began
+exactly that way (the second one with the rule already written in memory;
+memory is a soft layer, the script gate is the backstop).
 
 - `evidence` must reference something that actually happened this land — a
   command you ran, an output you saw, a diff/commit hash. An empty or vague
