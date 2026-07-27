@@ -43,8 +43,10 @@ standard single-repo project.
 
 ## Daily lifecycle
 
-`new <name>` → work inside the worktree → `land <name>` (push + PR; the
-campaign-land skill carries the full ritual) → merge per your model →
+`new <name>` → work inside the worktree → `land <name> --report` (scaffolds
+the land-report table into the state doc) → fill it per the campaign-land
+skill → `land <name>` (push + PR — REFUSES without the land-report;
+`LAND_GUARD=0` bypasses) → merge per your model →
 `status <name>` to verify (squash-safe) → `clean <name>`. Stuck/abandoned?
 `abort <name>` (keeps the remote branch unless `--purge`). `list` shows open
 campaigns so none go stale silently.

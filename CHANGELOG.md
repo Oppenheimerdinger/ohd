@@ -1,3 +1,8 @@
+## v0.4.18 (2026-07-27)
+
+- campaign-dropin: daily-lifecycle section teaches the v0.4.17 land gate
+  (`land --report` scaffold step, refusal semantics, bypass).
+
 ## v0.4.17 (2026-07-27)
 
 - campaign.sh `land`: the advisory echo became a die-gate (field postmortem:
