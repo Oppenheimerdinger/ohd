@@ -95,4 +95,55 @@ CAMPAIGN_INIT_SUBMODULES=0 "$CS" new c7 >/dev/null
 [ -f "$TMP/wt/c7/external/sub/sub.txt" ] && fail "CAMPAIGN_INIT_SUBMODULES=0 still initialized"
 "$CS" abort c6 >/dev/null && "$CS" abort c7 >/dev/null
 
+# ---- PR-API edge cases (mock gh): squash+head-deleted (F1) and reused-name (F2) ----
+# The verdict is tied to the branch TIP; a MERGED PR counts only when its headRefOid
+# matches that tip. Mock gh returns $GH_MOCK for `pr list`, succeeds otherwise.
+mkdir -p "$TMP/bin"
+cat > "$TMP/bin/gh" <<'GH'
+#!/usr/bin/env bash
+if [ "$1" = pr ] && [ "$2" = list ]; then printf '%s\n' "${GH_MOCK:-[]}"; exit 0; fi
+exit 0
+GH
+chmod +x "$TMP/bin/gh"
+ghp="$TMP/bin:/usr/bin:/bin"
+merged_pr() { printf '[{"number":%s,"state":"MERGED","baseRefName":"main","headRefOid":"%s"}]' "$1" "$2"; }
+badoid=0000000000000000000000000000000000000000
+
+# F1: squash-merged, then GitHub auto-deleted the head branch → origin/<n> is gone;
+# clean must judge the LOCAL tip via the PR API and allow, not refuse as "never pushed".
+"$CS" new f1 >/dev/null
+( cd "$TMP/wt/f1" && echo w > f1.txt && git add . && git commit -qm f1 && git push -q -u origin f1 )
+f1tip="$(git rev-parse f1)"
+git fetch -q origin && git merge -q --squash origin/f1 && git commit -qm "squash f1" && git push -q origin main
+git push -q origin --delete f1 && git fetch -q origin --prune       # simulate head auto-delete
+sed -i 's|- result / verdict:|- result / verdict: LANDS|' docs/campaigns/f1.md
+GH_MOCK="$(merged_pr 1 "$f1tip")" PATH="$ghp" "$CS" clean f1 >/dev/null \
+  || fail "F1: clean refused squash-merged, head-deleted work"
+[ -d "$TMP/wt/f1" ] && fail "F1: worktree survived a valid clean"
+
+# F2 (destructive path): unmerged reused name + a stale same-name MERGED PR whose head
+# ≠ this tip must NOT green-light teardown.
+"$CS" new f2 >/dev/null
+( cd "$TMP/wt/f2" && echo w > f2.txt && git add . && git commit -qm f2 && git push -q -u origin f2 )
+sed -i 's|- result / verdict:|- result / verdict: LANDS|' docs/campaigns/f2.md
+if GH_MOCK="$(merged_pr 2 "$badoid")" PATH="$ghp" "$CS" clean f2 2>/dev/null; then
+  fail "F2: clean tore down unmerged work via a stale same-name PR"; fi
+[ -d "$TMP/wt/f2" ]                                   || fail "F2: worktree destroyed despite refusal"
+git ls-remote --exit-code origin f2 >/dev/null 2>&1  || fail "F2: remote branch destroyed despite refusal"
+"$CS" abort f2 --purge >/dev/null
+
+# status: MERGED (via PR) only when headRefOid matches this tip; a stale-tip PR → UNMERGED?
+"$CS" new f3 >/dev/null
+( cd "$TMP/wt/f3" && echo w > f3.txt && git add . && git commit -qm f3 && git push -q -u origin f3 )
+f3tip="$(git rev-parse f3)"
+git fetch -q origin && git merge -q --squash origin/f3 && git commit -qm "squash f3" && git push -q origin main
+git fetch -q origin --prune
+GH_MOCK="$(merged_pr 3 "$f3tip")" PATH="$ghp" "$CS" status f3 | grep -q "MERGED (via PR" \
+  || fail "F3: status missed a squash merge whose PR head matches the tip"
+GH_MOCK="$(merged_pr 3 "$badoid")" PATH="$ghp" "$CS" status f3 | grep -q "UNMERGED?" \
+  || fail "F3: status treated a stale-tip MERGED PR as this work"
+sed -i 's|- result / verdict:|- result / verdict: LANDS|' docs/campaigns/f3.md
+GH_MOCK="$(merged_pr 3 "$f3tip")" PATH="$ghp" "$CS" clean f3 >/dev/null \
+  || fail "F3: clean refused a squash-merged branch (matching tip)"
+
 echo "SMOKE PASS"
