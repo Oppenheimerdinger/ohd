@@ -91,6 +91,15 @@ Whichever route, the report row names it (`code-review:code-review PR#n` /
 evidence — findings count and disposition, or the review output ref. The
 route name alone is a label, not evidence.
 
+**Simplification is part of this gate, not a later nicety.** When review
+findings (or your own read) flag over-complexity — duplicated logic, dead
+branches, a naive structure the diff itself introduced — dispatch the
+`code-simplifier` agent (code-simplifier plugin; generic subagent if absent)
+scoped to the diff, then RE-RUN validation on its output like any other fix:
+a simplifier mutates code, so its changes re-enter the fix→re-check loop,
+never merge unreviewed. Record it in the report row's evidence
+(`simplifier: run, N changes re-validated` or `not needed`).
+
 **Ask the reviewer to run mutations, not just read.** A passing test suite
 says nothing about whether the tests *can* fail. The highest-value reviews in
 practice mutated the code (flip a sign, swap `.mH`→`.mT`, replace a variance

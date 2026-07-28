@@ -1,3 +1,14 @@
+## v0.5.4 (2026-07-28)
+
+- Wire two harness components that lost their references during campaign-land
+  generalization: **code-simplifier** joins Phase 3 as the simplification
+  instrument (dispatch on over-complexity findings, output re-enters the
+  fix->re-check loop, evidence recorded in the report row);
+  **claude-md-management** becomes claude-md-sanity's named repair path
+  (sanity audits, revise-claude-md/claude-md-improver rewrite, then re-audit
+  -- the writer never grades its own rewrite). Both added to /ohd-setup §1
+  (checkup's dependency pass follows automatically) and README Requirements.
+
 ## v0.5.3 (2026-07-28)
 
 - /ohd-setup: oh-my-claudecode dropped from the checklist — it is a personal
