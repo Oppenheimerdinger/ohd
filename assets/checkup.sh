@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# checkup.sh — harness drift doctor for projects using the ohd campaign lifecycle.
+#
+#   checkup.sh [project-root] [--sync]
+#
+# Report mode (default) prints one `item | status | detail` line per check and
+# always exits 0. --sync rewrites tools/campaign.sh from the plugin's template,
+# PRESERVING the project's config-block values (key-based merge: project value
+# wins per variable; template supplies new variables; project-only custom
+# variables are kept) and stamping `# synced-from ohd v<version>`.
+#
+# DRY: this script restates NO harness content. The template next to it IS the
+# single source of truth; the script only compares and splices.
+set -euo pipefail
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+TPL="$HERE/campaign.sh"
+PLUGVER="$(grep -o '"version": *"[^"]*"' "$HERE/../.claude-plugin/plugin.json" | head -1 | sed 's/.*"\([0-9][^"]*\)"$/\1/')"
+
+ROOT="."; SYNC=0
+for a in "$@"; do
+  case "$a" in
+    --sync) SYNC=1 ;;
+    *) ROOT="$a" ;;
+  esac
+done
+cd "$ROOT" || { echo "checkup.sh: bad project root '$ROOT'" >&2; exit 2; }
+DST="tools/campaign.sh"
+
+# config block line numbers: first '# ──' line (contains 'config') .. next '# ──' line
+cfg_range() {  # $1=file → echoes "start end" (1-based, inclusive markers); empty if absent
+  local s e
+  s="$(grep -n '^# ── config' "$1" | head -1 | cut -d: -f1)" || true
+  [ -n "${s:-}" ] || { echo ""; return; }
+  e="$(tail -n +"$((s + 1))" "$1" | grep -n '^# ──' | head -1 | cut -d: -f1)" || true
+  [ -n "${e:-}" ] || { echo ""; return; }
+  echo "$s $((s + e))"
+}
+
+normalize() {  # strip config block + provenance lines → comparison view
+  local f="$1" r
+  r="$(cfg_range "$f")"
+  if [ -n "$r" ]; then
+    sed "$(echo "$r" | cut -d' ' -f1),$(echo "$r" | cut -d' ' -f2)d" "$f"
+  else
+    cat "$f"
+  fi | grep -v '^# instantiated' | grep -v '^# synced-from'
+}
+
+report() { printf '%s | %s | %s\n' "$1" "$2" "$3"; }
+
+# ---- campaign.sh ----
+if [ ! -f "$DST" ]; then
+  CS_STATUS=MISSING; CS_DETAIL="no $DST — --sync instantiates the template (all defaults)"
+elif diff -q <(normalize "$TPL") <(normalize "$DST") >/dev/null 2>&1; then
+  CS_STATUS=IN-SYNC; CS_DETAIL="matches template (config block excluded); $(grep -m1 '^# synced-from' "$DST" 2>/dev/null || echo 'no synced-from stamp')"
+else
+  CS_STATUS=DRIFT
+  CS_DETAIL="$({ diff <(normalize "$TPL") <(normalize "$DST") || true; } | grep -c '^[<>]' || true) differing line(s) vs template v$PLUGVER — --sync updates while keeping your config"
+fi
+report "campaign.sh" "$CS_STATUS" "$CS_DETAIL"
+
+if [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
+  mkdir -p "$(dirname "$DST")"
+  TR="$(cfg_range "$TPL")"; TS="${TR%% *}"; TE="${TR##* }"
+  NEW="$(mktemp)"
+  {
+    head -n "$((TS - 1))" "$TPL"
+    [ -f "$DST" ] && grep '^# instantiated' "$DST" || true
+    echo "# synced-from ohd v$PLUGVER ($(date +%F))"
+    sed -n "${TS}p" "$TPL"
+    # key-based merge of config inner lines
+    PROJ_INNER="$(mktemp)"
+    if [ -f "$DST" ]; then
+      PR="$(cfg_range "$DST")"
+      [ -n "$PR" ] && sed -n "$((${PR%% *} + 1)),$((${PR##* } - 1))p" "$DST" > "$PROJ_INNER"
+    fi
+    sed -n "$((TS + 1)),$((TE - 1))p" "$TPL" | while IFS= read -r tline; do
+      if [[ "$tline" =~ ^([A-Z_]+)= ]]; then
+        pline="$(grep -m1 "^${BASH_REMATCH[1]}=" "$PROJ_INNER" || true)"
+        printf '%s\n' "${pline:-$tline}"
+      else
+        printf '%s\n' "$tline"
+      fi
+    done
+    # project-only custom variables survive the sync
+    while IFS= read -r pline; do
+      if [[ "$pline" =~ ^([A-Z_]+)= ]] && ! grep -q "^${BASH_REMATCH[1]}=" <(sed -n "$((TS + 1)),$((TE - 1))p" "$TPL"); then
+        printf '%s\n' "$pline"
+      fi
+    done < "$PROJ_INNER"
+    rm -f "$PROJ_INNER"
+    sed -n "${TE}p" "$TPL"
+    tail -n +"$((TE + 1))" "$TPL"
+  } > "$NEW"
+  mv "$NEW" "$DST"; chmod +x "$DST"
+  report "campaign.sh" "SYNCED" "review with 'git diff $DST' before committing"
+fi
+
+# ---- trunk hook ----
+if HOOKS="$(git rev-parse --git-common-dir 2>/dev/null)/hooks" && [ -f "$HOOKS/pre-commit" ]; then
+  if grep -q 'docs-only' "$HOOKS/pre-commit" 2>/dev/null; then
+    report "trunk-hook" "INSTALLED" "$HOOKS/pre-commit"
+  else
+    report "trunk-hook" "OTHER" "a pre-commit exists but is not ohd's docs-only hook — inspect before overwriting"
+  fi
+else
+  report "trunk-hook" "MISSING" "optional; install via the plugin's assets/install-hooks.sh (skip for trunk-dev repos)"
+fi
+
+# ---- state dir ----
+SD="docs/campaigns"
+[ -f "$DST" ] && SD="$(grep -m1 '^STATE_DIR=' "$DST" | sed 's/.*:-\([^}]*\)}.*/\1/' || echo docs/campaigns)"
+if [ -d "$SD" ]; then
+  report "state-dir" "PRESENT" "$SD"
+else
+  report "state-dir" "MISSING" "mkdir -p $SD && touch $SD/.gitkeep (track it — campaign state docs live here)"
+fi
+
+# ---- CLAUDE.md (existence only — wiring semantics are the command's job) ----
+if [ -f CLAUDE.md ]; then
+  report "CLAUDE.md" "PRESENT" "wiring check (anchor/matrix/pointer/facts) is semantic — done by /ohd-checkup against the plugin's template"
+else
+  report "CLAUDE.md" "MISSING" "no project CLAUDE.md — /ohd-checkup drafts one from the plugin's template"
+fi

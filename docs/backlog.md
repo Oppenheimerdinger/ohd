@@ -36,7 +36,13 @@ deferred from v0.3 spec.
 
 v0.3 scaffolds at most one host; additional hosts are manual.
 
-## 6. /ohd-adopt — existing-project adoption command — OPEN
+## 6. /ohd-adopt — existing-project adoption command — RESOLVED (absorbed by /ohd-checkup, v0.5.0)
+
+Adoption is the everything-MISSING special case of the harness drift check;
+`/ohd-checkup` covers both (mechanical drift via assets/checkup.sh + semantic
+CLAUDE.md wiring vs the template, per-item approval). No separate command.
+
+## (original entry, kept per backlog rules) /ohd-adopt — OPEN
 
 new-project covers greenfield; existing repos get the lifecycle via the
 drop-in guide but the CLAUDE.md harness wiring (anchor line, machine×env

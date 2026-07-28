@@ -32,6 +32,7 @@ memory live there) — never inside a campaign worktree.
   (campaign lifecycle, protected trunk, machine×env matrix, hosts machinery)
 - `review-to-convergence` — verify a finished deliverable to zero findings
 - `claude-md-sanity` — audit a repo's CLAUDE.md / memory files for drift
+- `/ohd-checkup` — harness doctor for an existing project: drift check + repair (also the adoption path)
 - `/ohd-setup` — check (and on approval install) the plugins this harness
   builds on
 - `assets/campaign.sh` — drop-in worktree lifecycle for any repo
