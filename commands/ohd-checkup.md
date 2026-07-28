@@ -33,7 +33,11 @@ plugin updates, this command's standard updates with it.
    PRESENCE (not wording) of each numbered item that section lists, using
    `assets/CLAUDE.md.template` as the reference shape. The item list lives
    ONLY there — do not rely on a remembered copy. A missing CLAUDE.md = every
-   item missing.
+   item missing. For items PRESENT: if the template's current block carries a
+   load-bearing RULE the project's block lacks (a rule, not phrasing — e.g. a
+   concurrency rule the old block predates), add an `OPTIONAL-REFRESH` row
+   naming the missing clause; never auto-apply, and never flag mere wording
+   differences.
 4. **Drift table**: print ONE table — `item | status | fix` — merging all
    passes, ENDING with the script's scope footer relayed verbatim (what a
    green table does NOT attest: discipline compliance, code correctness).
@@ -44,8 +48,8 @@ plugin updates, this command's standard updates with it.
      merge: project values and custom vars survive; review `git diff` after).
    - hook missing → copy + run `assets/install-hooks.sh` (skip is legitimate
      for trunk-dev repos — say so).
-   - CLAUDE.md wiring gaps → MERGE the missing blocks into the existing file
-     from the template's shape; never replace the file.
+   - CLAUDE.md wiring gaps → MERGE the missing blocks/clauses into the
+     existing file from the template's shape; never replace the file.
    - state dir → mkdir + .gitkeep.
 6. **Content hygiene**: after repairs, if CLAUDE.md was touched (or the user
    asks), invoke the `ohd:claude-md-sanity` skill — do NOT re-implement its
