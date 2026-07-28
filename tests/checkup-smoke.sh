@@ -76,7 +76,35 @@ grep -q '^TRUNK=' tools/campaign.sh || fail "decoy banner corrupted the config s
 bash -n tools/campaign.sh || fail "decoy sync produced broken script"
 cd "$TMP/proj"
 
-# 9) adoption: empty repo bootstraps a fresh copy
+# 9) land-report audit: landed doc without a table → GAPS; with table → OK; abandoned → ignored
+cat > docs/campaigns/oldland.md <<'EOF'
+# campaign: oldland
+- result / verdict: LANDS — merged 2026-07-20
+EOF
+cat > docs/campaigns/aborted.md <<'EOF'
+# campaign: aborted
+- result / verdict: ABANDONED — superseded
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "land-reports | GAPS" <<<"$out" || fail "landed doc without table not flagged"
+grep -q "oldland.md" <<<"$out"  || fail "GAPS detail missing the offending doc"
+grep -q "aborted.md" <<<"$out" && fail "abandoned campaign wrongly flagged as land gap"
+printf '\n| phase | ran? | evidence |\n' >> docs/campaigns/oldland.md
+out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "land-reports | OK" <<<"$out" || fail "expected land-reports OK after backfill"
+grep -q "^— scope:" <<<"$out" || fail "scope footer missing from report"
+
+# 10) plugin-cache staleness: versioned cache layout with a newer sibling → STALE
+CACHE="$TMP/cache/ohd"; mkdir -p "$CACHE/1.0.0/assets" "$CACHE/1.0.0/.claude-plugin" "$CACHE/9.9.9"
+cp "$TPL" "$CACHE/1.0.0/assets/campaign.sh"
+cp "$HERE/assets/checkup.sh" "$CACHE/1.0.0/assets/checkup.sh"; chmod +x "$CACHE/1.0.0/assets/checkup.sh"
+echo '{"version": "1.0.0"}' > "$CACHE/1.0.0/.claude-plugin/plugin.json"
+out="$("$CACHE/1.0.0/assets/checkup.sh" .)"
+grep -q "plugin-cache | STALE" <<<"$out" || fail "stale plugin cache not detected"
+grep -q "v9.9.9 is installed" <<<"$out"  || fail "STALE detail missing the installed version"
+rm -rf "$CACHE/9.9.9"
+out="$("$CACHE/1.0.0/assets/checkup.sh" .)"
+grep -q "plugin-cache" <<<"$out" && fail "current cache wrongly reported stale"
+
+# 11) adoption: empty repo bootstraps a fresh copy
 mkdir -p "$TMP/fresh" && cd "$TMP/fresh" && git init -q
 out="$("$CK" .)"; grep -q "campaign.sh | MISSING" <<<"$out" || fail "expected MISSING in fresh repo"
 "$CK" . --sync >/dev/null

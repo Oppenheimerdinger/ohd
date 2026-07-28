@@ -60,6 +60,12 @@ Rules: multiple PRs per head → MERGED if ANY is merged. A CLOSED PR with
 `mergedAt: null` was closed WITHOUT merging — not merged. The step-3 token
 must exist only in this campaign's diff, or the grep can false-positive.
 
+**Scope of a MERGED verdict — say this footer with it**: MERGED is a git/PR
+FACT only. It is not a claim the change is enabled or reachable on the
+default path (that is campaign-land Phase 2.5), nor that the work is correct
+(that is the validation gate). Relaying a bare "MERGED" as "done/live" is the
+over-read this footer exists to stop.
+
 ## When to run
 
 Before claiming a land backlog / "awaiting merge" / "needs landing"; before

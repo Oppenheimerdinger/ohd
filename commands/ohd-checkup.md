@@ -22,15 +22,23 @@ plugin updates, this command's standard updates with it.
    `item | status | detail` for campaign.sh (template diff, config-block
    excluded), trunk hook, state dir, and CLAUDE.md existence. Do not
    re-derive these by hand.
-2. **Wiring pass (semantic)**: read the dropin guide's "Adopting an EXISTING
+2. **Dependency pass**: evaluate the plugin checklist that
+   `${CLAUDE_PLUGIN_ROOT}/commands/ohd-setup.md` §1 defines (read it at
+   runtime — the list lives ONLY there). Report each missing plugin as a
+   drift-table row (e.g. `plugin: code-review | MISSING | campaign-land
+   Phase 3 degrades to the subagent route`); offer the install commands
+   ohd-setup names, per-item on approval.
+3. **Wiring pass (semantic)**: read the dropin guide's "Adopting an EXISTING
    project" section AT RUNTIME and check the project's CLAUDE.md for the
    PRESENCE (not wording) of each numbered item that section lists, using
    `assets/CLAUDE.md.template` as the reference shape. The item list lives
    ONLY there — do not rely on a remembered copy. A missing CLAUDE.md = every
    item missing.
-3. **Drift table**: print ONE table — `item | status | fix` — merging both
-   passes. This is the artifact; findings not in the table didn't happen.
-4. **Per-item repair, gated**: AskUserQuestion per drifted item (batch
+4. **Drift table**: print ONE table — `item | status | fix` — merging all
+   passes, ENDING with the script's scope footer relayed verbatim (what a
+   green table does NOT attest: discipline compliance, code correctness).
+   This is the artifact; findings not in the table didn't happen.
+5. **Per-item repair, gated**: AskUserQuestion per drifted item (batch
    independent ones), exactly one recommendation each:
    - campaign.sh drift/missing → `checkup.sh <root> --sync` (key-based config
      merge: project values and custom vars survive; review `git diff` after).
@@ -39,16 +47,16 @@ plugin updates, this command's standard updates with it.
    - CLAUDE.md wiring gaps → MERGE the missing blocks into the existing file
      from the template's shape; never replace the file.
    - state dir → mkdir + .gitkeep.
-5. **Content hygiene**: after repairs, if CLAUDE.md was touched (or the user
+6. **Content hygiene**: after repairs, if CLAUDE.md was touched (or the user
    asks), invoke the `ohd:claude-md-sanity` skill — do NOT re-implement its
    audit here.
-6. Uncommitted repairs at the end: remind the user to review `git diff` and
+7. Uncommitted repairs at the end: remind the user to review `git diff` and
    commit (docs-only trunk hooks allow the .md and tools/ paths involved —
    if a hook blocks, say which paths and why instead of forcing).
 
 ## Adoption (project never had the harness)
 
-Same procedure — everything reports MISSING and step 4 becomes the dropin
+Same procedure — everything reports MISSING and step 5 becomes the dropin
 install (follow `docs/campaign-dropin.md` §Install + §Adopting; the
 interview questions and defaults live THERE). `/ohd-new-project` remains the
 path for brand-new projects; this command is for existing code.

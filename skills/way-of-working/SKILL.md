@@ -18,7 +18,9 @@ router — which tool, when.
 | The deliverable is a code diff | `review-to-convergence`; instrument = the code-review plugin (agents: `Skill(code-review:code-review)` on the PR — the bare `/code-review` built-in is user-only) or a review subagent |
 | A creative/structural piece of work just completed | workflow review (below) |
 | Landing/merging a campaign branch (incl. after push+PR) | `campaign-land` — re-load on EVERY land; never re-enact from memory |
+| "Is X merged?" / before pin/clean/re-run / any note asserting merge status | `campaign-status` |
 | CLAUDE.md / memory hygiene check | `claude-md-sanity` |
+| The ohd plugin may have updated since session start | `/reload-plugins` (or restart) → `/ohd-checkup` per project — the session stays pinned to its start-time version otherwise (checkup reports `plugin-cache | STALE` when it can see this) |
 | Starting a new research project | `/ohd-new-project` (interview-driven scaffolder) |
 | Existing project: harness drift check / adoption ("하네스 점검") | `/ohd-checkup` (mechanical drift + CLAUDE.md wiring, repairs on approval) |
 
@@ -60,9 +62,11 @@ looping session itself** — a session grading its own loop quits (or declares
 victory) far too easily. The evaluator gets the goal + concrete evidence and
 returns done / not-done with reasons. **The verdict is an artifact**: a loop
 may only be declared finished by quoting the evaluator's verdict verbatim
-(who evaluated, what evidence it saw, done/not-done, reasons). No quoted
-verdict = the loop is not done — "the evaluator would agree" is the looping
-session grading itself with extra steps.
+(who evaluated, what evidence it saw, done/not-done, reasons) AND appending
+that quote to the loop's own state/notes file — chat scrolls away, and loops
+are exactly the workloads that outlive the attention span of whoever started
+them. No quoted verdict = the loop is not done — "the evaluator would agree"
+is the looping session grading itself with extra steps.
 
 If ralph (or similar) is used: ① mentioning the word in a design conversation
 can auto-register its state — a status question is not a task; cancel misfired

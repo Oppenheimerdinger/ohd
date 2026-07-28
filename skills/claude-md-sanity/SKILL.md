@@ -225,6 +225,8 @@ MANUAL-CHECK (N)  ← needs your eyes (couldn't verify mechanically)
 
 Clean: <dimensions actually verified — e.g. "memory pointers (3 slugs resolved),
         version lock-step (verified-empty), anchor topology">
+Scope: declared promises audited for drift only — not writing quality, not
+       coverage, not promises that should exist but don't.
 ```
 
 Always say what passed AND how you verified it — "memory pointers all live (resolved

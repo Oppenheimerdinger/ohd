@@ -55,6 +55,9 @@ the old plugin installed, remove it to avoid double registration:
 - deep-solve's isolated mode runs on the Claude Code **Workflow tool**;
   without it the skill announces the limitation and falls back to a manual
   Agent-tool loop (grounded mode is unaffected).
+- **code-review** (official marketplace): campaign-land Phase 3's default
+  agent review route (`Skill(code-review:code-review)` on the land PR);
+  without it, agent-led lands degrade to a generic review subagent.
 - **superpowers**: recommended — required for the full workflow from v0.2;
   v0.1 works without it. **oh-my-claudecode**: optional (ralph persistence
   mode only). `/ohd-setup` checks both.

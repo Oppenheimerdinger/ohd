@@ -32,9 +32,14 @@ finding yourself to avoid a fix is closure by fiat. "The reviewer
 misunderstood" is itself a finding — against your artifact's clarity.
 
 **Convergence log (artifact, hand-off blocker):** when declaring done, print
-one line per round — `round N: X findings → fixed/rebutted-upheld/minor-logged`
-— ending in the clean pass. No log line for a clean final pass = not
-converged; go run it.
+one line per round — `round N: <reviewers>× <lens> → X findings →
+fixed/rebutted-upheld/minor-logged` — ending in the clean pass. The lens and
+reviewer count are part of the log: "clean" from one design-lens pass must
+not relay as the multi-reviewer rigor it wasn't. No log line for a clean
+final pass = not converged; go run it. **When the deliverable is a committed
+file** (design doc, ADR, analysis), the log goes INTO it (a short `## Review
+log` footer) or its commit message — the file outlives the chat that
+reviewed it.
 
 ## Scope guard
 

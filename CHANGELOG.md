@@ -1,3 +1,33 @@
+## v0.5.1 (2026-07-28)
+
+Five-axis audit hardening (scope over-reading / artifact-less rituals /
+silent dependency degradation / version-transition hazards / cross-reference
+drift) — 18 fixes from a field postmortem where a green /ohd-checkup was
+over-read as "the review harness is intact":
+
+- Scope lines on every verdict surface: checkup report footer (+ relay step),
+  campaign-status "MERGED = git/PR fact only" footer, r2c convergence log
+  carries lens+reviewer count, land-report scaffold carries a scope header,
+  claude-md-sanity "declared promises only" line, deep-solve grades never
+  travel without their mode inline.
+- Behavioral artifacts: checkup.sh audits landed state docs lacking a
+  land-report table (`land-reports | GAPS`); loop-termination verdicts are
+  appended to the loop's state file; r2c logs ride inside committed-file
+  deliverables; deep-solve Phase-1 keeps a printed convergence log and the
+  autonomous waiver writes brief/banner/result to a file; land-time sanity
+  findings not fixed in the land go to the project's backlog doc.
+- Dependencies/versions: checkup command gains a dependency pass (delegates
+  to ohd-setup §1 at runtime); campaign-land Phase 3 checks the code-review
+  plugin at USE time and names the degradation; checkup.sh detects a
+  session pinned to an older cache (`plugin-cache | STALE`); way-of-working
+  gains the canonical "updated? reload → checkup" row + a campaign-status
+  routing row; README/USAGE-ko document the code-review dependency.
+- Drift: USAGE-ko deep-solve defaults corrected to fable/high (stale since
+  v0.4.12); CLAUDE.md header modernized (self-hosting is fact, not pending);
+  lock-step rule narrowed to its greppable phrase; release-gate policy
+  clarifies public-by-necessity strings (marketplace name, archived-repo
+  links) vs internal names.
+
 ## v0.5.0 (2026-07-28)
 
 - NEW `/ohd-checkup` — harness doctor for existing projects (and the adoption
