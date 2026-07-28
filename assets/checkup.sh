@@ -53,7 +53,7 @@ report() { printf '%s | %s | %s\n' "$1" "$2" "$3"; }
 cfg_keys() {  # $1=file → its config-block variable names, one per line
   local r; r="$(cfg_range "$1")"
   [ -n "$r" ] || return 0
-  sed -n "$((${r%% *} + 1)),$((${r##* } - 1))p" "$1" | grep -o '^[A-Z_]*=' | tr -d '=' || true
+  sed -n "$((${r%% *} + 1)),$((${r##* } - 1))p" "$1" | grep -o '^[A-Z_][A-Z_0-9]*=' | tr -d '=' || true
 }
 
 # ---- campaign.sh ----
@@ -94,7 +94,7 @@ elif [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
       [ -n "$PR" ] && sed -n "$((${PR%% *} + 1)),$((${PR##* } - 1))p" "$DST" > "$PROJ_INNER"
     fi
     sed -n "$((TS + 1)),$((TE - 1))p" "$TPL" | while IFS= read -r tline; do
-      if [[ "$tline" =~ ^([A-Z_]+)= ]]; then
+      if [[ "$tline" =~ ^([A-Z_][A-Z_0-9]*)= ]]; then
         pline="$(grep -m1 "^${BASH_REMATCH[1]}=" "$PROJ_INNER" || true)"
         printf '%s\n' "${pline:-$tline}"
       else
@@ -103,7 +103,7 @@ elif [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
     done
     # project-only custom variables survive the sync
     while IFS= read -r pline; do
-      if [[ "$pline" =~ ^([A-Z_]+)= ]] && ! grep -q "^${BASH_REMATCH[1]}=" <(sed -n "$((TS + 1)),$((TE - 1))p" "$TPL"); then
+      if [[ "$pline" =~ ^([A-Z_][A-Z_0-9]*)= ]] && ! grep -q "^${BASH_REMATCH[1]}=" <(sed -n "$((TS + 1)),$((TE - 1))p" "$TPL"); then
         printf '%s\n' "$pline"
       fi
     done < "$PROJ_INNER"
