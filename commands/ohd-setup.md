@@ -12,8 +12,6 @@ the checklist.
    - **code-review** — recommended; campaign-land Phase 3's default agent
      route (`Skill(code-review:code-review)` on the land PR). Without it,
      agent-led lands fall back to a generic review subagent.
-   - **oh-my-claudecode** — optional; only needed for the ralph persistence
-     mode.
    - **deep-solve@dipark (stale)** — if installed, warn: this plugin bundles
      deep-solve, so both register the same skill and command; recommend
      `claude plugin uninstall deep-solve@dipark`.
@@ -24,9 +22,6 @@ the checklist.
      (the official marketplace normally ships with Claude Code; confirm with
      `claude plugin marketplace list` and say so honestly if it is absent).
    - code-review: `claude plugin install code-review@claude-plugins-official`
-   - oh-my-claudecode:
-     `claude plugin marketplace add Yeachan-Heo/oh-my-claudecode` then
-     `claude plugin install oh-my-claudecode@omc`
 3. Auto-update: third-party marketplaces default to autoUpdate OFF — offer
    to enable it for `dipark` via settings.json `extraKnownMarketplaces`
    (`"autoUpdate": true`; verify the exact schema against
