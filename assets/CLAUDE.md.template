@@ -28,9 +28,12 @@ the session, or use `git -C <worktree>`.
 
 Concurrent sessions here are normal, but **only ONE session at a time writes
 to this tree** (commits, merges, resets — the coordinator's lane); every
-other session drives its own worktree only. The full multi-session
-discipline, including memory hygiene, lives in the ohd way-of-working skill
-— not here.
+other session drives its own worktree only. **The coordinator orchestrates,
+not solves inline** — a separable hard problem goes to a fresh subagent
+(escalating to `/deep-solve`); a must-finish long task gets a persistence
+loop. The rest of the multi-session discipline — including who executes
+which work, and memory hygiene — lives in the ohd way-of-working skill, not
+here.
 
 Working discipline lives in the ohd plugin (way-of-working ·
 campaign-land · campaign-status · claude-md-sanity); lifecycle tooling is

@@ -1,3 +1,26 @@
+## v0.5.9 (2026-07-28)
+
+- Stall + main-session-does-everything field diagnosis, encoded:
+  - way-of-working: NEW "Who does the work — the delegation boundary" section
+    (context physics rationale; 6-row table: micro-edit stays inline,
+    multi-file implementation -> SDD, bulk writing -> writer/executor
+    subagents (OMC roster when installed), hard reasoning -> brief+agent /
+    deep-solve, must-complete -> loop/ralph, parallel -> 
+    superpowers:dispatching-parallel-agents; unified cost heuristic).
+  - way-of-working collaboration discipline: "the coordinator seat does not
+    solve inline" + "end turns on evidence or a question, never on a promise"
+    (promise-ending turns stall unattended sessions; the silent-stall class
+    is a confirmed upstream bug, correctly out of scope).
+  - CLAUDE.md.template: one-clause coordinator rule on the activation
+    surface; mechanics delegated to way-of-working (v0.5.7 dedup preserved).
+  - Verified per RELEASING 2b: plugin-validator CLEAN (template token
+    machinery byte-intact) + review-to-convergence, 3 rounds:
+    round 1: 1x consistency/fact -> 2 findings -> fixed (template exposition
+    dedup; persistence-loop overclaim qualified)
+    round 2: 1x fresh table review -> 2 findings -> fixed (heuristic
+    re-anchored to the cost criterion; parallel row vehicle resolved)
+    round 3: verification + final scan -> 0 findings (clean pass)
+
 ## v0.5.8 (2026-07-28)
 
 - /ohd-checkup wiring pass: presence-only checking left one class invisible —
