@@ -246,7 +246,7 @@ report is the point.
 
 **Repair path for approved fixes**: this skill audits; the claude-md-management
 plugin rewrites. When the user approves fixes beyond `--fix`'s
-mechanically-unambiguous set, hand the findings to its `revise-claude-md` (or
-`claude-md-improver`) skill rather than freehand-editing — then re-run this
+mechanically-unambiguous set, hand the findings to its `revise-claude-md` command (or
+`claude-md-improver` skill) rather than freehand-editing — then re-run this
 audit on the result (the writer never grades its own rewrite). If the plugin
 is absent, propose the edits as a diff for the user to apply.

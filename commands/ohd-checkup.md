@@ -19,10 +19,9 @@ plugin updates, this command's standard updates with it.
 ## Procedure
 
 1. **Mechanical pass**: run
-   `bash "${CLAUDE_PLUGIN_ROOT}/assets/checkup.sh" <root>` — it reports
-   `item | status | detail` for campaign.sh (template diff, config-block
-   excluded), trunk hook, state dir, and CLAUDE.md existence. Do not
-   re-derive these by hand.
+   `bash "${CLAUDE_PLUGIN_ROOT}/assets/checkup.sh" <root>` — it prints one
+   `item | status | detail` line per harness check plus a scope footer (the
+   check list lives in the script; do not restate or re-derive it by hand).
 2. **Dependency pass**: evaluate the plugin checklist that
    `${CLAUDE_PLUGIN_ROOT}/commands/ohd-setup.md` §1 defines (read it at
    runtime — the list lives ONLY there). Report each missing plugin as a
