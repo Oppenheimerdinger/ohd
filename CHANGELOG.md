@@ -1,3 +1,22 @@
+## v0.5.0 (2026-07-28)
+
+- NEW `/ohd-checkup` — harness doctor for existing projects (and the adoption
+  path, absorbing backlog #6 /ohd-adopt). DRY by construction: what the
+  harness should look like lives ONLY in assets/ (campaign.sh template,
+  CLAUDE.md.template, install-hooks.sh) + the dropin guide; the command and
+  its mechanical helper compare against those at runtime and restate nothing.
+  - assets/checkup.sh: `item | status | detail` report (campaign.sh template
+    diff with the config block excluded, trunk hook, state dir, CLAUDE.md
+    presence); `--sync` rewrites tools/campaign.sh from the template with a
+    KEY-BASED config merge (project values win, template supplies new vars,
+    project-only custom vars survive) + `# synced-from ohd v<ver>` stamp.
+    Bootstraps a fresh copy in repos that never had the harness.
+  - command: mechanical pass → semantic CLAUDE.md wiring pass (vs the
+    template) → single drift table → per-item AskUserQuestion repair →
+    delegates content hygiene to claude-md-sanity.
+  - way-of-working routing row, dropin §Adopting now points at the command,
+    README/USAGE-ko entries, checkup smoke in CI.
+
 ## v0.4.19 (2026-07-28)
 
 - campaign-land Phase 3 (merged PR #3 + maintainer amendments): the old text
