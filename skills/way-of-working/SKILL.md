@@ -49,6 +49,28 @@ findings before banking.
    ground truth, not self-consistency. Compose the two: delegate to produce,
    independently review before adopting.
 
+## Who does the work — the delegation boundary
+
+The main session writing everything is a physics problem before a discipline
+problem: everything it writes stays resident in its context, accelerating
+compaction — and long contexts are where turns die on promises. Delegation
+is context outsourcing. But delegating a 3-line edit costs more than the
+edit; the boundary:
+
+| Work | Who | Vehicle |
+|---|---|---|
+| Micro-edit (one file, tens of lines, instantly verifiable) | main session directly | — (delegation would cost more) |
+| Planned multi-file implementation | fresh implementer per task | superpowers:subagent-driven-development |
+| Bulk writing (docs, reports, large generated text) | a writer/executor subagent | Agent tool (oh-my-claudecode's tiered `writer`/`executor` roster, when installed) |
+| Separable hard reasoning | fresh agent with a verified brief | force-multiplier 1, escalating to `deep-solve` |
+| Must-complete long-running work | a persistence loop (independent evaluator judges termination — below) | `/loop` / schedule / ralph |
+| Independent parallelizable tasks | a subagent fleet, dispatched in one message | superpowers:dispatching-parallel-agents |
+
+When in doubt, weigh the actual costs: if writing the brief plus reading and
+verifying the reply costs more than just doing the work, do it directly
+(row 1's case); otherwise delegate — the output then lives in the subagent's
+context, not yours.
+
 ## Persistence loops — lightest thing that works
 
 | Need | Reach for |
@@ -88,6 +110,18 @@ autonomous loop always gets a termination condition and an iteration cap.
 - **Idle ≠ dead.** A quiet worker is usually working. Require positive
   confirmation (git activity, a received message) before declaring an agent
   dead or killing its work.
+- **The coordinator seat does not solve inline.** A long-lived anchor
+  session's job is orchestration; minutes-long inline reasoning there is a
+  solver's job in the wrong seat — write the brief and hand it to a fresh
+  agent (force-multiplier 1, escalating to deep-solve), or a persistence
+  loop for must-finish work. Long inline thinking in a long context is also
+  where turns die on promises (below).
+- **End turns on evidence or a question — never on a promise.** "I'll
+  continue" as a final line ENDS the turn; absent an explicit persistence
+  loop, nothing resumes a session that promised instead of acted. If the closing paragraph announces work not yet
+  done, do that work now (tool calls), then report. (A silent stall despite
+  acting is a known upstream bug — any user message resumes it; that class
+  is not yours to fix.)
 - **Anchor + worktrees.** The session anchors at a stable trunk checkout;
   every unit of work is its own worktree+branch (see the campaign skills and
   `docs/campaign-dropin.md` for the lifecycle tooling). **The anchor itself
