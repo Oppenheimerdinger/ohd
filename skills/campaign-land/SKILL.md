@@ -59,31 +59,41 @@ work they were waiting for isn't engaged.
 ## Phase 3 — quality gate on the diff
 
 An **independent** review of the final diff — independent meaning it did not
-write the code and it sees the tree as merged, not an earlier one. Fix real
-findings; **re-run the checks after any fix — never claim "fixed" without
-re-running** (see superpowers:verification-before-completion).
+write the code, and it sees the final combined diff, not an earlier snapshot
+from implementation. Fix real findings; **re-run the checks after any fix —
+never claim "fixed" without re-running** (see
+superpowers:verification-before-completion).
 
-Two routes, both valid:
+Three routes, in preference order:
 
-- **`/code-review`** — the user runs it. ⚠ It is a Claude Code built-in marked
-  `disable-model-invocation`: **an agent cannot call it.** If you are an agent
-  and the user has not run it, do not stall the land waiting for it — take the
-  agent route and say which one you used in the report.
-- **A review subagent** — dispatch one (e.g. `code-reviewer`) scoped to the
-  final diff. Give it the diff range, the files, and the *claims the campaign
-  doc makes*, and ask it to check the claims against the diff. Findings that
-  came back this way in the field: tests that could not fail, a "fix" that was
-  a provable no-op, and a `[x]` on a phase that delivered one of its three
-  required parts.
+- **The official code-review plugin (agent-invocable — the default route).**
+  The land's push+PR already exists, so invoke
+  `Skill(code-review:code-review, args: <PR number>)` — the NAMESPACED form.
+  ⚠ The bare `/code-review` name resolves to a Claude Code BUILT-IN marked
+  `disable-model-invocation` — an agent calling that form gets refused; do not
+  conclude from that refusal that no agent route exists. Requires
+  `code-review@claude-plugins-official` (checked by `/ohd-setup`).
+- **User-run `/code-review`** — the built-in, fine in an attended session; the
+  user runs it, the agent cannot.
+- **A review subagent** — fallback when the plugin is absent or there is no
+  PR. Dispatch one scoped to the final diff: give it the diff range, the
+  files, and the *claims the campaign doc makes*, and ask it to check the
+  claims against the diff. Findings that came back this way in the field:
+  tests that could not fail, a "fix" that was a provable no-op, and a `[x]`
+  on a phase that delivered one of its three required parts.
 
-Whichever route, the report row must name it (`/code-review` or
-`review subagent: <type>`) — "reviewed" alone is not evidence.
+Whichever route, the report row names it (`code-review:code-review PR#n` /
+`/code-review (user)` / `review subagent: <type>`) AND carries the normal
+evidence — findings count and disposition, or the review output ref. The
+route name alone is a label, not evidence.
 
-**Ask the reviewer to run mutations, not just read.** A passing test suite says
-nothing about whether the tests *can* fail. The highest-value reviews in
+**Ask the reviewer to run mutations, not just read.** A passing test suite
+says nothing about whether the tests *can* fail. The highest-value reviews in
 practice mutated the code (flip a sign, swap `.mH`→`.mT`, replace a variance
 with a component-wise one) and reported which tests caught each one — plus a
-no-op control to prove the harness was live.
+no-op control to prove the harness was live. Mutation results go in the same
+report row's evidence cell (`mutations: N tried / caught / no-op control ok`)
+— unrecorded mutations are the prose-only rule this skill says gets skipped.
 
 ## Phase 4 — docs in the SAME land
 

@@ -15,7 +15,7 @@ router — which tool, when.
 |---|---|
 | The answer does not exist yet (unsolved problem) | `deep-solve` (it routes isolated/grounded internally) |
 | A deliverable exists and must be checked | `review-to-convergence` |
-| The deliverable is a code diff | `review-to-convergence`, using `/code-review` as the instrument |
+| The deliverable is a code diff | `review-to-convergence`; instrument = the code-review plugin (agents: `Skill(code-review:code-review)` on the PR — the bare `/code-review` built-in is user-only) or a review subagent |
 | A creative/structural piece of work just completed | workflow review (below) |
 | Landing/merging a campaign branch (incl. after push+PR) | `campaign-land` — re-load on EVERY land; never re-enact from memory |
 | CLAUDE.md / memory hygiene check | `claude-md-sanity` |
