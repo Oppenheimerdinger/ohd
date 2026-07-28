@@ -63,9 +63,10 @@ chosen during Phase 1:
      non-load-bearing entry is likewise a finding — demote it to a hint or
      drop it.)
    - Fix findings → re-dispatch → repeat until a pass with ZERO findings.
-   - Keep a per-round convergence log and print it with the gate banner
-     (`round N: X findings → fixed/dropped`, ending in the clean pass) — the
-     brief's review history is part of what the user approves.
+   - Keep a per-round convergence log and print it with the gate banner —
+     review-to-convergence's log format (`round N: <reviewers>× <lens> → X
+     findings → fixed/dropped`), ending in the clean pass; the brief's review
+     history is part of what the user approves.
    - If not converged after 4 review iterations, stop and escalate to the user
      instead of looping further.
    - If a read-only reviewer idles without reporting, grep its transcript JSONL
@@ -141,7 +142,8 @@ set them).
 execution for this run ("자율적으로 진행", "run autonomously", "승인 생략" /
 "skip approval", "게이트 스킵"), do not wait at the gate — but STILL print the
 full brief and the banner, AND write brief + banner + convergence log (and,
-after the run, the result + evidence grade) to a file
+after the run, the result + evidence grade WITH its mode inline — the
+"a grade never travels alone" rule applies doubly to a file) to a file
 (`docs/deep-solve/<slug>-<date>.md` or the project's notes dir): an
 unattended run's chat record evaporates, and "the record stands" must mean a
 record someone can later open. Then launch immediately. Vague delegation ("알아서 해줘" without reference to

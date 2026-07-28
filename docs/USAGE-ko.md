@@ -32,7 +32,10 @@ claude plugin install ohd@dipark
 스키마는 https://code.claude.com/docs/en/discover-plugins 참조). `/ohd-setup`이
 켜기를 제안합니다
 
-**요구사항**: isolated 모드는 Claude Code의 Workflow 툴(멀티에이전트
+**요구사항**: campaign-land Phase 3의 기본 에이전트 리뷰 경로는 공식
+code-review 플러그인입니다 (`claude plugin install
+code-review@claude-plugins-official`; 없으면 일반 리뷰 서브에이전트로 강등).
+isolated 모드는 Claude Code의 Workflow 툴(멀티에이전트
 오케스트레이션)을 사용합니다. 없는 환경에서는 스킬이 스스로 한계를 알리고
 Agent 툴 기반 수동 루프로 대체합니다.
 

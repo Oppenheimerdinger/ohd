@@ -13,7 +13,7 @@
 # single source of truth; the script only compares and splices.
 set -euo pipefail
 
-HERE="$(cd "$(dirname "$0")" && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd -P)"
 TPL="$HERE/campaign.sh"
 PLUGVER="$(grep -o '"version": *"[^"]*"' "$HERE/../.claude-plugin/plugin.json" 2>/dev/null | head -1 | sed 's/.*"\([0-9][^"]*\)"$/\1/' || true)"
 [ -n "$PLUGVER" ] || PLUGVER=unknown
@@ -148,7 +148,7 @@ if [ -d "$SD" ]; then
   for d in "$SD"/*.md; do
     [ -f "$d" ] || continue
     if grep -qiE '(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|LANDS|LANDED' "$d" 2>/dev/null \
-       && ! grep -qiE 'abandon|abort' "$d" 2>/dev/null \
+       && ! grep -qiE '(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
        && ! grep -qi '| phase |' "$d" 2>/dev/null; then
       GAPS="$GAPS$(basename "$d") "
     fi
@@ -165,10 +165,10 @@ fi
 # a dev checkout has no sibling version dirs and skips silently.
 CACHE_PARENT="$(dirname "$(dirname "$HERE")")"
 if [ "$PLUGVER" != unknown ] && [ "$(basename "$(dirname "$HERE")")" = "$PLUGVER" ] && [ -d "$CACHE_PARENT" ]; then
-  LATEST="$(ls -1 "$CACHE_PARENT" 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)"
+  LATEST="$(for e in "$CACHE_PARENT"/*/; do basename "$e"; done 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)"
   if [ -n "$LATEST" ] && [ "$LATEST" != "$PLUGVER" ]; then
     report "plugin-cache" "STALE" "session bound to v$PLUGVER but v$LATEST is installed — /reload-plugins (or restart the session), then re-run checkup"
   fi
 fi
 
-printf -- '— scope: state alignment + land-report presence only. Plugin dependencies → /ohd-setup; per-land ritual compliance is enforced per-land by the land gates (campaign-land).\n'
+printf -- '— scope: state alignment + land-report presence only (this script). Plugin presence is /ohd-checkup'"'"'s dependency pass (list owned by /ohd-setup §1); per-land ritual compliance is enforced per-land by the land gates (campaign-land). A green table attests none of: code correctness, discipline compliance.\n'

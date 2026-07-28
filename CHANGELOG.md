@@ -21,7 +21,7 @@ over-read as "the review harness is intact":
   plugin at USE time and names the degradation; checkup.sh detects a
   session pinned to an older cache (`plugin-cache | STALE`); way-of-working
   gains the canonical "updated? reload → checkup" row + a campaign-status
-  routing row; README/USAGE-ko document the code-review dependency.
+  routing row; README and USAGE-ko document the code-review dependency.
 - Drift: USAGE-ko deep-solve defaults corrected to fable/high (stale since
   v0.4.12); CLAUDE.md header modernized (self-hosting is fact, not pending);
   lock-step rule narrowed to its greppable phrase; release-gate policy

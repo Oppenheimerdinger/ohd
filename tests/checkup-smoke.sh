@@ -85,10 +85,18 @@ cat > docs/campaigns/aborted.md <<'EOF'
 # campaign: aborted
 - result / verdict: ABANDONED — superseded
 EOF
+cat > docs/campaigns/prose.md <<'EOF'
+# campaign: prose
+- goal: retries must not abort on transient errors
+- result / verdict: LANDS — merged
+EOF
 out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "land-reports | GAPS" <<<"$out" || fail "landed doc without table not flagged"
+grep -q "prose.md" <<<"$out" || fail "incidental 'abort' prose wrongly exempted a landed doc"
+rm docs/campaigns/prose.md
 grep -q "oldland.md" <<<"$out"  || fail "GAPS detail missing the offending doc"
 grep -q "aborted.md" <<<"$out" && fail "abandoned campaign wrongly flagged as land gap"
-printf '\n| phase | ran? | evidence |\n' >> docs/campaigns/oldland.md
+{ echo; grep -m1 '^| phase | ran? | evidence |$' "$FAKE_ASSETS/campaign.sh"; } >> docs/campaigns/oldland.md \
+  || fail "producer table header not found in campaign.sh (scaffold/audit integration broken)" 
 out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "land-reports | OK" <<<"$out" || fail "expected land-reports OK after backfill"
 grep -q "^— scope:" <<<"$out" || fail "scope footer missing from report"
 
@@ -101,8 +109,18 @@ out="$("$CACHE/1.0.0/assets/checkup.sh" .)"
 grep -q "plugin-cache | STALE" <<<"$out" || fail "stale plugin cache not detected"
 grep -q "v9.9.9 is installed" <<<"$out"  || fail "STALE detail missing the installed version"
 rm -rf "$CACHE/9.9.9"
+touch "$CACHE/8.8.8"    # stray FILE — not an installed version
 out="$("$CACHE/1.0.0/assets/checkup.sh" .)"
-grep -q "plugin-cache" <<<"$out" && fail "current cache wrongly reported stale"
+grep -q "plugin-cache" <<<"$out" && fail "current cache wrongly reported stale (or stray file counted)"
+CACHE2="$TMP/cache2/ohd"; mkdir -p "$CACHE2/0.5.9/assets" "$CACHE2/0.5.9/.claude-plugin" "$CACHE2/0.5.10"
+cp "$TPL" "$CACHE2/0.5.9/assets/campaign.sh"
+cp "$HERE/assets/checkup.sh" "$CACHE2/0.5.9/assets/checkup.sh"; chmod +x "$CACHE2/0.5.9/assets/checkup.sh"
+echo '{"version": "0.5.9"}' > "$CACHE2/0.5.9/.claude-plugin/plugin.json"
+out="$("$CACHE2/0.5.9/assets/checkup.sh" .)"
+grep -q "v0.5.10 is installed" <<<"$out" || fail "semantic version ordering broken (0.5.10 must beat 0.5.9)"
+ln -s "$CACHE2/0.5.9" "$CACHE2/latest"
+out="$("$CACHE2/latest/assets/checkup.sh" .)"
+grep -q "plugin-cache | STALE" <<<"$out" || fail "symlinked cache path defeated staleness detection"
 
 # 11) adoption: empty repo bootstraps a fresh copy
 mkdir -p "$TMP/fresh" && cd "$TMP/fresh" && git init -q

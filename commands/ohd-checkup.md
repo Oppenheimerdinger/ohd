@@ -11,7 +11,8 @@ harness *should* look like lives in exactly one place each:
 `${CLAUDE_PLUGIN_ROOT}/assets/campaign.sh` (lifecycle tooling),
 `${CLAUDE_PLUGIN_ROOT}/assets/CLAUDE.md.template` (CLAUDE.md wiring shape),
 `${CLAUDE_PLUGIN_ROOT}/assets/install-hooks.sh` (trunk hook),
-`${CLAUDE_PLUGIN_ROOT}/docs/campaign-dropin.md` (adoption checklist). Read
+`${CLAUDE_PLUGIN_ROOT}/docs/campaign-dropin.md` (adoption checklist),
+`${CLAUDE_PLUGIN_ROOT}/commands/ohd-setup.md` §1 (plugin dependency list). Read
 them at runtime; never restate their content here or in the report. When the
 plugin updates, this command's standard updates with it.
 
