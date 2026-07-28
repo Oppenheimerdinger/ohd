@@ -243,10 +243,12 @@ distinguishes a real pass from an unchecked one (rule 2).
 Default to **report-only** — drift is diagnostic (a stale gotcha can mean a real
 regression shipped; the user should see it before it's papered over). On `--fix`,
 apply only **mechanically unambiguous** items: remove a *fully*-satisfied bootstrap
-note (all conditions met — never a partially-satisfied compound one), rebuild
-missing/dead MEMORY.md index lines from the memory files' own frontmatter
-(`name:` + `description:` — the index is a regenerable cache; existing valid
-lines stay untouched), correct a version string to match its tag.
+note (all conditions met — never a partially-satisfied compound one), repair the
+MEMORY.md index as a regenerable cache — REMOVE a line whose target file is
+gone (nothing left to rebuild from), REBUILD a line for any memory file that
+lacks one, from that file's own frontmatter (`name:` + `description:`);
+existing valid lines stay untouched — and correct a version string to match
+its tag.
 Leave judgment calls (rewording a gotcha, deciding a date is "fine", a WATCH pair)
 as proposals. Never edit code to satisfy a doc — if doc and code disagree, the
 report is the point.

@@ -1,3 +1,22 @@
+## v0.5.7 (2026-07-28)
+
+- Retroactive verification of v0.5.6 (validator: CLEAN; independent diff
+  review: 2 findings, both fixed here):
+  - CLAUDE.md.template's anchor block no longer inlines the multi-session
+    doctrine verbatim (it duplicated way-of-working three lines above its own
+    "working discipline lives in the plugin" pointer — scaffolds would freeze
+    a private copy that drifts). Now: the facts + the one-lane rule in two
+    sentences, mechanics delegated to way-of-working.
+  - claude-md-sanity --fix: index repair split into its two real actions —
+    REMOVE a line whose target is gone (nothing to rebuild from), REBUILD a
+    line for an unindexed file from its frontmatter.
+- §RELEASING gains a MECHANICAL verification tier (rule 2b): skills/commands/
+  assets diffs → plugin-validator; ≳30 instruction lines or script logic →
+  also independent review. "Micro release" is explicitly not an exemption —
+  that rationalization shipped five unreviewed releases today.
+- Backlog #7: FS=shared scaffold promises safety rules it never injects
+  (pre-existing, surfaced by this review).
+
 ## v0.5.6 (2026-07-28)
 
 - Multi-session shared-state doctrine (design review of the anchor-everything
