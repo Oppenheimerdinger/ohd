@@ -1,3 +1,18 @@
+## v0.4.19 (2026-07-28)
+
+- campaign-land Phase 3 (merged PR #3 + maintainer amendments): the old text
+  required `/code-review`, which agents cannot invoke (built-in,
+  `disable-model-invocation`) — an agent-led land could never legally satisfy
+  the report gate. Phase 3 now names three routes in preference order:
+  the official code-review plugin invoked as `Skill(code-review:code-review)`
+  on the land PR (agent-invocable — verified live by running it on PR #3
+  itself), user-run `/code-review`, or a review subagent fallback. The report
+  row names the route AND carries normal evidence. Mutation-review guidance
+  (from PR #3, field-proven: tautological tests, no-op fixes, 1/3-delivered
+  checked boxes) now records its results in the report row — not prose-only.
+- way-of-working: code-diff row teaches the namespaced plugin invocation;
+  /ohd-setup checks/installs code-review@claude-plugins-official.
+
 ## v0.4.18 (2026-07-27)
 
 - campaign-dropin: daily-lifecycle section teaches the v0.4.17 land gate

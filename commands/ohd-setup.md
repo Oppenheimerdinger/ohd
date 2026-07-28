@@ -9,6 +9,9 @@ the checklist.
 1. Run `claude plugin list` (Bash) and evaluate:
    - **superpowers** — recommended — required for the full workflow from v0.2; v0.1 works without it.
    <!-- lock-step 세 곳!: keep this label in sync with the way-of-working skill (v0.2). -->
+   - **code-review** — recommended; campaign-land Phase 3's default agent
+     route (`Skill(code-review:code-review)` on the land PR). Without it,
+     agent-led lands fall back to a generic review subagent.
    - **oh-my-claudecode** — optional; only needed for the ralph persistence
      mode.
    - **deep-solve@dipark (stale)** — if installed, warn: this plugin bundles
@@ -20,6 +23,7 @@ the checklist.
    - superpowers: `claude plugin install superpowers@claude-plugins-official`
      (the official marketplace normally ships with Claude Code; confirm with
      `claude plugin marketplace list` and say so honestly if it is absent).
+   - code-review: `claude plugin install code-review@claude-plugins-official`
    - oh-my-claudecode:
      `claude plugin marketplace add Yeachan-Heo/oh-my-claudecode` then
      `claude plugin install oh-my-claudecode@omc`
