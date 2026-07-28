@@ -42,7 +42,41 @@ mkdir -p docs/campaigns
 out="$("$CK" .)"; grep -q "state-dir | PRESENT" <<<"$out" || fail "expected state-dir PRESENT"
 out="$("$CK" .)"; grep -q "CLAUDE.md | MISSING" <<<"$out" || fail "expected CLAUDE.md MISSING"
 
-# 5) adoption: empty repo bootstraps a fresh copy
+# 5) config-ONLY template change must count as drift and sync must deliver it
+#    (the config block is excluded from the body diff — keys are compared explicitly)
+FAKE_ASSETS="$TMP/fakeplugin/assets"; mkdir -p "$FAKE_ASSETS" "$TMP/fakeplugin/.claude-plugin"
+cp "$TPL" "$FAKE_ASSETS/campaign.sh"
+cp "$HERE/assets/checkup.sh" "$FAKE_ASSETS/checkup.sh"; chmod +x "$FAKE_ASSETS/checkup.sh"
+echo '{"version": "9.9.9"}' > "$TMP/fakeplugin/.claude-plugin/plugin.json"
+sed -i 's/^PIN_FILE=/NEW_TPL_VAR="${CAMPAIGN_NEW_TPL_VAR:-}"  # added in a newer template\nPIN_FILE=/' "$FAKE_ASSETS/campaign.sh"
+out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "campaign.sh | DRIFT" <<<"$out" || fail "config-only template change not reported as DRIFT"
+grep -q "NEW_TPL_VAR" <<<"$out"                                             || fail "drift detail does not name the new config var"
+"$FAKE_ASSETS/checkup.sh" . --sync >/dev/null
+grep -q '^NEW_TPL_VAR=' tools/campaign.sh    || fail "sync did not deliver the new template config var"
+grep -q 'CAMPAIGN_TRUNK:-master' tools/campaign.sh || fail "new-var sync lost project config value"
+
+# 6) --sync on an IN-SYNC copy is a no-op
+before="$(sha256sum tools/campaign.sh)"
+out="$("$FAKE_ASSETS/checkup.sh" . --sync)"
+grep -q "campaign.sh | SYNCED" <<<"$out" && fail "sync rewrote an IN-SYNC copy"
+[ "$before" = "$(sha256sum tools/campaign.sh)" ] || fail "IN-SYNC sync modified the file"
+
+# 7) markerless project copy: sync must REFUSE, not silently revert config
+grep -v '^# ──' tools/campaign.sh > tools/campaign.sh.tmp && mv tools/campaign.sh.tmp tools/campaign.sh
+out="$("$FAKE_ASSETS/checkup.sh" . --sync)"
+grep -q "campaign.sh | SYNC-REFUSED" <<<"$out" || fail "markerless copy not refused"
+grep -q 'CAMPAIGN_TRUNK:-master' tools/campaign.sh || fail "refusal still mutated the file"
+
+# 8) decoy '# ──' banner in the body must not truncate the config range
+mkdir -p "$TMP/decoy" && cd "$TMP/decoy" && git init -q && mkdir tools
+sed 's/^wt_path() .*/# ── section banner (decoy)\nwt_path() { echo x; }/' "$TPL" > tools/campaign.sh
+out="$("$HERE/assets/checkup.sh" .)"; grep -q "campaign.sh | DRIFT" <<<"$out" || fail "decoy banner test setup wrong"
+"$HERE/assets/checkup.sh" . --sync >/dev/null
+grep -q '^TRUNK=' tools/campaign.sh || fail "decoy banner corrupted the config splice"
+bash -n tools/campaign.sh || fail "decoy sync produced broken script"
+cd "$TMP/proj"
+
+# 9) adoption: empty repo bootstraps a fresh copy
 mkdir -p "$TMP/fresh" && cd "$TMP/fresh" && git init -q
 out="$("$CK" .)"; grep -q "campaign.sh | MISSING" <<<"$out" || fail "expected MISSING in fresh repo"
 "$CK" . --sync >/dev/null

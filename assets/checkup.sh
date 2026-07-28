@@ -15,7 +15,8 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 TPL="$HERE/campaign.sh"
-PLUGVER="$(grep -o '"version": *"[^"]*"' "$HERE/../.claude-plugin/plugin.json" | head -1 | sed 's/.*"\([0-9][^"]*\)"$/\1/')"
+PLUGVER="$(grep -o '"version": *"[^"]*"' "$HERE/../.claude-plugin/plugin.json" 2>/dev/null | head -1 | sed 's/.*"\([0-9][^"]*\)"$/\1/' || true)"
+[ -n "$PLUGVER" ] || PLUGVER=unknown
 
 ROOT="."; SYNC=0
 for a in "$@"; do
@@ -32,7 +33,7 @@ cfg_range() {  # $1=file → echoes "start end" (1-based, inclusive markers); em
   local s e
   s="$(grep -n '^# ── config' "$1" | head -1 | cut -d: -f1)" || true
   [ -n "${s:-}" ] || { echo ""; return; }
-  e="$(tail -n +"$((s + 1))" "$1" | grep -n '^# ──' | head -1 | cut -d: -f1)" || true
+  e="$(tail -n +"$((s + 1))" "$1" | grep -n '^# ──────' | head -1 | cut -d: -f1)" || true
   [ -n "${e:-}" ] || { echo ""; return; }
   echo "$s $((s + e))"
 }
@@ -49,9 +50,21 @@ normalize() {  # strip config block + provenance lines → comparison view
 
 report() { printf '%s | %s | %s\n' "$1" "$2" "$3"; }
 
+cfg_keys() {  # $1=file → its config-block variable names, one per line
+  local r; r="$(cfg_range "$1")"
+  [ -n "$r" ] || return 0
+  sed -n "$((${r%% *} + 1)),$((${r##* } - 1))p" "$1" | grep -o '^[A-Z_]*=' | tr -d '=' || true
+}
+
 # ---- campaign.sh ----
+NEW_KEYS=""
+[ -f "$DST" ] && NEW_KEYS="$(comm -23 <(cfg_keys "$TPL" | sort) <(cfg_keys "$DST" | sort) | tr '\n' ' ')"
 if [ ! -f "$DST" ]; then
   CS_STATUS=MISSING; CS_DETAIL="no $DST — --sync instantiates the template (all defaults)"
+elif [ -n "${NEW_KEYS// /}" ]; then
+  # a body-identical copy can still lack config vars the template gained —
+  # the block is excluded from the body diff, so check its KEYS explicitly
+  CS_STATUS=DRIFT; CS_DETAIL="template has new config var(s) your copy lacks: ${NEW_KEYS}— --sync adds them (your values kept)"
 elif diff -q <(normalize "$TPL") <(normalize "$DST") >/dev/null 2>&1; then
   CS_STATUS=IN-SYNC; CS_DETAIL="matches template (config block excluded); $(grep -m1 '^# synced-from' "$DST" 2>/dev/null || echo 'no synced-from stamp')"
 else
@@ -60,7 +73,12 @@ else
 fi
 report "campaign.sh" "$CS_STATUS" "$CS_DETAIL"
 
-if [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
+if [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ] \
+   && [ -f "$DST" ] && [ -z "$(cfg_range "$DST")" ]; then
+  # markerless project copy: a blind splice would silently revert its config
+  # values and drop custom vars — refuse instead of corrupting
+  report "campaign.sh" "SYNC-REFUSED" "$DST has no '# ── config' markers — merge manually against the template ($TPL), then re-run"
+elif [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
   mkdir -p "$(dirname "$DST")"
   TR="$(cfg_range "$TPL")"; TS="${TR%% *}"; TE="${TR##* }"
   NEW="$(mktemp)"

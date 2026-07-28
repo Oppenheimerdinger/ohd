@@ -22,11 +22,12 @@ plugin updates, this command's standard updates with it.
    `item | status | detail` for campaign.sh (template diff, config-block
    excluded), trunk hook, state dir, and CLAUDE.md existence. Do not
    re-derive these by hand.
-2. **Wiring pass (semantic)**: read the project's CLAUDE.md against
-   `assets/CLAUDE.md.template` and the dropin guide's "Adopting an EXISTING
-   project" checklist. Check PRESENCE (not wording) of: session-anchor line ·
-   machine×env matrix · harness pointer · facts block. A missing CLAUDE.md =
-   all four missing.
+2. **Wiring pass (semantic)**: read the dropin guide's "Adopting an EXISTING
+   project" section AT RUNTIME and check the project's CLAUDE.md for the
+   PRESENCE (not wording) of each numbered item that section lists, using
+   `assets/CLAUDE.md.template` as the reference shape. The item list lives
+   ONLY there — do not rely on a remembered copy. A missing CLAUDE.md = every
+   item missing.
 3. **Drift table**: print ONE table — `item | status | fix` — merging both
    passes. This is the artifact; findings not in the table didn't happen.
 4. **Per-item repair, gated**: AskUserQuestion per drifted item (batch
