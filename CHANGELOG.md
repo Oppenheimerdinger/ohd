@@ -1,3 +1,12 @@
+## v0.5.3 (2026-07-28)
+
+- /ohd-setup: oh-my-claudecode dropped from the checklist — it is a personal
+  persistence-loop choice, not an ohd dependency (way-of-working routes to
+  built-in /loop and schedule first, and already warns ralph is heavy with a
+  misfire history; recommending its install from setup contradicted that).
+  README Requirements reworded the same way. /ohd-checkup's dependency pass
+  follows automatically (it reads ohd-setup §1 at runtime).
+
 ## v0.5.2 (2026-07-28)
 
 - Activation-surface staleness sweep (descriptions are the 1-hop surface the

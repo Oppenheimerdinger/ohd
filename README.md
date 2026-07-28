@@ -59,8 +59,10 @@ the old plugin installed, remove it to avoid double registration:
   agent review route (`Skill(code-review:code-review)` on the land PR);
   without it, agent-led lands degrade to a generic review subagent.
 - **superpowers**: recommended — required for the full workflow from v0.2;
-  v0.1 works without it. **oh-my-claudecode**: optional (ralph persistence
-  mode only). `/ohd-setup` checks both.
+  v0.1 works without it. Persistence-loop
+  plugins (e.g. oh-my-claudecode's ralph) are a personal choice, not an ohd
+  dependency — way-of-working routes to built-in `/loop`/schedule first.
+  `/ohd-setup` checks the dependencies above.
 
 ## Uninstall / rollback
 
