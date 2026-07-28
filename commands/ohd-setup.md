@@ -12,6 +12,14 @@ the checklist.
    - **code-review** — recommended; campaign-land Phase 3's default agent
      route (`Skill(code-review:code-review)` on the land PR). Without it,
      agent-led lands fall back to a generic review subagent.
+   - **code-simplifier** — recommended; campaign-land Phase 3's
+     simplification instrument (the `code-simplifier` agent on over-complex
+     diffs, findings re-validated). Without it, simplification falls back to
+     a generic subagent prompt.
+   - **claude-md-management** — recommended; the repair path for
+     claude-md-sanity findings (sanity AUDITS only — `revise-claude-md` /
+     `claude-md-improver` do the rewriting). Without it, fixes are manual
+     edits proposed by sanity's report.
    - **deep-solve@dipark (stale)** — if installed, warn: this plugin bundles
      deep-solve, so both register the same skill and command; recommend
      `claude plugin uninstall deep-solve@dipark`.
@@ -22,6 +30,8 @@ the checklist.
      (the official marketplace normally ships with Claude Code; confirm with
      `claude plugin marketplace list` and say so honestly if it is absent).
    - code-review: `claude plugin install code-review@claude-plugins-official`
+   - code-simplifier: `claude plugin install code-simplifier@claude-plugins-official`
+   - claude-md-management: `claude plugin install claude-md-management@claude-plugins-official`
 3. Auto-update: third-party marketplaces default to autoUpdate OFF — offer
    to enable it for `dipark` via settings.json `extraKnownMarketplaces`
    (`"autoUpdate": true`; verify the exact schema against

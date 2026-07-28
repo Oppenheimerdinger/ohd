@@ -58,6 +58,10 @@ the old plugin installed, remove it to avoid double registration:
 - **code-review** (official marketplace): campaign-land Phase 3's default
   agent review route (`Skill(code-review:code-review)` on the land PR);
   without it, agent-led lands degrade to a generic review subagent.
+- **code-simplifier** / **claude-md-management** (official marketplace):
+  campaign-land Phase 3's simplification instrument, and the repair path for
+  claude-md-sanity findings; each degrades to generic-subagent / manual-diff
+  work when absent.
 - **superpowers**: recommended — required for the full workflow from v0.2;
   v0.1 works without it. Persistence-loop
   plugins (e.g. oh-my-claudecode's ralph) are a personal choice, not an ohd
