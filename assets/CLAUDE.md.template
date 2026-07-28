@@ -26,16 +26,11 @@ session opens in, so worktree-anchored sessions fragment and orphan project
 memory). Campaign work is driven from this anchor: cd into the worktree within
 the session, or use `git -C <worktree>`.
 
-Concurrent sessions at this anchor are normal — but **the anchor's own tree
-takes writes from ONE session at a time** (git staging is shared: another
-session's `commit` can sweep up your staged files, and its post-merge
-`reset --hard` wipes your uncommitted edits). Trunk writes — docs commits,
-merges, resets — belong to the coordinator lane; every other session treats
-the anchor as read-only and drives only its own worktree. Memory hygiene for
-parallel sessions: re-read `MEMORY.md` from disk right before adding an index
-line (your session-start copy may be stale) and add it as a one-line edit,
-never a full-file rewrite; re-read a memory file from disk before basing a
-load-bearing decision on it.
+Concurrent sessions here are normal, but **only ONE session at a time writes
+to this tree** (commits, merges, resets — the coordinator's lane); every
+other session drives its own worktree only. The full multi-session
+discipline, including memory hygiene, lives in the ohd way-of-working skill
+— not here.
 
 Working discipline lives in the ohd plugin (way-of-working ·
 campaign-land · campaign-status · claude-md-sanity); lifecycle tooling is

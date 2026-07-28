@@ -11,6 +11,13 @@ CI). Larger changes go branch→PR→`code-review:code-review`→merge.
    reach installed copies without a bump.
 2. `node --test tests/*.test.mjs` → all pass. NEVER `node --test tests/`
    (directory form fails on some Node versions).
+2b. Verification tier is MECHANICAL, not judgment ("micro release" is not an
+   exemption — that rationalization shipped five unreviewed releases on
+   2026-07-28): diff touches `skills/`, `commands/`, or `assets/` → run
+   plugin-validator before tagging; AND the diff adds/changes ≳30 lines of
+   instruction text or any script logic → also an independent review
+   (branch→PR→`code-review:code-review`, or a review subagent on the diff).
+   Docs/CHANGELOG-only diffs may tag directly.
 3. Release gates (clean before push; run over git-tracked files only):
    - `grep -rniE "nanof[o]rge|f[o]rge-|xrd2xt[a]l|sr[u]uk|/f[s]x|dip[a]rk" $(git ls-files)`
      — allowed hits ONLY: marketplace name `dipark`, plugin.json author,

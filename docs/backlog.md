@@ -49,3 +49,12 @@ RESOLUTION (2026-07-28): adoption is the everything-MISSING special case of
 the harness drift check; `/ohd-checkup` covers both (mechanical drift via
 assets/checkup.sh + semantic CLAUDE.md wiring vs the template, per-item
 approval). No separate command shipped.
+
+## 7. new-project FS=shared: promised safety rules never injected — OPEN
+
+`commands/ohd-new-project.md` (Q4 option 3) promises "shared-tree safety
+rules in CLAUDE.md" when filesystems are shared, but `assets/new-project.sh`
+only special-cases `FS=separate` (git-only code movement note); no
+`FS=shared` branch injects anything. Pre-existing before v0.5.6, surfaced by
+its review (2026-07-28). Fix = a small template/script block (shared-tree
+rules: worktree isolation, commit-before-reset) + a smoke assert.
