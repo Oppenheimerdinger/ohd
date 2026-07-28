@@ -1,3 +1,12 @@
+## v0.5.8 (2026-07-28)
+
+- /ohd-checkup wiring pass: presence-only checking left one class invisible —
+  a project whose CLAUDE.md block EXISTS but predates a load-bearing rule the
+  template later gained (e.g. the v0.5.6 one-writer lane) passed forever.
+  Step 3 now adds an OPTIONAL-REFRESH row naming the missing clause (rules
+  only, never phrasing; never auto-applied — step 5's per-item gate applies).
+  Validated per RELEASING 2b (plugin-validator: CLEAN).
+
 ## v0.5.7 (2026-07-28)
 
 - Retroactive verification of v0.5.6 (validator: CLEAN; independent diff
