@@ -74,5 +74,9 @@ the project's CLAUDE.md (merge INTO the existing one; don't replace it):
 After merging, run the claude-md-sanity skill once — it audits the result and
 will keep auditing it as the project drifts.
 
-(An interview-driven `/ohd-adopt` command that automates this merge is on the
-backlog — until then this is a 10-minute manual step.)
+`/ohd-checkup` automates this section: it runs the mechanical drift check
+(assets/checkup.sh — template diff with config preserved, hook, state dir)
+plus the CLAUDE.md wiring check above, and repairs per-item on approval. It
+is also the RE-SYNC path after every plugin update ("하네스 점검"). This
+guide remains the source of truth for what the pieces are; the command only
+compares and repairs.

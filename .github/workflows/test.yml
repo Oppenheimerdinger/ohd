@@ -11,4 +11,5 @@ jobs:
       - run: node --test tests/*.test.mjs
       - run: bash tests/campaign-smoke.sh
       - run: bash tests/new-project-smoke.sh
-      - run: diff <(grep -v '^# instantiated' tools/campaign.sh) <(grep -v '^# instantiated' assets/campaign.sh)
+      - run: bash tests/checkup-smoke.sh
+      - run: diff <(grep -vE '^# (instantiated|synced-from)' tools/campaign.sh) <(grep -vE '^# (instantiated|synced-from)' assets/campaign.sh)

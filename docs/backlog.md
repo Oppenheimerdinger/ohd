@@ -36,7 +36,7 @@ deferred from v0.3 spec.
 
 v0.3 scaffolds at most one host; additional hosts are manual.
 
-## 6. /ohd-adopt — existing-project adoption command — OPEN
+## 6. /ohd-adopt — existing-project adoption command — RESOLVED (absorbed by /ohd-checkup, v0.5.0)
 
 new-project covers greenfield; existing repos get the lifecycle via the
 drop-in guide but the CLAUDE.md harness wiring (anchor line, machine×env
@@ -44,3 +44,8 @@ matrix, pointers — the measured activation surface) is a manual merge today
 (campaign-dropin.md §Adopting an EXISTING project). An interview-driven
 command that merges those sections into an existing CLAUDE.md (judgment task
 — prose-driven, not scripted) would close the gap. (2026-07-15)
+
+RESOLUTION (2026-07-28): adoption is the everything-MISSING special case of
+the harness drift check; `/ohd-checkup` covers both (mechanical drift via
+assets/checkup.sh + semantic CLAUDE.md wiring vs the template, per-item
+approval). No separate command shipped.

@@ -20,6 +20,7 @@ router — which tool, when.
 | Landing/merging a campaign branch (incl. after push+PR) | `campaign-land` — re-load on EVERY land; never re-enact from memory |
 | CLAUDE.md / memory hygiene check | `claude-md-sanity` |
 | Starting a new research project | `/ohd-new-project` (interview-driven scaffolder) |
+| Existing project: harness drift check / adoption ("하네스 점검") | `/ohd-checkup` (mechanical drift + CLAUDE.md wiring, repairs on approval) |
 
 **Workflow-review trigger (default, user-adjustable):** work where judgment
 (not a single right answer) shaped the result — a new design, a new module, an
