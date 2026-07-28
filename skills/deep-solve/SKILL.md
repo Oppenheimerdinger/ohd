@@ -63,6 +63,10 @@ chosen during Phase 1:
      non-load-bearing entry is likewise a finding — demote it to a hint or
      drop it.)
    - Fix findings → re-dispatch → repeat until a pass with ZERO findings.
+   - Keep a per-round convergence log and print it with the gate banner —
+     review-to-convergence's log format (`round N: <reviewers>× <lens> → X
+     findings → fixed/dropped`), ending in the clean pass; the brief's review
+     history is part of what the user approves.
    - If not converged after 4 review iterations, stop and escalate to the user
      instead of looping further.
    - If a read-only reviewer idles without reporting, grep its transcript JSONL
@@ -137,8 +141,12 @@ set them).
 **Pre-approval path**: if the user has explicitly authorized autonomous
 execution for this run ("자율적으로 진행", "run autonomously", "승인 생략" /
 "skip approval", "게이트 스킵"), do not wait at the gate — but STILL print the
-full brief and the banner (the record stands even when the wait is waived),
-then launch immediately. Vague delegation ("알아서 해줘" without reference to
+full brief and the banner, AND write brief + banner + convergence log (and,
+after the run, the result + evidence grade WITH its mode inline — the
+"a grade never travels alone" rule applies doubly to a file) to a file
+(`docs/deep-solve/<slug>-<date>.md` or the project's notes dir): an
+unattended run's chat record evaporates, and "the record stands" must mean a
+record someone can later open. Then launch immediately. Vague delegation ("알아서 해줘" without reference to
 this run's approval) does NOT qualify — present the gate normally.
 **Grounded mode never runs under this waiver** (it depends on the attended
 permission barrier): print the brief + banner, state that grounded mode needs
@@ -214,9 +222,13 @@ schedule and honesty rules.
 ## Post-processing (MANDATORY — the return is not user-visible by itself)
 
 Report: `converged` / `evidence` / `roundsUsed` / findings summary (plus
-`premiseChallenge` when `evidence` is `"premise-challenge"`). The following
-bullets are the ISOLATED-mode Workflow return; grounded mode is handled after
-them:
+`premiseChallenge` when `evidence` is `"premise-challenge"`). **A grade never
+travels alone**: any restatement of an evidence grade outside this immediate
+report (a summary, a handoff, a doc) must carry its mode and shape inline —
+"independent-agreement (isolated: closed-book, no live-system check)",
+"reviewer-verified (grounded: single solver)" — a bare grade name reads as
+ground truth, which no grade claims. The following bullets are the
+ISOLATED-mode Workflow return; grounded mode is handled after them:
 
 - `converged: true, evidence: "independent-agreement"` → adopt the answer.
 - `converged: true, evidence: "reviewer-silence"` → adopt, but tell the user the

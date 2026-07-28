@@ -72,7 +72,11 @@ Three routes, in preference order:
   ⚠ The bare `/code-review` name resolves to a Claude Code BUILT-IN marked
   `disable-model-invocation` — an agent calling that form gets refused; do not
   conclude from that refusal that no agent route exists. Requires
-  `code-review@claude-plugins-official` (checked by `/ohd-setup`).
+  `code-review@claude-plugins-official`. **Check availability at use time**
+  (is the plugin in your skill list? `/ohd-setup` §1 owns the install check):
+  if absent, SAY SO, take the subagent route, and record the degradation in
+  the report row ("plugin absent → review subagent") — never discover absence
+  via a failed call and silently downgrade.
 - **User-run `/code-review`** — the built-in, fine in an attended session; the
   user runs it, the agent cannot.
 - **A review subagent** — fallback when the plugin is absent or there is no
@@ -124,7 +128,9 @@ the change touches, now — not "later".
   to MERGED in the same pass as the merge. Stale status notes fabricate
   phantom backlogs — `campaign-status` is the re-derivation tool.
 - Run `claude-md-sanity` at land time (dangling pointers, half-landed
-  lock-steps).
+  lock-steps). A finding NOT fixed in this same land goes into the project's
+  backlog/deviations doc (e.g. `docs/backlog.md`) in the same pass — a
+  finding that lives only in this land's chat is discarded, not deferred.
 
 ## Land report — MANDATORY gate before Phase 7
 

@@ -1,7 +1,9 @@
 # ohd — repo conventions
 
 Public Claude Code harness plugin. Development happens on `main` directly
-(dedicated repo); campaign self-hosting is reconsidered in v0.2.
+(dedicated repo, trunk hook intentionally skipped); the repo self-hosts its
+own lifecycle via `tools/campaign.sh` (drift-guarded against the template in
+CI). Larger changes go branch→PR→`code-review:code-review`→merge.
 
 ## RELEASING (version-gated cache — the #1 trap)
 
@@ -22,12 +24,19 @@ Public Claude Code harness plugin. Development happens on `main` directly
      — allowed ONLY: docs/backlog.md and CHANGELOG.md history links, README
      version note, USAGE-ko migration note, ohd-setup's stale-plugin check,
      and this section's own text.
-   - `docs/superpowers/{specs,plans}/` have NO whitelist (policy hardened
-     2026-07-16 — internal project/company/machine NAMES are sensitive, not
-     just secrets/IPs; the 2026-07-14 wholesale whitelist leaked 45 name
-     hits, scrubbed in v0.4.9). New design docs must be written anonymized
-     from the start (umbrella-proj, pkg-proj, gpubox-style placeholders);
-     quoted grep patterns in docs use `internal-` in place of real prefixes.
+   - `docs/superpowers/{specs,plans}/` have NO whitelist for INTERNAL names
+     (policy hardened 2026-07-16 — internal project/company/machine NAMES
+     are sensitive, not just secrets/IPs; the 2026-07-14 wholesale whitelist
+     leaked 45 name hits, scrubbed in v0.4.9). New design docs must be
+     written anonymized from the start (umbrella-proj, pkg-proj,
+     gpubox-style placeholders); quoted grep patterns in docs use
+     `internal-` in place of real prefixes. PUBLIC-BY-NECESSITY strings are
+     exempt everywhere, including these docs: `dipark` (the marketplace name
+     — it is in the README install command) and the historical
+     `Oppenheimerdinger/deep-solve` / `deep-solve@dipark` references (an
+     archived public repo). Sensitive = names that identify internal
+     projects, the company, machines, or people — not the plugin's own
+     public identity.
 4. Commit everything, THEN tag `vX.Y.Z` on the final commit, push with tag
    (the tag must equal the pushed HEAD).
    (v0.1.0's tag trails main by one docs commit — known, do not force-move
@@ -45,12 +54,10 @@ Public Claude Code harness plugin. Development happens on `main` directly
   launcher. `commands/deep-solve.md` inlines its skill via
   `@${CLAUDE_PLUGIN_ROOT}` for exactly this reason — do NOT "simplify" it
   into a Skill-tool call.
-- **Lock-step (세 곳!)**: the superpowers dependency label ("recommended —
-  required for the full workflow from v0.2; v0.1 works without it") lives in
-  `commands/ohd-setup.md`, `README.md` (Requirements section), and (from
-  v0.2) the way-of-working skill. Change them together. claude-md-sanity
-  audits this rule; the audit instruction requires the phrase "required for
-  the full workflow from v0.2" to be greppable single-line in all its
-  locations.
+- **Lock-step (세 곳!)**: the greppable single-line phrase "required for the
+  full workflow from v0.2" must appear in `commands/ohd-setup.md`,
+  `README.md` (Requirements), and the way-of-working skill — THAT phrase is
+  the invariant (surrounding wording may vary per surface). Change all three
+  together; claude-md-sanity audits it.
 - Open deviations and carried decisions live in `docs/backlog.md` — do not
   delete entries; mark them resolved with the fixing commit.
