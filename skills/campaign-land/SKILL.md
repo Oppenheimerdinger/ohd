@@ -58,9 +58,32 @@ work they were waiting for isn't engaged.
 
 ## Phase 3 — quality gate on the diff
 
-Run `/code-review` on the final diff; fix real findings; **re-run the checks
-after any fix — never claim "fixed" without re-running** (see
-superpowers:verification-before-completion).
+An **independent** review of the final diff — independent meaning it did not
+write the code and it sees the tree as merged, not an earlier one. Fix real
+findings; **re-run the checks after any fix — never claim "fixed" without
+re-running** (see superpowers:verification-before-completion).
+
+Two routes, both valid:
+
+- **`/code-review`** — the user runs it. ⚠ It is a Claude Code built-in marked
+  `disable-model-invocation`: **an agent cannot call it.** If you are an agent
+  and the user has not run it, do not stall the land waiting for it — take the
+  agent route and say which one you used in the report.
+- **A review subagent** — dispatch one (e.g. `code-reviewer`) scoped to the
+  final diff. Give it the diff range, the files, and the *claims the campaign
+  doc makes*, and ask it to check the claims against the diff. Findings that
+  came back this way in the field: tests that could not fail, a "fix" that was
+  a provable no-op, and a `[x]` on a phase that delivered one of its three
+  required parts.
+
+Whichever route, the report row must name it (`/code-review` or
+`review subagent: <type>`) — "reviewed" alone is not evidence.
+
+**Ask the reviewer to run mutations, not just read.** A passing test suite says
+nothing about whether the tests *can* fail. The highest-value reviews in
+practice mutated the code (flip a sign, swap `.mH`→`.mT`, replace a variance
+with a component-wise one) and reported which tests caught each one — plus a
+no-op control to prove the harness was live.
 
 ## Phase 4 — docs in the SAME land
 
@@ -128,7 +151,8 @@ memory is a soft layer, the script gate is the backstop).
   evidence cell means the phase DID NOT HAPPEN — go run it.
 - **Substitution rationales are invalid.** A review that happened during
   implementation does not satisfy Phase 3 (it saw a different, earlier tree).
-  "Low risk" is not an exemption. The ONLY valid `skip` rows are conditions
+  "Low risk" is not an exemption. (A review **subagent** on the final diff is
+  not a substitution — it is one of the two named routes in Phase 3.) The ONLY valid `skip` rows are conditions
   this skill itself names (e.g. "no dependent-repo pin", "single campaign —
   no overlap", "nothing gated — 2.5 trivially clean"), and the skip row must
   quote that condition as its evidence.
