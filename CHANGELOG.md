@@ -1,3 +1,12 @@
+## v0.5.5 (2026-07-28)
+
+- plugin-validator follow-up: /ohd-checkup step 1 no longer enumerates the
+  script's report items (the list had gone stale at four of six — the exact
+  restated-content failure the file's own DRY invariant forbids; now it just
+  points at the script). claude-md-sanity's repair path names
+  revise-claude-md as a command, claude-md-improver as a skill (was: both
+  "skills").
+
 ## v0.5.4 (2026-07-28)
 
 - Wire two harness components that lost their references during campaign-land
