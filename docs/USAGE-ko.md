@@ -25,9 +25,17 @@ claude plugin install ohd@dipark
 
 설치/업데이트 후 새 세션을 열거나 `/reload-plugins`를 실행해야 적용됩니다.
 
-**업데이트**: `claude plugin update ohd@dipark` → `/reload-plugins`
+**업데이트**: `claude plugin update ohd@dipark` → `/reload-plugins`.
+**자동 업데이트**: 서드파티 마켓플레이스는 기본 꺼짐 — settings.json의
+`extraKnownMarketplaces`에서 dipark 항목에 `"autoUpdate": true`를 주면 세션
+시작 후 백그라운드로 갱신됩니다 (적용은 다음 세션 또는 `/reload-plugins`;
+스키마는 https://code.claude.com/docs/en/discover-plugins 참조). `/ohd-setup`이
+켜기를 제안합니다
 
-**요구사항**: isolated 모드는 Claude Code의 Workflow 툴(멀티에이전트
+**요구사항**: campaign-land Phase 3의 기본 에이전트 리뷰 경로는 공식
+code-review 플러그인입니다 (`claude plugin install
+code-review@claude-plugins-official`; 없으면 일반 리뷰 서브에이전트로 강등).
+isolated 모드는 Claude Code의 Workflow 툴(멀티에이전트
 오케스트레이션)을 사용합니다. 없는 환경에서는 스킬이 스스로 한계를 알리고
 Agent 툴 기반 수동 루프로 대체합니다.
 
@@ -86,14 +94,14 @@ CLAUDE.md·메모리가 루트에 있어서, 루트에서 열어야 하네스가
 ### 옵션
 
 ```
-/deep-solve <문제> [--mode isolated|grounded] [--rounds N] [--reviewers N] [--no-confirm] [--model fable]
+/deep-solve <문제> [--mode isolated|grounded] [--rounds N] [--reviewers N] [--no-confirm] [--model opus] [--effort low|medium|high|xhigh|max]
 ```
 
 자연어도 됩니다: "6라운드", "리뷰어 3", "패널로"(=리뷰어 3), "확증 생략",
 "fable로", "격리로".
 
-- 기본값: opus(max effort), solve 예산 4회(확증 포함), 리뷰어 1, 확증 on
-- **fable(최상위 모델)은 명시 요청 시에만** 사용됩니다
+- 기본값: **fable(high effort)**, solve 예산 4회(확증 포함), 리뷰어 1, 확증 on
+- opus로 낮추려면 명시 요청("opus로" / --model opus); 더 깊은 추론은 --effort max
 - rounds/reviewers/confirm은 isolated 모드 전용
 
 **자율 실행**: "자율적으로 진행해" / "승인 생략"이라고 명시하면 게이트에서

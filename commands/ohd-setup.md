@@ -27,15 +27,21 @@ the checklist.
    - oh-my-claudecode:
      `claude plugin marketplace add Yeachan-Heo/oh-my-claudecode` then
      `claude plugin install oh-my-claudecode@omc`
-3. Workflow tool: check your OWN tool list for `Workflow`. It powers
+3. Auto-update: third-party marketplaces default to autoUpdate OFF — offer
+   to enable it for `dipark` via settings.json `extraKnownMarketplaces`
+   (`"autoUpdate": true`; verify the exact schema against
+   https://code.claude.com/docs/en/discover-plugins at apply time — do not
+   guess it). On approval apply; on decline note that updates then require
+   manual `claude plugin update ohd@dipark`.
+4. Workflow tool: check your OWN tool list for `Workflow`. It powers
    deep-solve's isolated mode; if absent, say that grounded mode and the
    manual fallback still work.
-4. Final message = a checklist: one line per item — name, status
+5. Final message = a checklist: one line per item — name, status
    (✓ installed / ✗ missing / ⚠ stale), and a dependency note in the form
    "X is needed by Y; without it, Y degrades to Z". Never overstate a
    requirement. End with EXACTLY this line:
    "새로 설치한 플러그인이 있다면 세션을 재시작(또는 /reload-plugins)한 뒤
    /ohd-setup 을 다시 실행해 확인하세요."
-5. Render the report in the conversation language (the step-4 final line stays
+6. Render the report in the conversation language (the step-5 final line stays
    verbatim in Korean; if the conversation language is not Korean, add a
    translation in parentheses after it).
