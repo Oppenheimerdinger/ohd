@@ -1,6 +1,6 @@
 ---
 name: way-of-working
-description: This skill should be used when the user asks about the harness "way of working" / "작업 방식" / "어떤 도구를 써야", at project onboarding, or when unsure whether to produce (deep-solve), verify (review-to-convergence), review code (/code-review), run a workflow review, or set up a persistence loop. The routing layer of this plugin.
+description: This skill should be used when the user asks about the harness "way of working" / "작업 방식" / "어떤 도구를 써야", at project onboarding, or when unsure whether to produce (deep-solve), verify (review-to-convergence), review a code diff (the code-review plugin or a review subagent), run a workflow review, or set up a persistence loop. The routing layer of this plugin.
 ---
 
 # Way of working
