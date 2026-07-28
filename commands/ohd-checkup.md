@@ -1,5 +1,5 @@
 ---
-description: Harness doctor for an existing project — 하네스 점검/정비/채택. Detects drift between the project and the ohd harness (campaign.sh version, trunk hook, state dir, CLAUDE.md wiring), reports a fix table, and repairs per-item on approval. Also the adoption path for projects that never had the harness.
+description: Harness doctor for an existing project — 하네스 점검/정비/채택. Detects drift between the project and the ohd harness (campaign.sh template, trunk hook, state dir, CLAUDE.md wiring, plugin dependencies, landed docs missing their land-report, stale plugin cache), reports a fix table, and repairs per-item on approval. Also the adoption path for projects that never had the harness.
 argument-hint: [project-root]
 ---
 

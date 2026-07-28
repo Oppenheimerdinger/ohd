@@ -1,3 +1,13 @@
+## v0.5.2 (2026-07-28)
+
+- Activation-surface staleness sweep (descriptions are the 1-hop surface the
+  v0.5.1 cross-ref audit could not catch — it checked that references
+  RESOLVE, and the bare `/code-review` built-in resolves while misleading):
+  way-of-working's description no longer names bare `/code-review` (now "the
+  code-review plugin or a review subagent"); /ohd-checkup's description now
+  enumerates its v0.5.1 checks (plugin dependencies, land-report gaps, stale
+  plugin cache). Historical specs/plans left as-is (point-in-time records).
+
 ## v0.5.1 (2026-07-28)
 
 Five-axis audit hardening (scope over-reading / artifact-less rituals /
