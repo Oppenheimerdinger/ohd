@@ -1,3 +1,27 @@
+## v0.5.6 (2026-07-28)
+
+- Multi-session shared-state doctrine (design review of the anchor-everything
+  model — the model itself is kept: auto-memory is keyed by the session's
+  opening directory, so a single anchor is what makes project memory coherent;
+  worktree-anchored sessions would fragment and orphan it):
+  - **Anchor = one write lane**: concurrent sessions at the anchor are normal,
+    but trunk writes (docs commits, merges, resets) belong to the coordinator
+    session only — git staging is shared, so a second writer's commit/reset
+    can sweep or wipe the first's work. Encoded in way-of-working
+    (collaboration discipline) and the scaffolded CLAUDE.md template.
+  - **Two tiers**: memory = machine-local session-continuity buffer; git
+    (CLAUDE.md/docs/state docs) = durable tier. A fact another machine,
+    person, or agent needs is misplaced the moment it lands only in memory;
+    land-time distill (Phase 6) is the graduation path.
+  - **MEMORY.md index demoted to a regenerable cache**: memory files carry
+    their own frontmatter, so a parallel-write clobber is a rebuildable
+    accident — claude-md-sanity's --fix now rebuilds missing index lines from
+    frontmatter instead of hand-merging.
+  - **Re-read before load-bearing use**: parallel sessions age each other's
+    session-start copies — re-read MEMORY.md from disk before adding an index
+    line (one-line edit, never full rewrite) and re-read a memory file before
+    basing a decision on it.
+
 ## v0.5.5 (2026-07-28)
 
 - plugin-validator follow-up: /ohd-checkup step 1 no longer enumerates the

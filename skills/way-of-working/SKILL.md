@@ -90,7 +90,20 @@ autonomous loop always gets a termination condition and an iteration cap.
   dead or killing its work.
 - **Anchor + worktrees.** The session anchors at a stable trunk checkout;
   every unit of work is its own worktree+branch (see the campaign skills and
-  `docs/campaign-dropin.md` for the lifecycle tooling).
+  `docs/campaign-dropin.md` for the lifecycle tooling). **The anchor itself
+  is a scarce resource**: concurrent sessions are normal, but trunk WRITES
+  (docs commits, merges, resets — git staging is shared) are one lane, the
+  coordinator's; everyone else treats the anchor read-only and drives their
+  own worktree.
+- **Memory is the machine-local buffer; git is the durable tier.** Auto-memory
+  is keyed to this machine and this anchor path — a fact that another machine,
+  person, or agent will need is MISPLACED the moment it lands only in memory;
+  put it in the repo (CLAUDE.md, docs, the campaign state doc). Land-time
+  distill (campaign-land Phase 6) is the graduation path. Parallel-session
+  hygiene: re-read `MEMORY.md` from disk before adding an index line (one-line
+  edit, never full-file rewrite), and re-read a memory file before basing a
+  load-bearing decision on it — your session-start copy ages while other
+  sessions write.
 
 ## The superpowers flow
 

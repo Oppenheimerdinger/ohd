@@ -134,7 +134,12 @@ clean if you only checked one form:
 - **File/dir pointers:** `MEMORY.md`, `memory/<slug>.md`, `[[wiki-links]]`,
   `(+ memory/)` bare-dir refs. `test -e` each; dead pointer = `BROKEN`. Bidirectional
   MEMORY.md sync: index line whose file is gone = `BROKEN`; `memory/*.md` with no
-  index line = `STALE` (un-indexed memory is invisible).
+  index line = `STALE` (un-indexed memory is invisible). **The index is a
+  CACHE, not a source**: every `memory/*.md` carries its own frontmatter
+  (`name:`, `description:`), so a clobbered or drifted MEMORY.md (e.g. two
+  parallel sessions' writes colliding) is a rebuildable accident, not data
+  loss — never reconcile the index by hand-merging; regenerate the missing
+  lines from the files' frontmatter.
 - **Auto-memory slugs:** referenced by bare name, often in Korean —
   `메모리 \`project_foo\``, `auto-memory \`bar.md\``, `Memory: baz-discipline`.
   These are the MOST rot-prone (a memory gets distilled/renamed and the reference
@@ -238,8 +243,10 @@ distinguishes a real pass from an unchecked one (rule 2).
 Default to **report-only** — drift is diagnostic (a stale gotcha can mean a real
 regression shipped; the user should see it before it's papered over). On `--fix`,
 apply only **mechanically unambiguous** items: remove a *fully*-satisfied bootstrap
-note (all conditions met — never a partially-satisfied compound one), sync a
-MEMORY.md index line to an existing file, correct a version string to match its tag.
+note (all conditions met — never a partially-satisfied compound one), rebuild
+missing/dead MEMORY.md index lines from the memory files' own frontmatter
+(`name:` + `description:` — the index is a regenerable cache; existing valid
+lines stay untouched), correct a version string to match its tag.
 Leave judgment calls (rewording a gotcha, deciding a date is "fine", a WATCH pair)
 as proposals. Never edit code to satisfy a doc — if doc and code disagree, the
 report is the point.
