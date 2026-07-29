@@ -1,3 +1,23 @@
+## v0.5.11 (2026-07-29)
+
+- Review-wiring design round (user-directed; 3-lens independent design review
+  — systems / research-realism / red-team — killed the original heavier
+  design: a pre-experiment checkpoint with prose-gated Phase-3 downgrade,
+  RISK_PATHS gate machinery, size-based triggers. Unanimous verdicts: prose
+  checkpoints have a 0% survival record in this fleet; self-reported rows
+  must not weaken die-gated review depth; LOC is anti-correlated with
+  numerics risk). Shipped the minimal survivor, way-of-working only:
+  - Routing row "RISKY coding just completed": the session MAY choose the
+    heavy route on its own judgment (push branch, draft PR,
+    code-review:code-review once per PR + independently-dispatched
+    mutation/numerics reviewer, loop to clean per r2c; announce in one line;
+    land Phase 3 stays the backstop). Opportunity, not a gate.
+  - SDD final whole-branch review model: risk-scaled like every other review
+    — top model reserved for risky/complex branches ("mid-tier on a routine
+    branch is not a corner cut").
+  Residual risk (declared): both are prose — actual firing rate is a probe
+  item for the planned activation measurement. Validated per RELEASING 2b.
+
 ## v0.5.10 (2026-07-28)
 
 - review-to-convergence: the deliverable table's "code" row had not followed
