@@ -16,6 +16,7 @@ router — which tool, when.
 | The answer does not exist yet (unsolved problem) | `deep-solve` (it routes isolated/grounded internally) |
 | A deliverable exists and must be checked | `review-to-convergence` |
 | The deliverable is a code diff | `review-to-convergence`; instrument = the code-review plugin (agents: `Skill(code-review:code-review)` on the PR — the bare `/code-review` built-in is user-only) or a review subagent |
+| RISKY coding just completed (numerics, hot paths, code whose output experiments will trust) | the session may CHOOSE the heavy route on its own judgment — push the campaign branch, open a (draft) PR, run `Skill(code-review:code-review, <PR#>)` plus an independently-dispatched mutation/numerics reviewer, and loop fixes to a clean pass (r2c rules; the plugin runs once per PR — later rounds use subagents). Announce the choice in one line. Skipping it is fine for routine code — land Phase 3 remains the backstop |
 | A creative/structural piece of work just completed | workflow review (below) |
 | Landing/merging a campaign branch (incl. after push+PR) | `campaign-land` — re-load on EVERY land; never re-enact from memory |
 | "Is X merged?" / before pin/clean/re-run / any note asserting merge status | `campaign-status` |
@@ -143,7 +144,10 @@ autonomous loop always gets a termination condition and an iteration cap.
 
 Creative work starts at brainstorming; multi-step work gets a written plan
 (writing-plans) and subagent-driven execution; nothing is declared complete
-without verification-before-completion. **Completed implementation is itself
+without verification-before-completion. Model choice for SDD's final
+whole-branch review follows the same risk scaling as every other review —
+reserve the top model for risky or complex branches instead of defaulting to
+it (a routine branch's final review on a mid-tier model is not a corner cut). **Completed implementation is itself
 a deliverable**: subagent-driven execution's final whole-branch review covers
 it; anything built outside that flow gets an explicit review-to-convergence
 pass before it is trusted. A completion claim NAMES its review pass (what
