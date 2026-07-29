@@ -129,4 +129,44 @@ out="$("$CK" .)"; grep -q "campaign.sh | MISSING" <<<"$out" || fail "expected MI
 [ -x tools/campaign.sh ]                    || fail "bootstrap did not create executable copy"
 diff <(grep -v '^# synced-from' tools/campaign.sh) "$TPL" >/dev/null || fail "bootstrap copy differs from template beyond the stamp"
 
+# 12) harness-changes relay: BEHAVIOR-CHANGE markers between stamp and current, sort -V range
+cd "$TMP/proj"
+cat > "$TMP/fakeplugin/CHANGELOG.md" <<'EOF'
+## v0.5.11 (2026-07-29)
+
+BEHAVIOR-CHANGE: new gate eleven
+
+- filler prose
+
+## v0.5.10 (2026-07-28)
+
+BEHAVIOR-CHANGE: new gate ten
+
+## v0.5.2 (2026-07-28)
+
+BEHAVIOR-CHANGE: old gate two
+
+## v0.5.1 (2026-07-28)
+
+- no marker here
+EOF
+echo '{"version": "0.5.11"}' > "$TMP/fakeplugin/.claude-plugin/plugin.json"
+grep -q '^# synced-from ohd v' tools/campaign.sh || fail "scenario-12 precondition: no stamp to rewrite"
+sed -i 's/^# synced-from ohd v[0-9.]*/# synced-from ohd v0.5.2/' tools/campaign.sh
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "harness-changes | REVIEW" <<<"$out"    || fail "behavior-change relay missing"
+grep -q "\[v0.5.10\] new gate ten" <<<"$out"    || fail "v0.5.10 marker not relayed (lexical-sort regression?)"
+grep -q "\[v0.5.11\] new gate eleven" <<<"$out" || fail "v0.5.11 marker not relayed"
+grep -q "old gate two" <<<"$out" && fail "stamp-version marker wrongly relayed (range must exclude the stamp itself)"
+sed -i 's/^# synced-from ohd v0.5.2/# synced-from ohd v9.9.9/' tools/campaign.sh
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "harness-changes | ANOMALY" <<<"$out" || fail "inverted stamp not flagged as ANOMALY"
+grep -v '^# synced-from' tools/campaign.sh > t.tmp && mv t.tmp tools/campaign.sh && chmod +x tools/campaign.sh
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "harness-changes | NO-BASELINE" <<<"$out" || fail "missing stamp not reported as NO-BASELINE"
+
+# 13) CHANGELOG header-format pin (the relay's parsing contract)
+grep -E '^## v' "$HERE/CHANGELOG.md" | grep -vE '^## v[0-9]+\.[0-9]+\.[0-9]+ \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$' \
+  && fail "CHANGELOG header format drifted — harness-changes relay parsing depends on '## vX.Y.Z (date)'"
+
 echo "CHECKUP-SMOKE PASS"

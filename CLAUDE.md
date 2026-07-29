@@ -18,6 +18,12 @@ CI). Larger changes go branch→PR→`code-review:code-review`→merge.
    instruction text or any script logic → also an independent review
    (branch→PR→`code-review:code-review`, or a review subagent on the diff).
    Docs/CHANGELOG-only diffs may tag directly.
+2c. If the release changes a gate, route, or requirement that PROJECT
+   sessions rely on (campaign.sh semantics, land ritual, review routes),
+   put a single line `BEHAVIOR-CHANGE: <one sentence>` at the TOP of the
+   CHANGELOG entry (line-initial, one per change) — /ohd-checkup relays
+   exactly these lines to projects on sync. The project-facing judgment
+   happens here, at authoring time, never downstream.
 3. Release gates (clean before push; run over git-tracked files only):
    - `grep -rniE "nanof[o]rge|f[o]rge-|xrd2xt[a]l|sr[u]uk|/f[s]x|dip[a]rk" $(git ls-files)`
      — allowed hits ONLY: marketplace name `dipark`, plugin.json author,

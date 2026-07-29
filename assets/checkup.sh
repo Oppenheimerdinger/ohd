@@ -171,4 +171,43 @@ if [ "$PLUGVER" != unknown ] && [ "$(basename "$(dirname "$HERE")")" = "$PLUGVER
   fi
 fi
 
+# ---- harness-changes (what changed since this project's last sync) ----
+# Relays ONLY `BEHAVIOR-CHANGE:` marker lines from the shipped CHANGELOG.
+# The judgment of what is project-facing happens at release time (authoring,
+# see the plugin repo's §RELEASING) — never reconstructed here from prose.
+ver_gt() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]; }
+CHLOG="$HERE/../CHANGELOG.md"
+STAMP_VER=""
+[ -f "$DST" ] && STAMP_VER="$(grep -m1 '^# synced-from ohd v' "$DST" 2>/dev/null | sed 's/.*ohd v\([0-9][0-9.]*\).*/\1/' || true)"
+if [ -f "$DST" ] && [ ! -f "$CHLOG" ]; then
+  report "harness-changes" "NO-CHANGELOG" "plugin CHANGELOG.md missing next to assets/ — partial install? change relay unavailable"
+elif [ -f "$DST" ] && [ -z "$STAMP_VER" ]; then
+  report "harness-changes" "NO-BASELINE" "$DST carries no synced-from stamp — change relay skipped (one --sync establishes the baseline)"
+elif [ -n "$STAMP_VER" ] && [ "$PLUGVER" = unknown ]; then
+  report "harness-changes" "UNKNOWN" "installed plugin version unreadable (plugin.json) — change relay skipped"
+elif [ -n "$STAMP_VER" ] && [ "$STAMP_VER" != "$PLUGVER" ]; then
+  if ver_gt "$STAMP_VER" "$PLUGVER"; then
+    report "harness-changes" "ANOMALY" "stamp v$STAMP_VER is NEWER than this checkup's v$PLUGVER — stale session cache?; relay skipped"
+  else
+    BC_LINES=""; BC_N=0; CUR=""
+    while IFS= read -r line; do
+      case "$line" in
+        "## v"*) CUR="$(printf '%s' "$line" | sed 's/^## v\([0-9][0-9.]*\).*/\1/')" ;;
+        BEHAVIOR-CHANGE:*)
+          if [ -n "$CUR" ] && ver_gt "$CUR" "$STAMP_VER" && ! ver_gt "$CUR" "$PLUGVER"; then
+            BC_LINES="${BC_LINES}  [v$CUR] $(printf '%s' "$line" | sed 's/^BEHAVIOR-CHANGE:[[:space:]]*//')
+"
+            BC_N=$((BC_N + 1))
+          fi ;;
+      esac
+    done < "$CHLOG"
+    if [ "$BC_N" -gt 0 ]; then
+      report "harness-changes" "REVIEW" "v$STAMP_VER -> v$PLUGVER: $BC_N behavior change(s) affect projects — read before relying on the new gates:"
+      printf '%s' "$BC_LINES"
+    else
+      report "harness-changes" "INFO" "v$STAMP_VER -> v$PLUGVER since last sync — no flagged behavior changes (full detail: the plugin's CHANGELOG.md)"
+    fi
+  fi
+fi
+
 printf -- '— scope: state alignment + land-report presence only (this script). Plugin presence is /ohd-checkup'"'"'s dependency pass (list owned by /ohd-setup §1); per-land ritual compliance is enforced per-land by the land gates (campaign-land). A green table attests none of: code correctness, discipline compliance.\n'

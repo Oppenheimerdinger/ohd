@@ -1,3 +1,26 @@
+## v0.5.12 (2026-07-29)
+
+BEHAVIOR-CHANGE: campaign-land Phase 6 sanity gains a named skip condition — a land touching no docs/CLAUDE.md/memory may skip it; the skip row's evidence cell must carry the `git diff --name-only` artifact (attested, not gated).
+BEHAVIOR-CHANGE: /ohd-checkup now reports `harness-changes` — line-initial BEHAVIOR-CHANGE markers between your synced-from stamp and the installed version are relayed verbatim on every run.
+
+- Two-part release (both 2-lens design-reviewed; user field evidence:
+  long-lived worktrees/sessions drift, landing works as a reset):
+  - **Campaign sizing** (way-of-working): a campaign is ONE coherent
+    increment — size at intake (one sub-plan from brainstorming/
+    writing-plans scope checks = one campaign = one land), land signal is
+    state not calendar (stacking the next increment on validated work =
+    land now), small lands run lean via the named skip conditions, dragged
+    campaigns partial-land (Phase 0) + fresh session.
+  - **Patch visibility** (checkup): §RELEASING 2c — project-facing changes
+    get a line-initial `BEHAVIOR-CHANGE:` marker at authoring time; checkup
+    relays exactly those (sort -V ranges, explicit NO-BASELINE / UNKNOWN /
+    NO-CHANGELOG / ANOMALY branches); 4 markers backfilled (v0.4.14/16/17/19);
+    smoke pins the relay range semantics and the CHANGELOG header format.
+  - Verified per 2b: plugin-validator CLEAN; independent review found 5
+    (PLUGVER=unknown silent, CHANGELOG-absent silent, an INVENTED skip
+    condition in way-of-working, an unqualified cost claim, skip-condition
+    enforcement honesty) — all fixed and behaviorally re-verified 5/5.
+
 ## v0.5.11 (2026-07-29)
 
 - Review-wiring design round (user-directed; 3-lens independent design review
@@ -194,6 +217,8 @@ over-read as "the review harness is intact":
 
 ## v0.4.19 (2026-07-28)
 
+BEHAVIOR-CHANGE: campaign-land Phase 3's default agent review route is `Skill(code-review:code-review, <PR#>)` on the land PR — the bare /code-review built-in is user-only.
+
 - campaign-land Phase 3 (merged PR #3 + maintainer amendments): the old text
   required `/code-review`, which agents cannot invoke (built-in,
   `disable-model-invocation`) — an agent-led land could never legally satisfy
@@ -214,6 +239,8 @@ over-read as "the review harness is intact":
 
 ## v0.4.17 (2026-07-27)
 
+BEHAVIOR-CHANGE: campaign.sh `land` refuses to push without a land-report in the state doc (`land <name> --report` scaffolds the table; LAND_GUARD=0 bypass).
+
 - campaign.sh `land`: the advisory echo became a die-gate (field postmortem:
   two land-ritual skips in one project; every die-gate held, every prose
   reminder was ignored). `land` now refuses to push+PR unless the state doc
@@ -229,6 +256,8 @@ over-read as "the review harness is intact":
   LAND_GUARD=0 bypass.
 
 ## v0.4.16 (2026-07-27)
+
+BEHAVIOR-CHANGE: `clean`/`status` judge squash merges by branch TIP + PR headRefOid — head-auto-deleted branches clean correctly; a stale same-name merged PR no longer green-lights teardown.
 
 - campaign.sh (assets + tools): merge-verdict hardening in `clean`/`status`,
   from a field report on a sibling project's milestone tool (an independent
@@ -257,6 +286,8 @@ over-read as "the review harness is intact":
   red-CI commit; this tag is the green one.
 
 ## v0.4.14 (2026-07-21)
+
+BEHAVIOR-CHANGE: campaign.sh `new` auto-inits git submodules in fresh worktrees (CAMPAIGN_INIT_SUBMODULES=0 skips); `clean` refuses without a filled verdict/result line in the state doc (FORCE_CLEAN=1 bypass).
 
 - campaign.sh (assets + tools, from a real two-campaign field report;
   spec docs/superpowers/specs/2026-07-21-worktree-submodule-venv-land-gates.md):
