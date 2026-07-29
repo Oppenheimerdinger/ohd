@@ -58,7 +58,8 @@ looping.
 | handoff | accuracy (cross-check every commit SHA / number / fact) + completeness + actionability |
 | experiment analysis | self-consistent (numbers agree) + conditional-vs-unconditional (no selection blind-spot) + confidence/fidelity labelled |
 | design / plan | faithful to the real system + assumptions verified |
-| code | use superpowers:subagent-driven-development; each fix gets a regression test |
+| code (being built) | superpowers:subagent-driven-development carries the loop (task + whole-branch reviewers); each fix gets a regression test |
+| code (finished diff) | PR exists AND the code-review plugin is installed → `Skill(code-review:code-review, args: <PR#>)` as this loop's reviewer (the bare `/code-review` built-in is user-only); else → a fresh review subagent on the diff, saying which route and why |
 
 ## Red flags — STOP, you are about to skip the loop
 - "ready to hand off as-is" / "I'm confident it's clean"

@@ -1,3 +1,14 @@
+## v0.5.10 (2026-07-28)
+
+- review-to-convergence: the deliverable table's "code" row had not followed
+  v0.4.19's three-route doctrine — a session invoking r2c directly on code
+  never reached the code-review plugin. Row split: code being BUILT stays
+  with superpowers SDD's own loop; a FINISHED diff uses
+  `Skill(code-review:code-review, <PR#>)` as the loop's reviewer when a PR
+  exists and the plugin is installed, else a review subagent (route named).
+  Drift-class fix (stale cross-reference), not a new rule — the v0.5.9
+  freeze on rule additions stands. Validated per RELEASING 2b.
+
 ## v0.5.9 (2026-07-28)
 
 - Stall + main-session-does-everything field diagnosis, encoded:
