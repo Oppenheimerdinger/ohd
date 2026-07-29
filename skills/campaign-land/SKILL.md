@@ -140,6 +140,12 @@ the change touches, now — not "later".
   lock-steps). A finding NOT fixed in this same land goes into the project's
   backlog/deviations doc (e.g. `docs/backlog.md`) in the same pass — a
   finding that lives only in this land's chat is discarded, not deferred.
+  **Named skip condition**: a land whose diff touches no docs, CLAUDE.md, or
+  memory files may skip the sanity run — there is nothing for it to audit
+  that this land could have changed. Like every skip row this is attested,
+  not gated: the row's evidence cell must carry the derivable artifact
+  (`git diff --name-only <base>..HEAD` showing no doc/memory paths), not
+  just the quoted condition.
 
 ## Land report — MANDATORY gate before Phase 7
 

@@ -72,6 +72,35 @@ verifying the reply costs more than just doing the work, do it directly
 (row 1's case); otherwise delegate — the output then lives in the subagent's
 context, not yours.
 
+## Campaign sizing — a campaign is ONE coherent increment
+
+The land is the harness's reset: it forces the session's knowledge into
+artifacts (state doc, distill, report), re-sharpens review (small diffs
+review sharply; review bluntness grows superlinearly with diff size), and
+restores trunk as truth. Long-lived worktrees and sessions drift — the
+field observation behind this rule.
+
+- **Size at the start**: big work decomposes BEFORE campaigns exist —
+  brainstorming and writing-plans already carry the scope checks (their
+  rule: each sub-plan yields independently working, testable software).
+  **One sub-plan = one campaign = one land.** Open campaigns cut to the
+  increment you intend to land, not to the whole ambition.
+- **The land signal is state, not calendar**: the moment you catch yourself
+  stacking the NEXT increment on top of already-validated work, land first.
+  Batching related commits into one coherent increment is normal; one
+  campaign absorbing several distinct increments is the anti-pattern.
+- **Small lands run lean, legitimately**: land-report skip rows exist for
+  exactly this — no overlap → Phase 2 skip; no docs/CLAUDE.md/memory
+  touched → Phase 6 sanity skip (campaign-land names both conditions).
+  Review depth and re-validation scope scale with the diff; the ritual's
+  FIXED overhead (skill reload, report scaffold, merge mechanics) does not
+  — land often enough to keep review sharp, not so often that the fixed
+  tax dominates.
+- **When a campaign HAS dragged**: land the validated core (campaign-land
+  Phase 0's partial-land rule), open a follow-on campaign, and prefer a
+  fresh session on the far side — the reset is most valuable exactly when
+  it feels hardest to stop.
+
 ## Persistence loops — lightest thing that works
 
 | Need | Reach for |
