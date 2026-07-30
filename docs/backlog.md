@@ -58,3 +58,15 @@ only special-cases `FS=separate` (git-only code movement note); no
 `FS=shared` branch injects anything. Pre-existing before v0.5.6, surfaced by
 its review (2026-07-28). Fix = a small template/script block (shared-tree
 rules: worktree isolation, commit-before-reset) + a smoke assert.
+
+## 8. RETIRES: sub-marker — move retired-route judgment to release time — OPEN
+
+Pass 3b (v0.5.14) asks the checkup executor to judge "does this relayed
+BEHAVIOR-CHANGE retire a mechanism?" per project per session. The 5-lens
+review of PR #6 identified the strictly better third option the PR's own
+binary framing missed: author a `RETIRES: <literal token>` sub-marker next
+to BEHAVIOR-CHANGE at release time (§RELEASING 2c extension) — judgment
+made once with full context, read-time reduced to literal grep, movable
+into assets/checkup.sh's mechanical tier. Cost: brittle to paraphrase in
+project docs (same missed-row failure the bounded-judgment version already
+accepts, made deterministic). (2026-07-30)

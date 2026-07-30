@@ -48,11 +48,11 @@ plugin updates, this command's standard updates with it.
    yourself (that judgment happened at release time). Run this pass ONLY when
    the mechanical pass's `harness-changes` row reports `REVIEW` — an
    inversion, not an enumerated skip list, on purpose: every OTHER status
-   `assets/checkup.sh` can emit (`NO-CHANGELOG` / `NO-BASELINE` / `UNKNOWN` /
-   `ANOMALY` / `INFO`), including the row being absent entirely on a project
-   with no `campaign.sh` yet, carries no bounded BEHAVIOR-CHANGE list for 3b
-   to check — enumerating them by name would drift out of sync the next time
-   the script adds one. For each relayed BEHAVIOR-CHANGE that retires or
+   `assets/checkup.sh` can emit (see the script for the current set),
+   including the row being absent entirely on a project with no
+   `campaign.sh` yet, carries no bounded BEHAVIOR-CHANGE list for 3b to
+   check — naming them here would drift out of sync the next time the
+   script adds one. For each relayed BEHAVIOR-CHANGE that retires or
    re-routes a mechanism, grep the project's CLAUDE.md **and its memory
    store** for the retired mechanism. BOTH stores are in scope: the
    repo-relative `MEMORY.md` + `memory/*.md` if the project keeps one, AND the
@@ -61,7 +61,11 @@ plugin updates, this command's standard updates with it.
    path; do not inline it here, per the DRY invariant above). A project's
    standing rule commonly lives ONLY in the out-of-repo store, and no other
    checkup pass reads it. Add one `RETIRED-ROUTE` row per hit, naming the
-   superseding route.
+   superseding route. **If a store cannot be located or read, say so in the
+   table** — `retired-route-check | MANUAL | <which store> not resolved;
+   grep it by hand for the relayed routes` — never silently emit zero rows:
+   an unreadable store looking identical to a clean one is the exact
+   blindness this pass exists to close.
 4. **Drift table**: print ONE table — `item | status | fix` — merging all
    passes, ENDING with the script's scope footer relayed verbatim (what a
    green table does NOT attest: discipline compliance, code correctness).
@@ -70,6 +74,11 @@ plugin updates, this command's standard updates with it.
    independent ones), exactly one recommendation each:
    - campaign.sh drift/missing → `checkup.sh <root> --sync` (key-based config
      merge: project values and custom vars survive; review `git diff` after).
+   - `harness-changes | NO-BASELINE` (campaign.sh may be IN-SYNC yet
+     unstamped — every raw-copy install starts this way) → offer
+     `checkup.sh <root> --sync` to establish the stamp; note the protection
+     is forward-only, so pair it with the one-time hand review the row's
+     own message describes.
    - hook missing → copy + run `assets/install-hooks.sh` (skip is legitimate
      for trunk-dev repos — say so).
    - CLAUDE.md wiring gaps → MERGE the missing blocks/clauses into the
