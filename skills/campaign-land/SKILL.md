@@ -77,8 +77,10 @@ Three routes, in preference order:
   if absent, SAY SO, take the subagent route, and record the degradation in
   the report row ("plugin absent → review subagent") — never discover absence
   via a failed call and silently downgrade.
-- **User-run `/code-review`** — the built-in, fine in an attended session; the
-  user runs it, the agent cannot.
+- **User-run `/code-review`** — counts as this route ONLY when the user ran
+  it of their own accord. **Never ASK the user to run it and wait** — that
+  deferral is the pre-v0.4.19 fossil this route list exists to kill; if the
+  review has not happened, that case IS route 1: invoke the plugin yourself.
 - **A review subagent** — fallback when the plugin is absent or there is no
   PR. Dispatch one scoped to the final diff: give it the diff range, the
   files, and the *claims the campaign doc makes*, and ask it to check the
@@ -155,7 +157,12 @@ sanity"). Rules that live only as prose get skipped; artifacts don't. Two
 field recurrences proved a chat-printed table gates nothing — so:
 
 **The land report lives IN the state doc (`docs/campaigns/<name>.md`), not in
-chat.** Scaffold it with `campaign.sh land <name> --report` (appends the blank
+chat.** Two mechanical contracts on that doc: (1) the scaffold's `## land
+report` heading and `| phase |` header line are LOAD-BEARING — the land gate
+matches them; translate or rewrite row CONTENT freely, keep those two lines
+intact. (2) The state doc is TRUNK-owned — the coordinator commits it at the
+anchor; the campaign branch must NOT track it (add/add conflict at merge —
+`land` warns if it does; resolve as UNION per Phase 5). Scaffold it with `campaign.sh land <name> --report` (appends the blank
 table); `campaign.sh land` REFUSES to push without it, and Phase-7 cleanup
 still requires the filled verdict line. Fill rows as phases complete:
 

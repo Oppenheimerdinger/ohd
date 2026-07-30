@@ -182,7 +182,7 @@ STAMP_VER=""
 if [ -f "$DST" ] && [ ! -f "$CHLOG" ]; then
   report "harness-changes" "NO-CHANGELOG" "plugin CHANGELOG.md missing next to assets/ — partial install? change relay unavailable"
 elif [ -f "$DST" ] && [ -z "$STAMP_VER" ]; then
-  report "harness-changes" "NO-BASELINE" "$DST carries no synced-from stamp — change relay skipped (one --sync establishes the baseline)"
+  report "harness-changes" "NO-BASELINE" "$DST carries no synced-from stamp — one --sync establishes it; a FORK-kept copy may hand-add \`# synced-from ohd v$PLUGVER (manual)\` — NOTE: that stamps baseline=now, waiving relay of all PAST behavior changes; review the plugin CHANGELOG.md by hand once, or stamp your actual divergence version if known"
 elif [ -n "$STAMP_VER" ] && [ "$PLUGVER" = unknown ]; then
   report "harness-changes" "UNKNOWN" "installed plugin version unreadable (plugin.json) — change relay skipped"
 elif [ -n "$STAMP_VER" ] && [ "$STAMP_VER" != "$PLUGVER" ]; then
