@@ -1,3 +1,17 @@
+## v0.5.15 (2026-07-30)
+
+BEHAVIOR-CHANGE: an autonomous (unattended-completion) mandate now requires setting up a persistence loop as the session's FIRST action — a bare session under an autonomous mandate is non-compliant (way-of-working, persistence loops).
+
+- Third field occurrence of the promise-ending-turn stall, this time under an
+  autonomous mandate with no loop. Research (community + first-party):
+  the standard fix is state-based stop-blocking (ralph-style loops with
+  completion conditions; Anthropic now ships an official ralph-loop plugin),
+  NOT phrase heuristics — and plugin-shipped Stop hooks currently cannot
+  force continuation (upstream #10412), ruling out an ohd hook regardless.
+  Shipped the zero-build fix: the mandate→loop-first rule, verifiable at a
+  glance by the user who granted autonomy. Promise-guard hook recorded as
+  backlog #9 with its blocking conditions.
+
 ## v0.5.14 (2026-07-30)
 
 (maintainer amendments at merge, from the 5-lens review: 3b gains an
