@@ -140,7 +140,9 @@ set them).
 
 **Pre-approval path**: if the user has explicitly authorized autonomous
 execution for this run ("자율적으로 진행", "run autonomously", "승인 생략" /
-"skip approval", "게이트 스킵"), do not wait at the gate — but STILL print the
+"skip approval", "게이트 스킵"), do not wait at the gate. (This waiver
+covers THIS RUN's gate only — it is not a session-wide autonomous mandate;
+do not set up a persistence loop for it.) — but STILL print the
 full brief and the banner, AND write brief + banner + convergence log (and,
 after the run, the result + evidence grade WITH its mode inline — the
 "a grade never travels alone" rule applies doubly to a file) to a file

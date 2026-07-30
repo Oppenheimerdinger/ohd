@@ -1,3 +1,21 @@
+## v0.5.17 (2026-07-30)
+
+BEHAVIOR-CHANGE: saying "자율진행"/"run this autonomously" (session-scope, unattended) now auto-fires the new ohd:autonomous-mandate skill — loop setup becomes the first action; deep-solve's per-run "자율적으로 진행" waiver explicitly does NOT trigger it.
+
+- NEW skill autonomous-mandate: description-triggered (the fleet's measured
+  always-loaded activation surface) so the v0.5.15 mandate->loop rule fires
+  on the mandate wording itself. Procedure: contract (done-condition, cap,
+  completion phrase) -> launch official ralph-loop via its setup script
+  (slash command is user-facing only; path from installed_plugins.json,
+  cache glob fallback; session binding verified) -> completion phrase only
+  in <promise> tags after quoting the independent evaluator's verdict ->
+  mandate persisted to the state doc. Fallback tiers: OMC ralph -> built-in
+  /loop (never bare). Validated per 2b: plugin-validator CLEAN (facts
+  checked against installed ralph-loop 1.0.0); independent review 5 findings
+  fixed (deep-solve waiver collision carve-out BOTH sides, authoritative
+  path source, unattended plugin-absent dead-end, promise-tag exit format,
+  description budget).
+
 ## v0.5.16 (2026-07-30)
 
 - /ohd-setup gains **ralph-loop** (official marketplace, name verified
