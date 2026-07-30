@@ -1,6 +1,6 @@
 ---
 name: autonomous-mandate
-description: This skill MUST fire when the user grants UNATTENDED, session-scope autonomous completion — "자율진행", "자율로 완수해", "알아서 끝까지 해", "run this autonomously", "while I'm away". NOT for deep-solve's per-run gate waiver ("자율적으로 진행" scoped to one launch — that skill handles it). First action: persistence-loop setup; bare autonomous sessions stall.
+description: This skill MUST fire when the user grants UNATTENDED, session-scope autonomous completion — "자율진행", "자율로 완수해", "알아서 끝까지 해", "run this autonomously", "while I'm away". NOT for deep-solve's per-run gate waiver ("자율적으로 진행" scoped to one launch — that skill handles it). First action — persistence-loop setup; bare autonomous sessions stall.
 ---
 
 # Autonomous mandate — the loop comes first
@@ -53,5 +53,16 @@ loop for it. This skill is for session-scope, user-absent mandates.
 4. **Persist the mandate**: record scope, cap, and completion phrase in the
    project's state doc or notes — an unattended session's chat record
    evaporates, and the loop may outlive this context window.
-5. Cancellation: the user runs `/cancel-ralph`, or removes
-   `.claude/ralph-loop.local.md`.
+5. **Cancellation is USER-owned.** The user runs `/cancel-ralph` or removes
+   the state file from their shell. The looping session itself NEVER removes
+   `.claude/ralph-loop.local.md` **on its own initiative** (executing the
+   user's `/cancel-ralph` is the USER cancelling — the session is only the
+   mechanism) — killing the loop's state on its own judgment is the same
+   self-grading termination as emitting an unverdicted `<promise>`, just by
+   another door. In particular, "the remaining work is owned by agents whose
+   notifications will resume me" is NOT a termination verdict: an
+   idle_notification means "nothing to say", not "done" (field record: three
+   agents idled with uncommitted fixes, missing deliverables, and missing
+   verdicts — the loop, not the notifications, was the only real resume
+   mechanism). If you believe the loop should end, dispatch the independent
+   evaluator and exit through its verdict — there is no other exit.

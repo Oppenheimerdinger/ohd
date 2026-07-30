@@ -1,3 +1,20 @@
+## v0.5.18 (2026-07-30)
+
+BEHAVIOR-CHANGE: a looping session never cancels its own loop — deleting the ralph-loop state file is self-grading termination, same as an unverdicted promise; cancellation is user-owned (/cancel-ralph or shell). The only session-side exit is the independent evaluator's verdict.
+
+- Field incident: a session under ralph-loop deleted its own state file at
+  iteration 5, reasoning "remaining work is agent-owned; notifications will
+  resume me" — then collected three counterexamples itself (agents idling
+  with uncommitted fixes / missing deliverables / missing verdicts).
+  idle_notification means "nothing to say", not "done" (idle != done — the
+  twin of way-of-working's "Idle != dead"). Root cause was partly ours: the
+  autonomous-mandate skill's cancellation line taught the session the kill
+  path. Step 5 rewritten (cancellation ownership, the named rationalization,
+  the evaluator-only exit); way-of-working's verdict-artifact rule gains the
+  state-file clause. A mechanical file-deletion block was considered and
+  REJECTED: porous against full-Bash sessions (mv/truncate/python bypasses)
+  — a leaky gate is worse than a named rule.
+
 ## v0.5.17 (2026-07-30)
 
 BEHAVIOR-CHANGE: saying "자율진행"/"run this autonomously" (session-scope, unattended) now auto-fires the new ohd:autonomous-mandate skill — loop setup becomes the first action; deep-solve's per-run "자율적으로 진행" waiver explicitly does NOT trigger it.
