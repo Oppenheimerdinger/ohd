@@ -70,3 +70,16 @@ made once with full context, read-time reduced to literal grep, movable
 into assets/checkup.sh's mechanical tier. Cost: brittle to paraphrase in
 project docs (same missed-row failure the bounded-judgment version already
 accepts, made deterministic). (2026-07-30)
+
+## 9. promise-guard Stop hook — DEFERRED pending upstream + loop adoption
+
+Sessions ending turns on declarative promises ("계속 진행하겠습니다") stall
+unattended work (3 field occurrences). Research verdict (2026-07-30): the
+community-standard fix is STATE-based stop-blocking (ralph-style loops with
+completion conditions), not phrase heuristics on the last message — and
+plugin-shipped Stop hooks currently fail to continue (upstream #10412), so
+ohd cannot ship one anyway. Adopted instead: the way-of-working rule that an
+autonomous mandate's first action is loop setup (v0.5.15). Revisit a
+phrase-tripwire hook only if stalls recur UNDER loops, and only after
+#10412 is fixed (or as a user-settings hook offered by ohd-setup, which
+sidesteps the plugin path).
