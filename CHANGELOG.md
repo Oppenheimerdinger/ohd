@@ -1,3 +1,41 @@
+## v0.5.14 (2026-07-30)
+
+BEHAVIOR-CHANGE: /ohd-checkup gains a `RETIRED-ROUTE` row — a project CLAUDE.md (or memory store) still naming a mechanism a relayed BEHAVIOR-CHANGE retired is now reported, where before it passed green as "present, mere wording".
+
+- Field defect: a project session kept re-deriving a review route that a
+  BEHAVIOR-CHANGE had made agent-invalid ~15 versions earlier, because the
+  route was still written into that project's own CLAUDE.md (5 sites) and into
+  its auto-memory as a standing rule. Every session read it and complied; the
+  user had "fixed it in the harness" and the harness WAS current. Repeated
+  /ohd-checkup runs reported green.
+- Root cause was a genuine blind spot between pass 3's two cases, not a stale
+  install: the wiring pass checks item PRESENCE and is explicitly told to
+  "never flag mere wording differences". A retired ROUTE is neither — the rule
+  is present and load-bearing, only the mechanism it names has expired — so
+  neither case fires, and the drift table certifies the fossil indefinitely.
+  The narrower the retired thing, the longer it survives.
+- Fix (pass 3b, semantic, BOUNDED): cross-check the project's CLAUDE.md AND its
+  memory store against the retired routes named in the `harness-changes` rows
+  the script already relays. Bounded on purpose — no general prose policing,
+  and the command does not re-derive project impact from CHANGELOG prose
+  (that judgment happens at release time, per §RELEASING 2c; the script's
+  relay stays mechanical). Runs ONLY when `harness-changes` reports `REVIEW`
+  (an inversion of the script's status set, not an enumerated skip list, so
+  it can't drift out of sync when the script adds a new no-relay status).
+- Also: the memory store was read by NO checkup pass, though a standing rule
+  there re-derives as reliably as CLAUDE.md — 3b now greps it, and pass 6's
+  claude-md-sanity trigger fires when a repair touched it. ★Both stores are
+  in scope: the repo-relative `MEMORY.md` + `memory/*.md` (if the project
+  keeps one) AND the **out-of-repo auto-memory store** — the store the
+  original defect actually lived in, which a repo-relative grep never
+  reaches. 3b resolves its location the same way `claude-md-sanity`'s Check 3
+  does, at runtime, rather than inlining a path (found by internal review
+  before ship: the first draft named only the repo-relative paths, which
+  don't exist on most projects — the out-of-repo store is where the standing
+  rule from the field defect actually sat, ~168 files deep). A `RETIRED-ROUTE`
+  repair landing in that out-of-repo store never shows up in `git diff`,
+  so step 7 now calls that out separately.
+
 ## v0.5.13 (2026-07-30)
 
 BEHAVIOR-CHANGE: the land gate now also accepts the scaffold's `## land report` heading — translate/rename table row content freely, but the heading and `| phase |` header lines are load-bearing; the refusal message says so.
