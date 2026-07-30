@@ -132,7 +132,9 @@ may only be declared finished by quoting the evaluator's verdict verbatim
 that quote to the loop's own state/notes file — chat scrolls away, and loops
 are exactly the workloads that outlive the attention span of whoever started
 them. No quoted verdict = the loop is not done — "the evaluator would agree"
-is the looping session grading itself with extra steps.
+is the looping session grading itself with extra steps — and so is
+DELETING the loop's state file (a looping session never cancels its own
+loop; cancellation is the user's).
 
 If ralph (or similar) is used: ① mentioning the word in a design conversation
 can auto-register its state — a status question is not a task; cancel misfired
