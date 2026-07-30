@@ -84,7 +84,7 @@ cmd_new() {
 - result / verdict:
 - follow-on:
 DOC
-    echo "state doc: $doc  (commit it on trunk — docs are allowed there)"
+    echo "state doc: $doc  (TRUNK-owned: commit it on trunk; do NOT commit it on the campaign branch — add/add conflicts at merge)"
   fi
   echo "worktree: $wt  (branch '$n' off origin/$TRUNK)"
   [ -n "$WORKTREE_HINT" ] && echo "${WORKTREE_HINT//\{wt\}/$wt}"
@@ -101,7 +101,7 @@ cmd_land() {
   # only remaining work.
   if [ "${2:-}" = "--report" ]; then
     [ -f "$doc" ] || die "no state doc at $doc (run 'campaign.sh new' first?)"
-    grep -qi '| phase |' "$doc" && die "$doc already has a land-report table"
+    grep -qiE '^##[[:space:]]*land[- ]report|\| phase \|' "$doc" && die "$doc already has a land-report table"
     cat >> "$doc" <<'TBL'
 
 ## land report
@@ -129,8 +129,12 @@ TBL
   # from memory).
   if [ "${LAND_GUARD:-1}" != "0" ] \
      && ! grep -qi '| phase |' "$doc" 2>/dev/null \
+     && ! grep -qiE '^##[[:space:]]*land[- ]report' "$doc" 2>/dev/null \
      && ! grep -qiE '^[[:space:]]*-?[[:space:]]*land-report[[:space:]]*:' "$doc" 2>/dev/null; then
-    die "refusing land: '$doc' has no land-report (load the campaign-land skill; scaffold the table with 'campaign.sh land $n --report'). Bypass: LAND_GUARD=0 campaign.sh land $n"
+    die "refusing land: '$doc' has no land-report — the gate matches the '## land report' heading or the '| phase |' header (keep those lines intact; row content is yours). Scaffold: 'campaign.sh land $n --report'. Bypass: LAND_GUARD=0 campaign.sh land $n"
+  fi
+  if git -C "$wt" ls-files --error-unmatch "$doc" >/dev/null 2>&1; then
+    echo "WARN: the campaign branch tracks $doc — the state doc is TRUNK-owned; if the merge conflicts on it, resolve as UNION (campaign-land Phase 5)." >&2
   fi
   git -C "$wt" push -u origin "$n"
   if command -v gh >/dev/null 2>&1; then

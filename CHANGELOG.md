@@ -1,3 +1,28 @@
+## v0.5.13 (2026-07-30)
+
+BEHAVIOR-CHANGE: the land gate now also accepts the scaffold's `## land report` heading — translate/rename table row content freely, but the heading and `| phase |` header lines are load-bearing; the refusal message says so.
+BEHAVIOR-CHANGE: the state doc is TRUNK-owned — `land` WARNS when the campaign branch tracks it (add/add at merge); `new` says so at creation.
+BEHAVIOR-CHANGE: fork-kept tools/campaign.sh copies can hand-add a `# synced-from ohd vX.Y.Z (manual)` line to receive BEHAVIOR-CHANGE relays (checkup's NO-BASELINE message explains).
+
+- Three field defects from a project session (self-diagnosed via the STALE
+  row — the machinery worked):
+  - Land gate matched only the literal `| phase |` header, refusing a
+    legitimate report whose table header had been translated → gate accepts
+    the `## land report` heading too; the load-bearing lines are named in
+    campaign-land and in the refusal message.
+  - State-doc dual-home (trunk copy + branch copy) caused recurring add/add
+    merge conflicts → ownership defined (trunk-only), mechanical WARN at
+    land, UNION-resolution pointer.
+  - Fork projects (legitimately SYNC-REFUSED) had no version baseline, so
+    the v0.5.12 BEHAVIOR-CHANGE relay would stay silent for them forever →
+    the manual-stamp path reuses the existing mechanism, no new machinery.
+  - campaign-land route 2 sharpened: "user-run" counts only unprompted —
+    asking the user to run /code-review is not a route (field fossil from a
+    pre-0.4.19 session). Platform note, verified against docs: Claude Code
+    has NO per-command disable setting (a subagent's claimed
+    disabledSlashCommands key does not exist; disableBundledSkills would
+    also kill /loop and schedule) — so this stays a skill-layer rule.
+
 ## v0.5.12 (2026-07-29)
 
 BEHAVIOR-CHANGE: campaign-land Phase 6 sanity gains a named skip condition — a land touching no docs/CLAUDE.md/memory may skip it; the skip row's evidence cell must carry the `git diff --name-only` artifact (attested, not gated).

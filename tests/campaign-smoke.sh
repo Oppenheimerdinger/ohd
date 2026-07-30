@@ -28,13 +28,13 @@ git rev-parse -q --verify c1 >/dev/null   || fail "branch missing"
 if CAMPAIGN_NAMING=numbered "$CS" new badname 2>/dev/null; then fail "numbered naming accepted bad name"; fi
 
 # status before push: NO-BRANCH
-"$CS" status c1 | grep -q NO-BRANCH        || fail "expected NO-BRANCH before push"
+out="$("$CS" status c1)"; grep -q NO-BRANCH <<<"$out" || fail "expected NO-BRANCH before push"
 
 # work + push (simulating what land does, without gh)
 ( cd "$TMP/wt/c1" && echo work > f.txt && git add f.txt && git commit -qm work && git push -q -u origin c1 )
 
 # status after push, unmerged, gh-free: UNVERIFIED (must NOT claim UNMERGED without PR API)
-PATH="/usr/bin:/bin" "$CS" status c1 | grep -q UNVERIFIED || fail "expected UNVERIFIED without gh"
+out="$(PATH="/usr/bin:/bin" "$CS" status c1)"; grep -q UNVERIFIED <<<"$out" || fail "expected UNVERIFIED without gh"
 
 # clean must refuse an unmerged branch
 if PATH="/usr/bin:/bin" "$CS" clean c1 2>/dev/null; then fail "clean accepted unmerged branch"; fi
@@ -49,7 +49,7 @@ if "$CS" clean c3 2>/dev/null; then fail "clean destroyed a never-pushed campaig
 
 # merge on trunk → status flips to MERGED (ancestry)
 git fetch -q origin && git merge -q --no-ff origin/c1 -m merge && git push -q origin main
-"$CS" status c1 | grep -q "MERGED (ancestry)" || fail "expected MERGED after merge"
+out="$("$CS" status c1)"; grep -q "MERGED (ancestry)" <<<"$out" || fail "expected MERGED after merge"
 
 # verdict gate: merged but state doc verdict still empty → clean must refuse
 if "$CS" clean c1 2>/dev/null; then fail "clean accepted a land with an empty verdict line"; fi
@@ -73,8 +73,8 @@ git push -q origin --delete c2
 "$CS" list >/dev/null || fail "list errored"
 
 # worktree hint: {wt} substituted when set, silent when empty
-CAMPAIGN_WORKTREE_HINT='test: run {wt}/go' "$CS" new c5 | grep -q "test: run $TMP/wt/c5/go" \
-  || fail "worktree hint not printed/substituted"
+out="$(CAMPAIGN_WORKTREE_HINT='test: run {wt}/go' "$CS" new c5)"
+grep -q "test: run $TMP/wt/c5/go" <<<"$out" || fail "worktree hint not printed/substituted"
 "$CS" abort c5 >/dev/null
 
 # submodule init: a fresh worktree must have populated submodules
@@ -138,10 +138,10 @@ git ls-remote --exit-code origin f2 >/dev/null 2>&1  || fail "F2: remote branch 
 f3tip="$(git rev-parse f3)"
 git fetch -q origin && git merge -q --squash origin/f3 && git commit -qm "squash f3" && git push -q origin main
 git fetch -q origin --prune
-GH_MOCK="$(merged_pr 3 "$f3tip")" PATH="$ghp" "$CS" status f3 | grep -q "MERGED (via PR" \
-  || fail "F3: status missed a squash merge whose PR head matches the tip"
-GH_MOCK="$(merged_pr 3 "$badoid")" PATH="$ghp" "$CS" status f3 | grep -q "UNMERGED?" \
-  || fail "F3: status treated a stale-tip MERGED PR as this work"
+out="$(GH_MOCK="$(merged_pr 3 "$f3tip")" PATH="$ghp" "$CS" status f3)"
+grep -q "MERGED (via PR" <<<"$out" || fail "F3: status missed a squash merge whose PR head matches the tip"
+out="$(GH_MOCK="$(merged_pr 3 "$badoid")" PATH="$ghp" "$CS" status f3)"
+grep -q "UNMERGED?" <<<"$out" || fail "F3: status treated a stale-tip MERGED PR as this work"
 sed -i 's|- result / verdict:|- result / verdict: LANDS|' docs/campaigns/f3.md
 GH_MOCK="$(merged_pr 3 "$f3tip")" PATH="$ghp" "$CS" clean f3 >/dev/null \
   || fail "F3: clean refused a squash-merged branch (matching tip)"
@@ -158,6 +158,25 @@ grep -q '| phase |' docs/campaigns/g1.md || fail "--report did not append the ta
 PATH="/usr/bin:/bin" "$CS" land g1 >/dev/null 2>&1 || fail "land refused despite land-report table"
 git ls-remote --exit-code origin g1 >/dev/null 2>&1 || fail "land did not push with table present"
 "$CS" abort g1 --purge >/dev/null
+
+# translated table header under an intact heading must still pass the gate
+"$CS" new g3 >/dev/null
+( cd "$TMP/wt/g3" && echo w > g3.txt && git add . && git commit -qm g3 )
+PATH="/usr/bin:/bin" "$CS" land g3 --report >/dev/null
+sed -i 's/| phase | ran? | evidence |/| 단계 | 실행? | 증거 |/' docs/campaigns/g3.md
+sed -i 's/|-------|------|----------|/|------|------|------|/' docs/campaigns/g3.md
+PATH="/usr/bin:/bin" "$CS" land g3 >/dev/null 2>&1 || fail "translated header under intact heading was refused"
+git ls-remote --exit-code origin g3 >/dev/null 2>&1 || fail "g3 did not push"
+"$CS" abort g3 --purge >/dev/null
+
+# branch tracking the state doc must trigger the trunk-ownership WARN
+"$CS" new g4 >/dev/null
+( cd "$TMP/wt/g4" && echo w > g4.txt && mkdir -p docs/campaigns && echo "# campaign: g4" > docs/campaigns/g4.md \
+  && git add . && git commit -qm g4 )
+PATH="/usr/bin:/bin" "$CS" land g4 --report >/dev/null
+out="$(PATH="/usr/bin:/bin" "$CS" land g4 2>&1)" || fail "g4 land failed outright"
+grep -q "TRUNK-owned" <<<"$out" || fail "branch-tracked state doc did not WARN"
+"$CS" abort g4 --purge >/dev/null
 
 # LAND_GUARD=0 bypass
 "$CS" new g2 >/dev/null
