@@ -119,7 +119,9 @@ A bare session under an autonomous mandate dies silently at its first
 promise-ending turn — three field occurrences, and no prose reminder has
 ever prevented one. The user can verify compliance at a glance: the first
 visible action after granting autonomy is loop setup, or the session is
-not running autonomously.
+not running autonomously. The ohd:autonomous-mandate skill carries the
+trigger phrases and the setup procedure — it fires on the mandate wording
+itself ("자율진행", "자율로 완수해"), not on this paragraph being read.
 
 **Loop termination is judged by an independent evaluator agent, never by the
 looping session itself** — a session grading its own loop quits (or declares
