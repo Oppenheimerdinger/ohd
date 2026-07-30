@@ -19,11 +19,22 @@ BEHAVIOR-CHANGE: /ohd-checkup gains a `RETIRED-ROUTE` row — a project CLAUDE.m
   the script already relays. Bounded on purpose — no general prose policing,
   and the command does not re-derive project impact from CHANGELOG prose
   (that judgment happens at release time, per §RELEASING 2c; the script's
-  relay stays mechanical). Skipped when the relay has no baseline.
-- Also: the memory store (`MEMORY.md` + `memory/*.md`) was read by NO checkup
-  pass, though a standing rule there re-derives as reliably as CLAUDE.md — 3b
-  greps it, and pass 6's claude-md-sanity trigger now also fires when a repair
-  touched it.
+  relay stays mechanical). Runs ONLY when `harness-changes` reports `REVIEW`
+  (an inversion of the script's status set, not an enumerated skip list, so
+  it can't drift out of sync when the script adds a new no-relay status).
+- Also: the memory store was read by NO checkup pass, though a standing rule
+  there re-derives as reliably as CLAUDE.md — 3b now greps it, and pass 6's
+  claude-md-sanity trigger fires when a repair touched it. ★Both stores are
+  in scope: the repo-relative `MEMORY.md` + `memory/*.md` (if the project
+  keeps one) AND the **out-of-repo auto-memory store** — the store the
+  original defect actually lived in, which a repo-relative grep never
+  reaches. 3b resolves its location the same way `claude-md-sanity`'s Check 3
+  does, at runtime, rather than inlining a path (found by internal review
+  before ship: the first draft named only the repo-relative paths, which
+  don't exist on most projects — the out-of-repo store is where the standing
+  rule from the field defect actually sat, ~168 files deep). A `RETIRED-ROUTE`
+  repair landing in that out-of-repo store never shows up in `git diff`,
+  so step 7 now calls that out separately.
 
 ## v0.5.13 (2026-07-30)
 
