@@ -1,3 +1,12 @@
+## v0.5.16 (2026-07-30)
+
+- /ohd-setup gains **ralph-loop** (official marketplace, name verified
+  against the marketplace manifest) — the v0.5.15 mandate->loop-first rule
+  now has an installable vehicle instead of an "if installed" shrug; README's
+  "loop plugins are a personal choice" stance (v0.5.3) narrowed accordingly:
+  still true for ordinary work, no longer for autonomous mandates.
+  /ohd-checkup's dependency pass follows automatically (reads setup §1).
+
 ## v0.5.15 (2026-07-30)
 
 BEHAVIOR-CHANGE: an autonomous (unattended-completion) mandate now requires setting up a persistence loop as the session's FIRST action — a bare session under an autonomous mandate is non-compliant (way-of-working, persistence loops).

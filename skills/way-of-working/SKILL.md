@@ -107,14 +107,14 @@ field observation behind this rule.
 |---|---|
 | Recurring run / polling | built-in `/loop` (zero install, self-pacing) |
 | Scheduled / cron | built-in `schedule` |
-| "Keep going until done" in-session | only then a persistence mode such as oh-my-claudecode's ralph — a heavy install with a known keyword-misfire history |
+| "Keep going until done" in-session | the official **ralph-loop** plugin (installed by /ohd-setup); oh-my-claudecode's ralph also works — heavier, with a known keyword-misfire history |
 
 **An autonomous mandate means a loop, FIRST.** When the user hands over
 unattended completion ("자율로 완수해", "run this to the end while I'm
 away"), the session's FIRST action is to set up the persistence loop it
 will run under (pick from the table above — for must-complete work that is
-ralph, or the official ralph-loop plugin if installed) before touching the
-work itself.
+the official ralph-loop plugin, or oh-my-claudecode's ralph) before
+touching the work itself.
 A bare session under an autonomous mandate dies silently at its first
 promise-ending turn — three field occurrences, and no prose reminder has
 ever prevented one. The user can verify compliance at a glance: the first

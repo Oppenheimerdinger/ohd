@@ -63,9 +63,11 @@ the old plugin installed, remove it to avoid double registration:
   claude-md-sanity findings; each degrades to generic-subagent / manual-diff
   work when absent.
 - **superpowers**: recommended — required for the full workflow from v0.2;
-  v0.1 works without it. Persistence-loop
-  plugins (e.g. oh-my-claudecode's ralph) are a personal choice, not an ohd
-  dependency — way-of-working routes to built-in `/loop`/schedule first.
+  v0.1 works without it. For ordinary work,
+  persistence-loop plugins are optional — way-of-working routes to built-in
+  `/loop`/schedule first. An AUTONOMOUS (unattended-completion) mandate,
+  however, requires a completion loop: **ralph-loop** (official marketplace)
+  is the recommended vehicle; oh-my-claudecode's ralph also qualifies.
   `/ohd-setup` checks the dependencies above.
 
 ## Uninstall / rollback
