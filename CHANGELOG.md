@@ -1,5 +1,12 @@
 ## v0.5.14 (2026-07-30)
 
+(maintainer amendments at merge, from the 5-lens review: 3b gains an
+explicit unresolvable-store MANUAL row — silent zero-rows was the same
+blindness the pass closes; step 5 gains a NO-BASELINE repair bullet — every
+raw-copy install starts unstamped, so the motivating project class had zero
+3b coverage; the status-set enumeration was dropped per the command's own
+DRY rule. Follow-up in backlog: release-time `RETIRES:` sub-marker.)
+
 BEHAVIOR-CHANGE: /ohd-checkup gains a `RETIRED-ROUTE` row — a project CLAUDE.md (or memory store) still naming a mechanism a relayed BEHAVIOR-CHANGE retired is now reported, where before it passed green as "present, mere wording".
 
 - Field defect: a project session kept re-deriving a review route that a
@@ -24,7 +31,7 @@ BEHAVIOR-CHANGE: /ohd-checkup gains a `RETIRED-ROUTE` row — a project CLAUDE.m
   it can't drift out of sync when the script adds a new no-relay status).
 - Also: the memory store was read by NO checkup pass, though a standing rule
   there re-derives as reliably as CLAUDE.md — 3b now greps it, and pass 6's
-  claude-md-sanity trigger fires when a repair touched it. ★Both stores are
+  claude-md-sanity trigger fires when a repair touched it. Both stores are
   in scope: the repo-relative `MEMORY.md` + `memory/*.md` (if the project
   keeps one) AND the **out-of-repo auto-memory store** — the store the
   original defect actually lived in, which a repo-relative grep never
