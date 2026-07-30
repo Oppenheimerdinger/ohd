@@ -38,6 +38,30 @@ plugin updates, this command's standard updates with it.
    concurrency rule the old block predates), add an `OPTIONAL-REFRESH` row
    naming the missing clause; never auto-apply, and never flag mere wording
    differences.
+3b. **Retired-route pass (semantic)**: a PRESENT item can name a **route a
+   BEHAVIOR-CHANGE has RETIRED** — the rule survives, the mechanism it names
+   no longer works. That is neither a missing rule nor mere wording, so 3's
+   two cases both miss it and the table stays green while every session
+   re-derives the dead route from the project's own CLAUDE.md. Bound this to
+   the `harness-changes` rows the script just relayed — do NOT go hunting for
+   prose to dislike, and do not re-derive project impact from CHANGELOG prose
+   yourself (that judgment happened at release time). Run this pass ONLY when
+   the mechanical pass's `harness-changes` row reports `REVIEW` — an
+   inversion, not an enumerated skip list, on purpose: every OTHER status
+   `assets/checkup.sh` can emit (`NO-CHANGELOG` / `NO-BASELINE` / `UNKNOWN` /
+   `ANOMALY` / `INFO`), including the row being absent entirely on a project
+   with no `campaign.sh` yet, carries no bounded BEHAVIOR-CHANGE list for 3b
+   to check — enumerating them by name would drift out of sync the next time
+   the script adds one. For each relayed BEHAVIOR-CHANGE that retires or
+   re-routes a mechanism, grep the project's CLAUDE.md **and its memory
+   store** for the retired mechanism. BOTH stores are in scope: the
+   repo-relative `MEMORY.md` + `memory/*.md` if the project keeps one, AND the
+   out-of-repo auto-memory store — resolve its location the way
+   `ohd:claude-md-sanity`'s Check 3 does (read that skill at runtime for the
+   path; do not inline it here, per the DRY invariant above). A project's
+   standing rule commonly lives ONLY in the out-of-repo store, and no other
+   checkup pass reads it. Add one `RETIRED-ROUTE` row per hit, naming the
+   superseding route.
 4. **Drift table**: print ONE table — `item | status | fix` — merging all
    passes, ENDING with the script's scope footer relayed verbatim (what a
    green table does NOT attest: discipline compliance, code correctness).
@@ -50,13 +74,21 @@ plugin updates, this command's standard updates with it.
      for trunk-dev repos — say so).
    - CLAUDE.md wiring gaps → MERGE the missing blocks/clauses into the
      existing file from the template's shape; never replace the file.
+   - `RETIRED-ROUTE` → replace the named mechanism with the superseding route,
+     in place, at every hit (CLAUDE.md and the memory store — repo-relative
+     and/or out-of-repo, whichever 3b found the hit in); KEEP the rule — the
+     gate is not the thing that expired. A project may legitimately decline
+     (a fork carrying its own route on purpose); record that and move on.
    - state dir → mkdir + .gitkeep.
-6. **Content hygiene**: after repairs, if CLAUDE.md was touched (or the user
-   asks), invoke the `ohd:claude-md-sanity` skill — do NOT re-implement its
-   audit here.
+6. **Content hygiene**: after repairs, if CLAUDE.md **or the memory store** was
+   touched (or the user asks), invoke the `ohd:claude-md-sanity` skill — do NOT
+   re-implement its audit here.
 7. Uncommitted repairs at the end: remind the user to review `git diff` and
    commit (docs-only trunk hooks allow the .md and tools/ paths involved —
-   if a hook blocks, say which paths and why instead of forcing).
+   if a hook blocks, say which paths and why instead of forcing). A
+   `RETIRED-ROUTE` repair applied to the out-of-repo auto-memory store is not
+   under version control and so never shows up in that `git diff` — call it
+   out separately and point the user at the edited memory file(s) directly.
 
 ## Adoption (project never had the harness)
 
