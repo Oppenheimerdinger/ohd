@@ -20,6 +20,11 @@ the checklist.
      claude-md-sanity findings (sanity AUDITS only — `revise-claude-md` /
      `claude-md-improver` do the rewriting). Without it, fixes are manual
      edits proposed by sanity's report.
+   - **ralph-loop** — recommended; way-of-working requires an autonomous
+     (unattended-completion) mandate to run under a persistence loop, and
+     this is the official completion-loop plugin. Without it, an autonomous
+     mandate needs oh-my-claudecode's ralph (heavier, user's own choice) —
+     a bare session under such a mandate is non-compliant.
    - **deep-solve@dipark (stale)** — if installed, warn: this plugin bundles
      deep-solve, so both register the same skill and command; recommend
      `claude plugin uninstall deep-solve@dipark`.
@@ -32,6 +37,7 @@ the checklist.
    - code-review: `claude plugin install code-review@claude-plugins-official`
    - code-simplifier: `claude plugin install code-simplifier@claude-plugins-official`
    - claude-md-management: `claude plugin install claude-md-management@claude-plugins-official`
+   - ralph-loop: `claude plugin install ralph-loop@claude-plugins-official`
 3. Auto-update: third-party marketplaces default to autoUpdate OFF — offer
    to enable it for `dipark` via settings.json `extraKnownMarketplaces`
    (`"autoUpdate": true`; verify the exact schema against
