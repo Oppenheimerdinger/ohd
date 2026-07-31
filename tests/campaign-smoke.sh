@@ -34,6 +34,22 @@ export CAMPAIGN_WT_ROOT="$TMP/wt"
 )
 export CAMPAIGN_TRUNK=main
 
+# issue #10 regression guard: sibling clones that share one --separate-git-dir
+# PARENT must still land in DIFFERENT project slots. Deriving the project name
+# from the git dir's parent collapses both onto that parent, so the second
+# clone's 'new' collides on an already-existing worktree path.
+( unset CAMPAIGN_WT_ROOT
+  mkdir -p "$TMP/sephome" "$TMP/sepgit"
+  for p in alpha beta; do
+    git clone -q --separate-git-dir="$TMP/sepgit/$p.git" "$TMP/origin.git" "$TMP/sep/$p"
+    ( cd "$TMP/sep/$p" && git config user.email smoke@test && git config user.name smoke
+      HOME="$TMP/sephome" "$CS" new s1 >/dev/null ) \
+      || fail "--separate-git-dir clone '$p': new failed (sibling WT_ROOT collision?)"
+    [ -d "$TMP/sephome/wt/$p/s1" ] \
+      || fail "--separate-git-dir clone '$p': WT_ROOT project slot is not the project name"
+  done
+)
+
 # new: worktree + branch + state doc
 "$CS" new c1 >/dev/null
 [ -d "$TMP/wt/c1" ]                       || fail "worktree missing"
@@ -77,6 +93,9 @@ if "$CS" clean c1 2>/dev/null; then fail "clean accepted a plan-line 'result:' a
 # ...and a plan bullet merely CONTAINING a verdict word must not either (bare-word branch)
 echo '- [ ] check if this already LANDED upstream before redoing the work' >> docs/campaigns/c1.md
 if "$CS" clean c1 2>/dev/null; then fail "clean accepted a plan-line containing LANDED as a verdict"; fi
+# ...nor when the prose starts with a label token (decoration is ONE key, not prose)
+echo '- [ ] note: this already LANDED upstream, confirm before redoing' >> docs/campaigns/c1.md
+if "$CS" clean c1 2>/dev/null; then fail "clean accepted a labelled plan bullet as a verdict"; fi
 sed -i 's|- result / verdict:|- result / verdict: LANDS — smoke ok|' docs/campaigns/c1.md
 
 # clean now succeeds; worktree and branches gone
@@ -170,6 +189,22 @@ GH_MOCK="$(merged_pr 3 "$f3tip")" PATH="$ghp" "$CS" clean f3 >/dev/null \
   || fail "F3: clean refused a squash-merged branch (matching tip)"
 
 
+# ---- verdict gate: decoration is allowed, prose is not (v0.5.20 over-anchored) ----
+# Each form below is a verdict row a real state doc carries; the gate must accept
+# it. Acceptance is destructive (clean tears the campaign down), so one campaign
+# per form.
+verdict_ok() {   # <campaign name> <verdict row>
+  local n="$1" row="$2"
+  "$CS" new "$n" >/dev/null
+  ( cd "$TMP/wt/$n" && echo w > "$n.txt" && git add . && git commit -qm "$n" && git push -q -u origin "$n" )
+  git fetch -q origin && git merge -q --no-ff "origin/$n" -m "merge $n" && git push -q origin main
+  printf '%s\n' "$row" >> "docs/campaigns/$n.md"
+  "$CS" clean "$n" >/dev/null || fail "verdict gate refused a legitimate row: $row"
+}
+verdict_ok v1 '- **verdict**: LANDS — merged as PR #13'
+verdict_ok v2 '- 결론: LANDS — PR #13 머지됨'
+verdict_ok v3 '- [x] LANDED as PR #7'
+verdict_ok v4 '- `verdict`: LANDS'
 
 # ---- land gate: state doc must carry the land-report artifact before push ----
 "$CS" new g1 >/dev/null
@@ -200,6 +235,24 @@ PATH="/usr/bin:/bin" "$CS" land g4 --report >/dev/null
 out="$(PATH="/usr/bin:/bin" "$CS" land g4 2>&1)" || fail "g4 land failed outright"
 grep -q "TRUNK-owned" <<<"$out" || fail "branch-tracked state doc did not WARN"
 "$CS" abort g4 --purge >/dev/null
+
+# a plan bullet merely MENTIONING the header must not satisfy the land gate
+# (nor block --report as an "existing" table)
+"$CS" new g5 >/dev/null
+( cd "$TMP/wt/g5" && echo w > g5.txt && git add . && git commit -qm g5 )
+echo '- [ ] add a | phase | table later' >> docs/campaigns/g5.md
+if PATH="/usr/bin:/bin" "$CS" land g5 2>/dev/null; then fail "land accepted a plan bullet mentioning '| phase |'"; fi
+git ls-remote --exit-code origin g5 >/dev/null 2>&1 && fail "land gate died AFTER pushing (g5)"
+PATH="/usr/bin:/bin" "$CS" land g5 --report >/dev/null || fail "--report refused: plan bullet read as an existing table"
+PATH="/usr/bin:/bin" "$CS" land g5 >/dev/null 2>&1 || fail "land refused despite a real land-report table"
+"$CS" abort g5 --purge >/dev/null
+
+# the existence-only escape hatch stays valid
+"$CS" new g6 >/dev/null
+( cd "$TMP/wt/g6" && echo w > g6.txt && git add . && git commit -qm g6 )
+echo '- land-report: TBD' >> docs/campaigns/g6.md
+PATH="/usr/bin:/bin" "$CS" land g6 >/dev/null 2>&1 || fail "land refused a '- land-report:' line"
+"$CS" abort g6 --purge >/dev/null
 
 # LAND_GUARD=0 bypass
 "$CS" new g2 >/dev/null

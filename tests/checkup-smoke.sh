@@ -107,6 +107,43 @@ grep -q "oldland.md" <<<"$out"  || fail "GAPS detail missing the offending doc"
 grep -q "aborted.md" <<<"$out" && fail "abandoned campaign wrongly flagged as land gap"
 grep -q "openplan.md" <<<"$out" && fail "open campaign's plan-line 'result:' wrongly read as landed"
 rm docs/campaigns/openplan.md
+
+# 9b) decorated / translated verdict rows must be COUNTED, not silently skipped
+#     (v0.5.20's anchoring made the audit under-report), and a decorated
+#     abandonment must still be excluded. A plan bullet mentioning the table
+#     header must not exempt a landed doc either.
+cat > docs/campaigns/deco.md <<'EOF'
+# campaign: deco
+- **verdict**: LANDS — merged as PR #13
+EOF
+cat > docs/campaigns/korean.md <<'EOF'
+# campaign: korean
+- 결론: LANDS — PR #13 머지됨
+EOF
+cat > docs/campaigns/boxed.md <<'EOF'
+# campaign: boxed
+- [x] LANDED as PR #7
+EOF
+cat > docs/campaigns/decoabandon.md <<'EOF'
+# campaign: decoabandon
+- **verdict**: ABANDONED — superseded
+EOF
+cat > docs/campaigns/fakephase.md <<'EOF'
+# campaign: fakephase
+- result / verdict: LANDS — merged
+
+## plan
+- [ ] add a | phase | table later
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "deco.md" <<<"$out"       || fail "bold verdict row silently skipped by the land-report audit"
+grep -q "korean.md" <<<"$out"     || fail "translated-label verdict row silently skipped by the audit"
+grep -q "boxed.md" <<<"$out"      || fail "checkbox verdict row silently skipped by the audit"
+grep -q "fakephase.md" <<<"$out"  || fail "plan bullet mentioning '| phase |' wrongly exempted a landed doc"
+grep -q "decoabandon.md" <<<"$out" && fail "decorated ABANDONED row wrongly counted as a land gap"
+rm docs/campaigns/deco.md docs/campaigns/korean.md docs/campaigns/boxed.md \
+   docs/campaigns/decoabandon.md docs/campaigns/fakephase.md
+
 { echo; grep -m1 '^| phase | ran? | evidence |$' "$FAKE_ASSETS/campaign.sh"; } >> docs/campaigns/oldland.md \
   || fail "producer table header not found in campaign.sh (scaffold/audit integration broken)" 
 out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "land-reports | OK" <<<"$out" || fail "expected land-reports OK after backfill"

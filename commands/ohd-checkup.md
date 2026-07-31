@@ -74,7 +74,7 @@ plugin updates, this command's standard updates with it.
    independent ones), exactly one recommendation each:
    - campaign.sh drift/missing → `checkup.sh <root> --sync` (key-based config
      merge: config-block keys survive — the script BODY is replaced wholesale,
-   with a pre-sync backup written; review `git diff` after).
+     with a pre-sync backup written; review `git diff` after).
    - `harness-changes | NO-BASELINE` (campaign.sh may be IN-SYNC yet
      unstamped — every raw-copy install starts this way) → offer
      `checkup.sh <root> --sync` to establish the stamp; note the protection

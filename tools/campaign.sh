@@ -37,10 +37,20 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git rep
 cd "$ROOT"
 
 # Worktree roots are per-project: a flat shared root collides as soon as two
-# sibling projects both number campaigns from 001 (issue #10). The project
-# name must come from the MAIN worktree: inside a linked worktree,
-# --show-toplevel returns the worktree path (issue #10 follow-up).
-PROJECT_ROOT="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"
+# sibling projects both number campaigns from 001 (issue #10). The project name
+# must come from the MAIN worktree, and --show-toplevel is wrong for that in
+# exactly ONE layout — inside a linked worktree it returns the worktree path
+# (issue #10 follow-up) — so branch on the layout instead of rewriting every
+# case. Deriving the name from the git dir's parent is NOT a substitute: under
+# 'clone --separate-git-dir' every sibling project resolves to the shared gitdir
+# parent (siblings collide again), and inside a submodule every submodule
+# collapses onto its 'modules/…' parent. Neither is 'git worktree list' alone:
+# under --separate-git-dir its first entry reports the git dir, not the worktree.
+if [ "$(git rev-parse --git-dir)" = "$(git rev-parse --git-common-dir)" ]; then
+  PROJECT_ROOT="$ROOT"                                                     # main worktree
+else
+  PROJECT_ROOT="$(git worktree list --porcelain | awk 'NR==1{print $2}')"  # linked worktree
+fi
 WT_ROOT="${WT_ROOT:-$HOME/wt/$(basename "$PROJECT_ROOT")}"
 
 check_name() {
@@ -114,7 +124,7 @@ cmd_land() {
   # only remaining work.
   if [ "${2:-}" = "--report" ]; then
     [ -f "$doc" ] || die "no state doc at $doc (run 'campaign.sh new' first?)"
-    grep -qiE '^##[[:space:]]*land[- ]report|\| phase \|' "$doc" && die "$doc already has a land-report table"
+    grep -qiE '^##[[:space:]]*land[- ]report|^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$doc" && die "$doc already has a land-report table"
     cat >> "$doc" <<'TBL'
 
 ## land report
@@ -140,9 +150,10 @@ TBL
   # artifact BEFORE push+PR. Prose reminders here were skipped twice in the
   # field; die-gates never were. Existence-only check — content honesty stays
   # with the campaign-land skill (re-load it on EVERY land; do not re-enact
-  # from memory).
+  # from memory). The header match is line-anchored: a plan bullet that merely
+  # MENTIONS '| phase |' is prose, not the artifact.
   if [ "${LAND_GUARD:-1}" != "0" ] \
-     && ! grep -qi '| phase |' "$doc" 2>/dev/null \
+     && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$doc" 2>/dev/null \
      && ! grep -qiE '^##[[:space:]]*land[- ]report' "$doc" 2>/dev/null \
      && ! grep -qiE '^[[:space:]]*-?[[:space:]]*land-report[[:space:]]*:' "$doc" 2>/dev/null; then
     die "refusing land: '$doc' has no land-report — the gate matches the '## land report' heading or the '| phase |' header (keep those lines intact; row content is yours). Scaffold: 'campaign.sh land $n --report'. Bypass: LAND_GUARD=0 campaign.sh land $n"
@@ -260,10 +271,15 @@ cmd_clean() {
   # (campaign-land Phase 4, "docs in the SAME land") BEFORE the worktree is
   # destroyed. Content after the colon is required — the scaffold's empty
   # '- result / verdict:' line does not count. Bullet-anchored on purpose: a
-  # 'result:' inside the ## plan section must not satisfy this gate.
+  # 'result:' inside the ## plan section must not satisfy this gate. Between the
+  # bullet and the verdict only DECORATION may sit — a checkbox, emphasis
+  # characters, and/or ONE short label key ending in ':' — so bold, backticked
+  # and translated rows still count. Prose does not fit through that gap: a plan
+  # bullet like '- [ ] check if this already LANDED upstream …' puts several
+  # space-separated words there and stays blocked.
   local doc="$STATE_DIR/$n.md"
   if [ "${FORCE_CLEAN:-0}" != "1" ] && [ -f "$doc" ] && \
-     ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|^[[:space:]]*[-*][[:space:]]*\b(LANDS|LANDED|ABANDONED)\b' "$doc"; then
+     ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(\[[ xX]?\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|([^[:space:]:]{1,16}:[[:space:]]*)?[*_`]*\b(LANDS|LANDED|ABANDONED)\b)' "$doc"; then
     die "refusing clean: '$doc' has no filled verdict/result line — update the state doc (campaign-land Phase 4) first. Bypass: FORCE_CLEAN=1 campaign.sh clean $n"
   fi
   teardown "$n" yes

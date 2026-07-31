@@ -1,3 +1,26 @@
+## v0.5.22 (2026-07-31)
+
+BEHAVIOR-CHANGE: /ohd-checkup's land-report audit was silently UNDER-COUNTING since v0.5.20 — a landed state doc whose verdict row carried any decoration (`- **verdict**: LANDS`, `- [x] LANDED as PR #7`, a translated label key such as `- 결론: LANDS`) was skipped without an error, so a green `land-reports` row was not evidence of coverage; re-run checkup on projects audited under v0.5.20/v0.5.21.
+
+BEHAVIOR-CHANGE: `campaign.sh` derives the per-project worktree root from the layout again — under `clone --separate-git-dir` sibling projects no longer collapse onto the shared gitdir parent (reintroduced issue #10's cross-project collision) and submodules no longer collapse onto their `modules/…` parent.
+
+- Both regressions were found by an independent round-2 convergence pass over
+  v0.5.20 + v0.5.21, with live reproductions; the round-1 review had passed
+  them. Verdict-grep anchoring (v0.5.20) and the `--git-common-dir` project
+  root (v0.5.21) each fixed a real hole and opened another.
+- `clean`'s verdict gate and checkup's audit now share one rule: between the
+  bullet and the verdict, only DECORATION may sit — a checkbox, emphasis
+  characters, and/or ONE short label key ending in `:`. Prose still cannot
+  pose as a verdict, which is what the v0.5.20 anchoring was for
+  (`- [ ] check if this already LANDED upstream …` stays blocked).
+- Same bug class, pre-existing: the `land` gate's land-report check matched
+  `| phase |` anywhere on a line, so a plan bullet mentioning the header
+  satisfied it (and blocked `land --report` as a duplicate table). The header
+  match is line-anchored now; the scaffold's emitted lines are unchanged and
+  translated row content still passes.
+- Fixture coverage added for every case above, plus two sibling
+  `--separate-git-dir` clones opening campaigns without collision.
+
 ## v0.5.21 (2026-07-31)
 
 BEHAVIOR-CHANGE: the campaign worktree default root is now per-project (`$HOME/wt/<repo-basename>/`) — `CAMPAIGN_WT_ROOT` still overrides, existing projects keep their config's explicit old value through sync, and teardown now WARNs instead of claiming success when a worktree it cannot remove survives.

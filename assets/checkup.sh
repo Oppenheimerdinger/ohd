@@ -155,9 +155,14 @@ if [ -d "$SD" ]; then
   GAPS=""
   for d in "$SD"/*.md; do
     [ -f "$d" ] || continue
-    if grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|^[[:space:]]*[-*][[:space:]]*\b(LANDS|LANDED)\b' "$d" 2>/dev/null \
-       && ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
-       && ! grep -qi '| phase |' "$d" 2>/dev/null; then
+    # Same decoration allowance as campaign.sh's clean gate (checkbox / emphasis /
+    # ONE short label key between the bullet and the verdict), so bold, backticked
+    # and translated verdict rows are AUDITED rather than silently skipped, while
+    # plan-section prose still cannot pose as a verdict. The table check is
+    # line-anchored for the same reason: a bullet mentioning '| phase |' is prose.
+    if grep -qiE '^[[:space:]]*[-*][[:space:]]*(\[[ xX]?\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|([^[:space:]:]{1,16}:[[:space:]]*)?[*_`]*\b(LANDS|LANDED)\b)' "$d" 2>/dev/null \
+       && ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(\[[ xX]?\][[:space:]]*)?[*_`]*(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
+       && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$d" 2>/dev/null; then
       GAPS="$GAPS$(basename "$d") "
     fi
   done
