@@ -155,9 +155,37 @@ if [ -d "$SD" ]; then
   GAPS=""
   for d in "$SD"/*.md; do
     [ -f "$d" ] || continue
-    if grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|^[[:space:]]*[-*][[:space:]]*\b(LANDS|LANDED)\b' "$d" 2>/dev/null \
-       && ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
-       && ! grep -qi '| phase |' "$d" 2>/dev/null; then
+    # DELIBERATELY NOT the same rule as campaign.sh's clean gate. Their inputs
+    # differ: 'clean' only sees campaigns 'campaign.sh new' opened, so it can
+    # anchor on the literal '- result / verdict:' scaffold row that 'new'
+    # writes, and it does. This audit reads LEGACY docs, of which only 84 of 365
+    # carry that row, so anchoring on it would silently skip the other 77% —
+    # the failure this audit exists to remove. It stays TOLERANT instead:
+    # a REAL list marker (space after '[-*]', so a bold PARAGRAPH of
+    # sub-conclusions is not a verdict row), a checkbox only when CHECKED (an
+    # unchecked box is a TODO), and between marker and verdict only decoration:
+    # emphasis and/or ONE space-free label key ending in ':' (no length bound —
+    # a character count becomes a BYTE count under LC_ALL=C and drops non-ASCII
+    # labels). Bold, backticked, translated and 'status:'-labelled verdict rows
+    # are therefore AUDITED rather than skipped.
+    # The cost is over-reporting: '- TODO: LANDED upstream?' with no checkbox is
+    # a plan bullet, and it is reported. That is the accepted trade — this row's
+    # output is a prompt to go look ("backfill honestly or annotate"), whereas
+    # clean DESTROYS a worktree, which is why clean takes the strict anchor and
+    # this does not. Separating those two rows needs a list of blessed label
+    # words; that is the game v0.5.20 and v0.5.21 each lost.
+    # The abandon exclusion below repeats the positive test's marker/checkbox
+    # shape so the two stay symmetric. The hazard runs one way only: the
+    # exclusion SUBTRACTS, so making it STRICTER than the positive test excludes
+    # fewer docs and an ABANDONED doc starts being reported as a land-report gap.
+    # (Measured over the 365-doc corpus both directions are inert — 58 flagged
+    # either way — because only ONE corpus doc is excluded by this rule at all,
+    # and its row uses neither a checkbox nor pre-label emphasis. Symmetry is
+    # kept for the shape, not for a witness.) The table check is line-anchored
+    # for its own reason: a bullet mentioning '| phase |' is prose.
+    if grep -qiE '^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|([^[:space:]:]+:[[:space:]]*)?[*_`]*\b(LANDS|LANDED)\b)' "$d" 2>/dev/null \
+       && ! grep -qiE '^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?[*_`]*(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
+       && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$d" 2>/dev/null; then
       GAPS="$GAPS$(basename "$d") "
     fi
   done
