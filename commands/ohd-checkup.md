@@ -73,7 +73,8 @@ plugin updates, this command's standard updates with it.
 5. **Per-item repair, gated**: AskUserQuestion per drifted item (batch
    independent ones), exactly one recommendation each:
    - campaign.sh drift/missing → `checkup.sh <root> --sync` (key-based config
-     merge: project values and custom vars survive; review `git diff` after).
+     merge: config-block keys survive — the script BODY is replaced wholesale,
+   with a pre-sync backup written; review `git diff` after).
    - `harness-changes | NO-BASELINE` (campaign.sh may be IN-SYNC yet
      unstamped — every raw-copy install starts this way) → offer
      `checkup.sh <root> --sync` to establish the stamp; note the protection
@@ -93,8 +94,14 @@ plugin updates, this command's standard updates with it.
    touched (or the user asks), invoke the `ohd:claude-md-sanity` skill — do NOT
    re-implement its audit here.
 7. Uncommitted repairs at the end: remind the user to review `git diff` and
-   commit (docs-only trunk hooks allow the .md and tools/ paths involved —
-   if a hook blocks, say which paths and why instead of forcing). A
+   commit. `.md` repairs pass the default docs-only trunk hook, but `tools/`
+   repairs do NOT (default ALLOW_RE is `^docs/|\.md$`) — commit those with
+   `--no-verify` and the reason in the commit message (harness maintenance,
+   not campaign work); do NOT widen ALLOW_RE to make them pass, and if a
+   hook blocks, say which paths and why instead of forcing silently. A
+   `--sync` also leaves an untracked `tools/campaign.sh.pre-sync.*` backup —
+   recovery material, not a commit candidate: point the user at it and
+   suggest deleting it once the diff is reviewed. A
    `RETIRED-ROUTE` repair applied to the out-of-repo auto-memory store is not
    under version control and so never shows up in that `git diff` — call it
    out separately and point the user at the edited memory file(s) directly.
