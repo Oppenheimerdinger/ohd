@@ -1,25 +1,65 @@
 ## v0.5.22 (2026-07-31)
 
-BEHAVIOR-CHANGE: /ohd-checkup's land-report audit was silently UNDER-COUNTING since v0.5.20 — a landed state doc whose verdict row carried any decoration (`- **verdict**: LANDS`, `- [x] LANDED as PR #7`, a translated label key such as `- 결론: LANDS`) was skipped without an error, so a green `land-reports` row was not evidence of coverage; re-run checkup on projects audited under v0.5.20/v0.5.21.
+BEHAVIOR-CHANGE: /ohd-checkup's land-report audit was silently UNDER-COUNTING since v0.5.20 — a landed state doc whose verdict row carried any decoration (`- status: LANDED (PR #12 merged)`, `- **verdict**: LANDS`, `- [x] LANDED as PR #7`, a translated label key such as `- 결론: LANDS`) was skipped without an error, so a green `land-reports` row was not evidence of coverage; projects audited under v0.5.20/v0.5.21 pick the fix up with `checkup.sh <root> --sync` (report-mode checkup only prints a DRIFT row — the gate regexes live in the project-local `tools/campaign.sh`, which only `--sync` rewrites).
 
-BEHAVIOR-CHANGE: `campaign.sh` derives the per-project worktree root from the layout again — under `clone --separate-git-dir` sibling projects no longer collapse onto the shared gitdir parent (reintroduced issue #10's cross-project collision) and submodules no longer collapse onto their `modules/…` parent.
+BEHAVIOR-CHANGE: `campaign.sh` derives the per-project worktree root from the layout again — under `clone --separate-git-dir` sibling projects no longer collapse onto the shared gitdir parent (reintroduced issue #10's cross-project collision) and submodules no longer collapse onto their `modules/…` parent; a project path containing a SPACE is no longer truncated at the space. Apply with `checkup.sh <root> --sync`.
+
+BEHAVIOR-CHANGE: the `land` gate, `land --report`'s duplicate-table detection, and checkup's audit exemption now match `| phase |` only at the START of a line instead of anywhere in it — a plan bullet that merely mentions the header no longer satisfies the land gate, no longer blocks `land --report` from scaffolding the real table, and no longer exempts a landed doc from the audit. Apply with `checkup.sh <root> --sync`.
 
 - Both regressions were found by an independent round-2 convergence pass over
   v0.5.20 + v0.5.21, with live reproductions; the round-1 review had passed
   them. Verdict-grep anchoring (v0.5.20) and the `--git-common-dir` project
-  root (v0.5.21) each fixed a real hole and opened another.
-- `clean`'s verdict gate and checkup's audit now share one rule: between the
-  bullet and the verdict, only DECORATION may sit — a checkbox, emphasis
-  characters, and/or ONE short label key ending in `:`. Prose still cannot
-  pose as a verdict, which is what the v0.5.20 anchoring was for
-  (`- [ ] check if this already LANDED upstream …` stays blocked).
-- Same bug class, pre-existing: the `land` gate's land-report check matched
-  `| phase |` anywhere on a line, so a plan bullet mentioning the header
-  satisfied it (and blocked `land --report` as a duplicate table). The header
-  match is line-anchored now; the scaffold's emitted lines are unchanged and
-  translated row content still passes.
-- Fixture coverage added for every case above, plus two sibling
-  `--separate-git-dir` clones opening campaigns without collision.
+  root (v0.5.21) each fixed a real hole and opened another. A round-3 review
+  then caught this release's own first attempt at the allowance (below).
+- EXPECT MORE FLAGGED DOCS. Measured over 365 UNIQUE campaign docs (four
+  repos, deduplicated), the `land-reports` row goes from 13 flagged under
+  v0.5.21 to 58 under v0.5.22: 45 docs (~12%) flip from unflagged to flagged,
+  and none stops being flagged. That count is PER UNIQUE CAMPAIGN DOC, not per
+  file on disk — every campaign worktree is a full checkout carrying the whole
+  `docs/campaigns/` tree, so grepping across live worktrees counts each doc
+  once per worktree and will show a much larger number. The flips concentrate
+  in the largest repo (37 of the 45), where the row goes from single digits to
+  dozens. This is BACKFILL OF A PRE-EXISTING BLIND SPOT, not new breakage:
+  those lands really did happen without a land-report table, and the audit was
+  simply unable to see them. Most are old already-landed campaigns that need no
+  worktree action — annotate or backfill honestly. `- status: LANDED (PR #NN
+  merged)` phrasing alone drove 33 of the 45.
+- `clean`'s verdict gate and checkup's audit now share one rule, and it is
+  STRUCTURAL rather than word-counting, because the earlier "prose intervenes"
+  discriminator fails exactly when the verdict word is the first token after a
+  label. A verdict row needs a REAL list marker (a space after `-`/`*`), a
+  checkbox only when CHECKED, and between marker and verdict only decoration —
+  emphasis and/or ONE space-free label key ending in `:`. So a bold PARAGRAPH
+  of sub-conclusions (`**Verdict: L2 is validated.**`, which long research docs
+  carry while the campaign is still OPEN) and an unchecked TODO
+  (`- [ ] TODO: LANDED upstream?`) are no longer verdicts, while
+  `- [ ] check if this already LANDED upstream …` stays blocked as before.
+  Known gaps, unclosed and stated plainly: `- risk: ABANDONED approach may
+  resurface` still reads as a labelled verdict, and a bold sub-conclusion
+  written as a REAL bullet (`- **VERDICT: nrxx-tiling reduces the peak.**`) is
+  structurally identical to a decorated canonical row (`- **verdict**: LANDS`)
+  — only position tells them apart. Scoping the search above the first `## `
+  heading would close both, but was rejected on measurement: of the 139 unique
+  docs carrying a verdict line at all, 25 keep it BELOW a heading, four in the
+  literal `- result / verdict:` form, so scoping would refuse legitimate
+  cleans. (Keying on `## plan` specifically rather than any heading is no
+  escape: only 13 of the 365 docs use that literal spelling — plans appear
+  under 40+ other headings.) Both
+  gaps sit behind `clean`'s merge check, which refuses an unmerged campaign
+  before the verdict gate is consulted at all.
+- The label key carries no length bound. The previous `{1,16}` counted BYTES
+  under `LC_ALL=C` (cron, systemd, `env -i`), so a Korean label past ~5
+  characters silently stopped matching — the exact silent-skip failure this
+  release exists to remove. Neither script pins a locale, so the bound had to
+  go rather than the locale be assumed.
+- Fixture coverage added for every case above. Layout fixtures now cover: main
+  worktree, linked worktree, sibling `--separate-git-dir` clones opening
+  campaigns without collision, a linked worktree whose MAIN checkout used
+  `--separate-git-dir` (git keeps no back-pointer there — `core.worktree` is
+  unset — so the git dir's own name, `.git` stripped, is the project name), a
+  repo path containing a space, and a linked worktree of that space-path repo.
+  Verdict-gate fixtures cover 15 accepted row forms (including a 24-byte
+  non-ASCII label exercised under `LC_ALL=C`) and 9 rejected ones.
 
 ## v0.5.21 (2026-07-31)
 

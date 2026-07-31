@@ -46,12 +46,19 @@ cd "$ROOT"
 # parent (siblings collide again), and inside a submodule every submodule
 # collapses onto its 'modules/…' parent. Neither is 'git worktree list' alone:
 # under --separate-git-dir its first entry reports the git dir, not the worktree.
+# The first entry is read with sed, not awk: porcelain does NOT quote paths, so
+# splitting on whitespace truncates any project path containing a space or tab.
+# Stripping a '.git' suffix covers the --separate-git-dir case reached from a
+# LINKED worktree — there git records no back-pointer to the main worktree
+# (core.worktree is unset), so the git dir's own name is the best available
+# project name; sibling clones keep distinct '<name>.git' dirs, so they still
+# land in distinct slots, which is what issue #10 was about.
 if [ "$(git rev-parse --git-dir)" = "$(git rev-parse --git-common-dir)" ]; then
-  PROJECT_ROOT="$ROOT"                                                     # main worktree
+  PROJECT_ROOT="$ROOT"                                                        # main worktree
 else
-  PROJECT_ROOT="$(git worktree list --porcelain | awk 'NR==1{print $2}')"  # linked worktree
+  PROJECT_ROOT="$(git worktree list --porcelain | sed -n '1s/^worktree //p')" # linked worktree
 fi
-WT_ROOT="${WT_ROOT:-$HOME/wt/$(basename "$PROJECT_ROOT")}"
+WT_ROOT="${WT_ROOT:-$HOME/wt/$(basename "$PROJECT_ROOT" .git)}"
 
 check_name() {
   local n="${1:-}"
@@ -270,16 +277,33 @@ cmd_clean() {
   # Land-report gate: the state doc must carry a filled verdict/result line
   # (campaign-land Phase 4, "docs in the SAME land") BEFORE the worktree is
   # destroyed. Content after the colon is required — the scaffold's empty
-  # '- result / verdict:' line does not count. Bullet-anchored on purpose: a
-  # 'result:' inside the ## plan section must not satisfy this gate. Between the
-  # bullet and the verdict only DECORATION may sit — a checkbox, emphasis
-  # characters, and/or ONE short label key ending in ':' — so bold, backticked
-  # and translated rows still count. Prose does not fit through that gap: a plan
-  # bullet like '- [ ] check if this already LANDED upstream …' puts several
-  # space-separated words there and stays blocked.
+  # '- result / verdict:' line does not count. Three structural requirements do
+  # the discriminating; none of them counts words, because "prose intervenes"
+  # fails exactly when the verdict word is the first token after a label:
+  #   1. a REAL list marker — '[-*]' followed by at least one space. A bold
+  #      PARAGRAPH ('**Verdict: …**') is not a list item, and long research docs
+  #      use it for intermediate sub-conclusions while the campaign is OPEN.
+  #   2. a checkbox only when CHECKED — an unchecked '- [ ]' box is a TODO, so
+  #      '- [ ] TODO: LANDED upstream?' is a plan item, not a verdict.
+  #   3. between marker and verdict only DECORATION — emphasis characters and/or
+  #      ONE label key ending in ':'. The label is space-free by construction,
+  #      which is what makes it one key; it carries no length bound because a
+  #      character count silently becomes a BYTE count under LC_ALL=C and drops
+  #      non-ASCII labels (the silent skip this gate exists to remove).
+  # Known gaps, both bounded by the merge check ABOVE (an unmerged campaign is
+  # refused before it ever reaches this gate): '- risk: ABANDONED approach may
+  # resurface' still reads as a labelled verdict, and a bold sub-conclusion
+  # written as a real bullet ('- **VERDICT: nrxx-tiling reduces the peak.**')
+  # is structurally identical to a decorated canonical row ('- **verdict**:
+  # LANDS') — only position distinguishes them. Scoping the search above the
+  # first '## ' heading would close both, but of 139 live campaign docs
+  # carrying a verdict line, 25 keep it BELOW a heading — four in the literal
+  # '- result / verdict:' scaffold form — so scoping would refuse legitimate
+  # cleans instead. Keying on '## plan' alone is no escape either: only 13 of
+  # 365 docs use that spelling; plans appear under 40+ other headings.
   local doc="$STATE_DIR/$n.md"
   if [ "${FORCE_CLEAN:-0}" != "1" ] && [ -f "$doc" ] && \
-     ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(\[[ xX]?\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|([^[:space:]:]{1,16}:[[:space:]]*)?[*_`]*\b(LANDS|LANDED|ABANDONED)\b)' "$doc"; then
+     ! grep -qiE '^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|([^[:space:]:]+:[[:space:]]*)?[*_`]*\b(LANDS|LANDED|ABANDONED)\b)' "$doc"; then
     die "refusing clean: '$doc' has no filled verdict/result line — update the state doc (campaign-land Phase 4) first. Bypass: FORCE_CLEAN=1 campaign.sh clean $n"
   fi
   teardown "$n" yes

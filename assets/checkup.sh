@@ -155,13 +155,20 @@ if [ -d "$SD" ]; then
   GAPS=""
   for d in "$SD"/*.md; do
     [ -f "$d" ] || continue
-    # Same decoration allowance as campaign.sh's clean gate (checkbox / emphasis /
-    # ONE short label key between the bullet and the verdict), so bold, backticked
-    # and translated verdict rows are AUDITED rather than silently skipped, while
-    # plan-section prose still cannot pose as a verdict. The table check is
-    # line-anchored for the same reason: a bullet mentioning '| phase |' is prose.
-    if grep -qiE '^[[:space:]]*[-*][[:space:]]*(\[[ xX]?\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|([^[:space:]:]{1,16}:[[:space:]]*)?[*_`]*\b(LANDS|LANDED)\b)' "$d" 2>/dev/null \
-       && ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(\[[ xX]?\][[:space:]]*)?[*_`]*(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
+    # Same structural rules as campaign.sh's clean gate — a REAL list marker
+    # (space after '[-*]', so a bold PARAGRAPH of sub-conclusions is not a
+    # verdict row), a checkbox only when CHECKED (an unchecked box is a TODO),
+    # and between marker and verdict only decoration: emphasis and/or ONE
+    # space-free label key ending in ':' (no length bound — a character count
+    # becomes a BYTE count under LC_ALL=C and drops non-ASCII labels). Bold,
+    # backticked and translated verdict rows are therefore AUDITED rather than
+    # silently skipped, while plan-section prose cannot pose as a verdict. The
+    # abandon exclusion below repeats the same marker/checkbox shape on purpose:
+    # if it were looser than the positive test an ABANDONED doc would start
+    # being reported as a land-report gap. The table check is line-anchored for
+    # the same reason: a bullet mentioning '| phase |' is prose.
+    if grep -qiE '^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|([^[:space:]:]+:[[:space:]]*)?[*_`]*\b(LANDS|LANDED)\b)' "$d" 2>/dev/null \
+       && ! grep -qiE '^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?[*_`]*(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
        && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$d" 2>/dev/null; then
       GAPS="$GAPS$(basename "$d") "
     fi

@@ -144,6 +144,43 @@ grep -q "decoabandon.md" <<<"$out" && fail "decorated ABANDONED row wrongly coun
 rm docs/campaigns/deco.md docs/campaigns/korean.md docs/campaigns/boxed.md \
    docs/campaigns/decoabandon.md docs/campaigns/fakephase.md
 
+# 9c) the audit must read the SAME structural rules as campaign.sh's clean gate:
+#     a bold paragraph is not a verdict row, an unchecked box is a TODO, and a
+#     long non-ASCII label must survive a C locale. The abandon exclusion is
+#     checked on the same shapes so an ABANDONED doc never becomes a "gap".
+cat > docs/campaigns/boldpara.md <<'EOF'
+# campaign: boldpara
+- status: OPEN (2026-07-20)
+- result / verdict:
+
+## log
+**Verdict: L2 is validated.** an intermediate sub-conclusion, campaign still OPEN
+EOF
+cat > docs/campaigns/todobox.md <<'EOF'
+# campaign: todobox
+- status: OPEN (2026-07-20)
+- result / verdict:
+
+## plan
+- [ ] TODO: LANDED upstream? check before redoing
+- [ ] risk: ABANDONED approach may resurface
+EOF
+cat > docs/campaigns/longkorean.md <<'EOF'
+# campaign: longkorean
+- 결론결론결론결론: LANDS — PR #13 머지됨
+EOF
+cat > docs/campaigns/boxabandon.md <<'EOF'
+# campaign: boxabandon
+- [x] verdict: ABANDONED — superseded by another campaign
+EOF
+out="$(LC_ALL=C "$FAKE_ASSETS/checkup.sh" .)"
+grep -q "boldpara.md" <<<"$out"   && fail "bold PARAGRAPH counted an OPEN campaign as landed"
+grep -q "todobox.md" <<<"$out"    && fail "unchecked TODO box counted an OPEN campaign as landed"
+grep -q "longkorean.md" <<<"$out" || fail "long non-ASCII label silently skipped by the audit under LC_ALL=C"
+grep -q "boxabandon.md" <<<"$out" && fail "checkbox ABANDONED row wrongly counted as a land gap"
+rm docs/campaigns/boldpara.md docs/campaigns/todobox.md docs/campaigns/longkorean.md \
+   docs/campaigns/boxabandon.md
+
 { echo; grep -m1 '^| phase | ran? | evidence |$' "$FAKE_ASSETS/campaign.sh"; } >> docs/campaigns/oldland.md \
   || fail "producer table header not found in campaign.sh (scaffold/audit integration broken)" 
 out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "land-reports | OK" <<<"$out" || fail "expected land-reports OK after backfill"

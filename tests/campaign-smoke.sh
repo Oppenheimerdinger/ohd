@@ -50,6 +50,40 @@ export CAMPAIGN_TRUNK=main
   done
 )
 
+# A repo path containing a SPACE must not be truncated. 'git worktree list
+# --porcelain' does not quote paths, so splitting the line on whitespace keeps
+# only the first field ('/tmp/my' out of '/tmp/my proj') and every project whose
+# path has a space collapses onto one bogus slot.
+( unset CAMPAIGN_WT_ROOT
+  mkdir -p "$TMP/spacehome"
+  git clone -q "$TMP/origin.git" "$TMP/sp/my proj"
+  ( cd "$TMP/sp/my proj" && git config user.email smoke@test && git config user.name smoke
+    HOME="$TMP/spacehome" "$CS" new p1 >/dev/null ) || fail "space-path repo: new failed"
+  [ -d "$TMP/spacehome/wt/my proj/p1" ] \
+    || fail "space-path repo: WT_ROOT slot truncated at the space (got: $(ls "$TMP/spacehome/wt"))"
+  # ...and from INSIDE a linked worktree of that repo the slot must still hold
+  ( cd "$TMP/spacehome/wt/my proj/p1"
+    HOME="$TMP/spacehome" "$CS" new p2 >/dev/null ) || fail "space-path repo: inside-worktree new failed"
+  [ -d "$TMP/spacehome/wt/my proj/p2" ] \
+    || fail "space-path repo: inside-worktree slot truncated at the space"
+)
+
+# Linked worktree whose MAIN checkout is a --separate-git-dir clone. Here git
+# keeps NO back-pointer to the main worktree (core.worktree is unset), so
+# 'worktree list' reports the GIT DIR itself; the project slot must still be a
+# clean per-project name — '<gitdir>.git' stripped to '<gitdir>' — never a
+# literal '.git' suffix and never a slot shared with a sibling clone.
+( unset CAMPAIGN_WT_ROOT
+  mkdir -p "$TMP/lwhome" "$TMP/lwgit"
+  git clone -q --separate-git-dir="$TMP/lwgit/myproj.git" "$TMP/origin.git" "$TMP/lwmain"
+  ( cd "$TMP/lwmain" && git config user.email smoke@test && git config user.name smoke )
+  git -C "$TMP/lwmain" worktree add -q "$TMP/lwlinked" -b lw1
+  ( cd "$TMP/lwlinked" && HOME="$TMP/lwhome" "$CS" new l1 >/dev/null ) \
+    || fail "separate-git-dir LINKED worktree: new failed"
+  [ -d "$TMP/lwhome/wt/myproj/l1" ] \
+    || fail "separate-git-dir LINKED worktree: slot is not the project name (got: $(ls "$TMP/lwhome/wt"))"
+)
+
 # new: worktree + branch + state doc
 "$CS" new c1 >/dev/null
 [ -d "$TMP/wt/c1" ]                       || fail "worktree missing"
@@ -96,6 +130,23 @@ if "$CS" clean c1 2>/dev/null; then fail "clean accepted a plan-line containing 
 # ...nor when the prose starts with a label token (decoration is ONE key, not prose)
 echo '- [ ] note: this already LANDED upstream, confirm before redoing' >> docs/campaigns/c1.md
 if "$CS" clean c1 2>/dev/null; then fail "clean accepted a labelled plan bullet as a verdict"; fi
+# A BOLD PARAGRAPH is not a list item. Long research docs mark intermediate
+# sub-conclusions with '**Verdict: …**'; without a space after the bullet
+# marker the leading '*' poses as the marker and the second as emphasis, and a
+# still-open campaign passes the gate that exists to protect it.
+echo '**Verdict: L2 is validated.**' >> docs/campaigns/c1.md
+if "$CS" clean c1 2>/dev/null; then fail "clean accepted a bold PARAGRAPH as a verdict row"; fi
+echo '**VERDICT: ceiling ~1.3x deck, hard-capped by Amdahl (GEMM=24% of wall).**' >> docs/campaigns/c1.md
+if "$CS" clean c1 2>/dev/null; then fail "clean accepted an all-caps bold paragraph as a verdict row"; fi
+# An UNCHECKED '- [ ]' box is a TODO, never a verdict — including when the
+# verdict WORD is the first token after the label, where "prose intervenes"
+# cannot discriminate.
+echo '- [ ] TODO: LANDED upstream? check before redoing' >> docs/campaigns/c1.md
+if "$CS" clean c1 2>/dev/null; then fail "clean accepted an unchecked TODO box as a verdict"; fi
+echo '- [ ] 확인: LANDED 됐는지 먼저 보기' >> docs/campaigns/c1.md
+if "$CS" clean c1 2>/dev/null; then fail "clean accepted an unchecked non-ASCII TODO box as a verdict"; fi
+echo '- [ ] risk: ABANDONED approach may resurface' >> docs/campaigns/c1.md
+if "$CS" clean c1 2>/dev/null; then fail "clean accepted an unchecked risk box as a verdict"; fi
 sed -i 's|- result / verdict:|- result / verdict: LANDS — smoke ok|' docs/campaigns/c1.md
 
 # clean now succeeds; worktree and branches gone
@@ -199,12 +250,28 @@ verdict_ok() {   # <campaign name> <verdict row>
   ( cd "$TMP/wt/$n" && echo w > "$n.txt" && git add . && git commit -qm "$n" && git push -q -u origin "$n" )
   git fetch -q origin && git merge -q --no-ff "origin/$n" -m "merge $n" && git push -q origin main
   printf '%s\n' "$row" >> "docs/campaigns/$n.md"
-  "$CS" clean "$n" >/dev/null || fail "verdict gate refused a legitimate row: $row"
+  env ${VERDICT_ENV:-} "$CS" clean "$n" >/dev/null \
+    || fail "verdict gate refused a legitimate row${VERDICT_ENV:+ (${VERDICT_ENV})}: $row"
 }
 verdict_ok v1 '- **verdict**: LANDS — merged as PR #13'
 verdict_ok v2 '- 결론: LANDS — PR #13 머지됨'
 verdict_ok v3 '- [x] LANDED as PR #7'
 verdict_ok v4 '- `verdict`: LANDS'
+verdict_ok v5 '- result / verdict: LANDS — ok'
+verdict_ok v6 '- LANDED as PR #7'
+verdict_ok v7 '- ABANDONED — superseded'
+verdict_ok v8 '  - result / verdict: LANDS'
+verdict_ok v9 '* result: LANDS'
+verdict_ok v10 '- [X] LANDED as PR #7'
+verdict_ok v11 '- [x] verdict: LANDS'
+verdict_ok v12 '- _verdict_: LANDS'
+verdict_ok v13 '- **LANDS** — ok'
+verdict_ok v14 '- status: LANDED (PR #12 merged)'
+# Locale independence: a character-counted bound on the label group counts
+# BYTES under LC_ALL=C (cron, systemd, env -i), so a non-ASCII label silently
+# stopped matching past ~5 characters — the exact silent skip this gate exists
+# to remove. This row is 24 bytes of label under a C locale.
+VERDICT_ENV='LC_ALL=C' verdict_ok v15 '- 결론결론결론결론: LANDS — PR #13 머지됨'
 
 # ---- land gate: state doc must carry the land-report artifact before push ----
 "$CS" new g1 >/dev/null
