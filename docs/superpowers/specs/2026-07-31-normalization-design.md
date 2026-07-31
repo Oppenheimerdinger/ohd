@@ -45,8 +45,15 @@ save the approved plan into the state doc's plan section and execute. The user
 then approves an already-reviewed plan — review happens before the approval
 gate consumes their attention, at the pipeline stage with the highest error
 replication factor. Encoding: one clause on the existing campaign-scale
-routing row ("converge it before execution begins"); the r2c description's
-"plan 다 썼다" trigger covers the moment. Instrument stays free — the field
+routing row ("converge it before execution begins, then materialize its items
+into the session task list — TaskCreate/todos — and track execution there,
+writing results back to the plan section as units complete"); the r2c
+description's "plan 다 썼다" trigger covers the moment. The task-list half
+rides a NATIVE surface: the harness already nags about task tools via system
+reminders, and SDD's own first step is "create todos" — this extends the same
+move to non-SDD campaign execution. Division of labor: the plan section is
+the durable artifact (survives the session), the task list is the in-session
+execution tracker (visible progress, reminder-revived). Instrument stays free — the field
 observation is that instrument selection self-organizes and only the MOMENTS
 need naming; cr:cr stays forced at land Phase 3 only.
 
