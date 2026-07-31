@@ -20,8 +20,16 @@ export CAMPAIGN_WT_ROOT="$TMP/wt"
 # issue #10: with no CAMPAIGN_WT_ROOT, the default root is per-project
 ( unset CAMPAIGN_WT_ROOT
   mkdir -p "$TMP/fakehome"
+  proj="$(basename "$PWD")"
   HOME="$TMP/fakehome" "$CS" new d1 >/dev/null
-  [ -d "$TMP/fakehome/wt/$(basename "$PWD")/d1" ] || fail "default WT_ROOT not per-project (expected \$HOME/wt/<repo>/d1)"
+  [ -d "$TMP/fakehome/wt/$proj/d1" ] || fail "default WT_ROOT not per-project (expected \$HOME/wt/<repo>/d1)"
+  # issue #10 follow-up: invoked from INSIDE a linked worktree, the project
+  # slot must still be the repo name, not the campaign name
+  ( cd "$TMP/fakehome/wt/$proj/d1"
+    HOME="$TMP/fakehome" "$CS" new d2 >/dev/null
+    [ -d "$TMP/fakehome/wt/$proj/d2" ] || fail "inside-worktree invocation nested WT_ROOT (campaign name in project slot)"
+    HOME="$TMP/fakehome" "$CS" abort d2 >/dev/null
+  )
   HOME="$TMP/fakehome" "$CS" abort d1 >/dev/null
 )
 export CAMPAIGN_TRUNK=main

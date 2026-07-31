@@ -16,6 +16,15 @@ BEHAVIOR-CHANGE: /ohd-checkup step 7 no longer claims the docs-only trunk hook a
   config block, so a synced project whose config still pins the old flat
   root keeps it — open campaigns are unaffected; new instantiations get
   the namespaced root.
+- Post-review fixes (code-review:code-review on the PR + the reporter's own
+  issue-thread follow-up): the project name now derives from the MAIN
+  worktree via `git rev-parse --git-common-dir` (from inside a linked
+  worktree, `--show-toplevel` would have put the campaign name in the
+  project slot — smoke fixture added); the pre-sync backup suffix carries a
+  time component (a same-day re-sync clobbered the first backup —
+  reproduced); the drop-in interview default, checkup step 5, and the
+  checkup.sh header now state plainly that sync replaces the script body
+  wholesale and what to do with the backup file.
 
 ## v0.5.20 (2026-07-31)
 

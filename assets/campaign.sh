@@ -36,8 +36,11 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git rep
 cd "$ROOT"
 
 # Worktree roots are per-project: a flat shared root collides as soon as two
-# sibling projects both number campaigns from 001 (issue #10).
-WT_ROOT="${WT_ROOT:-$HOME/wt/$(basename "$ROOT")}"
+# sibling projects both number campaigns from 001 (issue #10). The project
+# name must come from the MAIN worktree: inside a linked worktree,
+# --show-toplevel returns the worktree path (issue #10 follow-up).
+PROJECT_ROOT="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"
+WT_ROOT="${WT_ROOT:-$HOME/wt/$(basename "$PROJECT_ROOT")}"
 
 check_name() {
   local n="${1:-}"
