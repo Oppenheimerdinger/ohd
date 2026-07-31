@@ -30,7 +30,8 @@ convergence never).
 **1 — `review-to-convergence` description re-aimed at the ACT, not the topic.**
 Trigger on being about to dispatch a reviewer, hand off a deliverable, or call
 something done — especially right after fixing findings — with an explicit
-negative clause excluding discussing/reading/routing reviews, and the line
+negative clause excluding merely discussing/reading/summarizing reviews (the
+routing layer must still be able to route TO it), and the line
 "wraps code-review; never replaces it" (the corpus shows r2c DISPLACING the
 review instrument in 3 of ~15 firings). Under the ~50-word budget; the current
 description is 76 words, so this is a convention repair, not growth.

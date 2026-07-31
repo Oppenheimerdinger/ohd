@@ -52,6 +52,12 @@ normalize() {  # strip config block + provenance lines → comparison view
 
 report() { printf '%s | %s | %s\n' "$1" "$2" "$3"; }
 
+# Version comparison, used by every check that reads a version stamp. Both
+# consumers (trunk hook, harness-changes relay) need the DIRECTION, not just
+# inequality: a stamp NEWER than this plugin's means the plugin is behind, and
+# the "upgrade" advice would be a downgrade.
+ver_gt() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]; }
+
 cfg_keys() {  # $1=file → its config-block variable names, one per line
   local r; r="$(cfg_range "$1")"
   [ -n "$r" ] || return 0
@@ -129,16 +135,24 @@ fi
 # here). Matching 'docs-only' alone, as this did through v0.5.22, matched every
 # hook ohd ever wrote, so a CHANGED hook reported as already installed and was
 # never offered to an adopted project.
+# The comparison is DIRECTIONAL. Hooks live in the shared common git dir, so a
+# sibling worktree running a NEWER ohd leaves a stamp ahead of the one this
+# plugin ships; string inequality alone called that STALE and offered a
+# re-install, which downgrades the hook.
 HOOK_WANT="$(grep -m1 '^# ohd-hook v' "$HERE/install-hooks.sh" 2>/dev/null || true)"
+hook_ver() { printf '%s' "${1:-}" | sed -n 's/.*ohd-hook v\([0-9][0-9.]*\).*/\1/p'; }
 if HOOKS="$(git rev-parse --git-common-dir 2>/dev/null)/hooks" && [ -f "$HOOKS/pre-commit" ]; then
   HOOK_HAVE="$(grep -m1 '^# ohd-hook v' "$HOOKS/pre-commit" 2>/dev/null || true)"
+  HOOK_SHOW="${HOOK_HAVE#\# }"; HOOK_SHOW="${HOOK_SHOW:-unstamped (pre-v0.5.23)}"
   if ! grep -q 'docs-only' "$HOOKS/pre-commit" 2>/dev/null; then
     report "trunk-hook" "OTHER" "a pre-commit exists but is not ohd's docs-only hook — inspect before overwriting"
   elif [ -z "$HOOK_WANT" ] || [ "$HOOK_HAVE" = "$HOOK_WANT" ]; then
     # no shipped stamp to compare against = partial install; report as before
     report "trunk-hook" "INSTALLED" "$HOOKS/pre-commit${HOOK_WANT:+ (${HOOK_WANT#\# })}"
+  elif ver_gt "$(hook_ver "$HOOK_HAVE")" "$(hook_ver "$HOOK_WANT")"; then
+    report "trunk-hook" "AHEAD" "installed hook $HOOK_SHOW is NEWER than this plugin's ${HOOK_WANT#\# } — a sibling worktree ran a newer ohd (hooks are shared per git common dir), so this plugin cache is likely stale: /reload-plugins or update the plugin, then re-run checkup. Do NOT reinstall the hook — that downgrades it"
   else
-    report "trunk-hook" "STALE" "ohd's docs-only hook, but ${HOOK_HAVE:-unstamped (pre-v0.5.23)} != shipped ${HOOK_WANT#\# } — re-run the plugin's assets/install-hooks.sh to pick up hook changes (it overwrites $HOOKS/pre-commit; CAMPAIGN_TRUNK / CAMPAIGN_TRUNK_ALLOW still apply)"
+    report "trunk-hook" "STALE" "ohd's docs-only hook, but $HOOK_SHOW != shipped ${HOOK_WANT#\# } — re-run the plugin's assets/install-hooks.sh to pick up hook changes (it overwrites $HOOKS/pre-commit; CAMPAIGN_TRUNK / CAMPAIGN_TRUNK_ALLOW still apply)"
   fi
 else
   report "trunk-hook" "MISSING" "optional; install via the plugin's assets/install-hooks.sh (skip for trunk-dev repos)"
@@ -221,7 +235,6 @@ fi
 # Relays ONLY `BEHAVIOR-CHANGE:` marker lines from the shipped CHANGELOG.
 # The judgment of what is project-facing happens at release time (authoring,
 # see the plugin repo's §RELEASING) — never reconstructed here from prose.
-ver_gt() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]; }
 CHLOG="$HERE/../CHANGELOG.md"
 STAMP_VER=""
 [ -f "$DST" ] && STAMP_VER="$(grep -m1 '^# synced-from ohd v' "$DST" 2>/dev/null | sed 's/.*ohd v\([0-9][0-9.]*\).*/\1/' || true)"

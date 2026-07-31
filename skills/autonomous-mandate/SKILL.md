@@ -30,17 +30,24 @@ loop for it. This skill is for session-scope, user-absent mandates.
    bash "$RL/scripts/setup-ralph-loop.sh" \
      "<the mandate, restated as the loop prompt>
       Your lane is dispatch, review, merge. Implementation goes to a fresh
-      agent per task; only micro-edits stay inline — and it is NOT a
-      micro-edit if it writes a new test, needs a mutation or negative
-      control, or needs a gate run to judge it.
+      agent per task; only micro-edits stay inline — a STANDALONE fix
+      outside any plan or dispatched task, and NOT a micro-edit if it
+      writes a new test, needs a mutation or negative control, or needs a
+      gate run to judge it.
+      End every iteration having ADVANCED the mandate — a fresh dispatch or
+      a backgrounded watch; work you did inline does not count as advancing.
       Every deliverable you call done NAMES the review pass that cleared it." \
      --max-iterations <cap> --completion-promise '<exact phrase>'
    ```
    (installed_plugins.json is the authoritative path source; the cache glob
-   is the fallback.) The lane and review-naming lines ride the PROMPT, not
-   this skill's body, deliberately: the stop hook re-injects the prompt
-   verbatim on every iteration, so it survives compaction and context
-   rollover — which a skill read once at minute zero does not.
+   is the fallback.) The lane, advance and review-naming lines ride the
+   PROMPT, not this skill's body, deliberately: the stop hook re-injects the
+   prompt verbatim on every iteration, so it survives compaction and context
+   rollover — which a skill read once at minute zero does not. The flip side:
+   the prompt is written ONCE at setup and re-injected AS STORED, so upgrading
+   the plugin mid-mandate does not refresh a running loop's prompt — adopting
+   new prompt text means cancelling the loop and setting it up again, which is
+   the user's call (step 5).
 
    The state file lands at `.claude/ralph-loop.local.md` in the cwd — run
    this at the project anchor. If the plugin is absent: SAY SO and offer the
@@ -102,8 +109,12 @@ loop for it. This skill is for session-scope, user-absent mandates.
      failure this mandate exists to prevent — a coordinator that did
      everything itself used to satisfy this list as written. An empty
      iteration is almost always a MISSING DISPATCH — the same failure the
-     mandate exists to prevent, wearing a different hat. (Step 3's completion
-     exit is its own ending and needs none of these.)
+     mandate exists to prevent, wearing a different hat. If a legitimate
+     micro-edit really was the only actionable item and nothing is
+     dispatchable or watchable, that iteration is the LAST RESORT case
+     below — name it as such; do not manufacture a dispatch to dodge the
+     label (manufacturing work is banned there for the same reason).
+     (Step 3's completion exit is its own ending and needs none of these.)
    - **Read deliverables from git or the agent log, never from the
      notification** (step 5: idle != done). "Agent notified" is not "agent
      committed"; check, then tell it to finish.

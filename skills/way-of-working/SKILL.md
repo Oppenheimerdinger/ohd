@@ -34,7 +34,9 @@ files or ~100+ lines of new logic, or (b) later work will build on top of it.
 Below that, a single independent reviewer (review-to-convergence) suffices.
 Run it as 2–3 independent fresh-context reviewers with distinct lenses (design
 soundness, correctness, simplicity), each given the goal + the diff; reconcile
-findings before banking.
+findings before banking, and close on review-to-convergence's rule rather than
+by adjudication: a final pass comes back clean, or every residual carries an
+explicit ruling.
 
 ## Two force-multipliers (defaults, not ad-hoc)
 
@@ -69,17 +71,20 @@ edit; the boundary:
 | Must-complete long-running work | a persistence loop (independent evaluator judges termination — below) | `/loop` / schedule / ralph |
 | Independent parallelizable tasks | a subagent fleet, dispatched in one message | superpowers:dispatching-parallel-agents |
 
-When in doubt, weigh the actual costs: if writing the brief plus reading and
-verifying the reply costs more than just doing the work, do it directly
-(row 1's case); otherwise delegate — the output then lives in the subagent's
-context, not yours.
+Row 1's disqualifiers are a FLOOR, not a factor to be weighed: work that writes
+a new test, needs a mutation or negative control, or needs a gate run to judge
+it is not a micro-edit at any cost ratio. Once they pass, weigh the actual
+costs: if writing the brief plus reading and verifying the reply costs more
+than just doing the work, do it directly (row 1's case); otherwise delegate —
+the output then lives in the subagent's context, not yours.
 
 Inside an open campaign the default is that an edit belongs to the plan —
 "standalone" is a claim you support by pointing at the plan section, not the
 fallback when no plan exists (no plan line yet = the signal to write one, not
 a license to edit). An exploratory campaign whose plan is a one-line
-next-probe has dispatched nothing: row 1 still applies there, and the probe's
-result gets written back into the plan line.
+next-probe has dispatched nothing: row 1's precondition is met there — its
+disqualifiers still decide — and the probe's result gets written back into the
+plan line (writing that result is analysis, not a code edit).
 
 ## Campaign sizing — a campaign is ONE coherent increment
 
@@ -220,9 +225,10 @@ a deliverable**: subagent-driven execution's final whole-branch review covers
 it, and work built outside that flow gets its own explicit
 review-to-convergence pass. But being INSIDE the flow is not an exemption, on
 two counts. **(i) The spec and the plan are reviewed by their AUTHOR only** —
-both superpowers skills say so verbatim ("a checklist you run yourself, not a
-subagent dispatch") — so each gets an independent r2c pass before execution
-begins. **(ii) SDD's own review loop terminates on ADJUDICATION, not on a clean
+writing-plans says so verbatim ("a checklist you run yourself — not a subagent
+dispatch") and brainstorming's spec self-review is likewise author-run ("look
+at it with fresh eyes… Fix any issues inline. No need to re-review") — so each
+gets an independent r2c pass before execution begins. **(ii) SDD's own review loop terminates on ADJUDICATION, not on a clean
 pass** ("there is no second fix wave — residual load-bearing findings surface to
 your human partner"), so r2c supplies the stopping rule it lacks: the last round
 comes back clean, or every residual carries an explicit ruling recorded in the

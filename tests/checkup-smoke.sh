@@ -53,6 +53,21 @@ sed -i '2i # ohd-hook v1' "$HOOKF"
 out="$("$CK" .)"; grep -q "trunk-hook | STALE" <<<"$out" || fail "OLDER hook stamp not reported STALE"
 bash "$HERE/assets/install-hooks.sh" >/dev/null
 out="$("$CK" .)"; grep -q "trunk-hook | INSTALLED" <<<"$out" || fail "re-run of install-hooks did not restore INSTALLED"
+
+# 4c) the REVERSE skew. Hooks live in the shared common git dir, so a sibling
+#     worktree running a NEWER ohd installs a hook stamped ahead of what THIS
+#     plugin ships. Comparing stamps by string inequality alone called that
+#     STALE and offered install-hooks.sh — a DOWNGRADE. Direction matters:
+#     HAVE > WANT is the plugin cache being stale, not the hook.
+sed -i 's/^# ohd-hook v.*/# ohd-hook v99/' "$HOOKF"
+out="$("$CK" .)"
+grep -q "trunk-hook | STALE" <<<"$out" && fail "newer-than-shipped hook reported STALE (recommends a downgrade)"
+grep -q "trunk-hook | AHEAD" <<<"$out" || fail "newer-than-shipped hook not reported AHEAD"
+grep -q "re-run the plugin's assets/install-hooks.sh" <<<"$out" && fail "AHEAD row still offers the downgrading re-install"
+grep -q "reload-plugins" <<<"$out" || fail "AHEAD row does not name the real fix (stale plugin cache)"
+bash "$HERE/assets/install-hooks.sh" >/dev/null
+out="$("$CK" .)"; grep -q "trunk-hook | INSTALLED" <<<"$out" || fail "install-hooks did not restore INSTALLED after the AHEAD fixture"
+
 # a foreign pre-commit is still OTHER, not STALE (nothing of ours to upgrade)
 printf '#!/usr/bin/env bash\nexit 0\n' > "$HOOKF"; chmod +x "$HOOKF"
 out="$("$CK" .)"; grep -q "trunk-hook | OTHER" <<<"$out" || fail "foreign pre-commit misreported"

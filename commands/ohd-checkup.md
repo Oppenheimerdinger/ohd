@@ -82,6 +82,12 @@ plugin updates, this command's standard updates with it.
      own message describes.
    - hook missing → copy + run `assets/install-hooks.sh` (skip is legitimate
      for trunk-dev repos — say so).
+   - `trunk-hook | STALE` → re-run `assets/install-hooks.sh`; hook changes
+     never auto-propagate, so an older stamp stays until someone reinstalls.
+   - `trunk-hook | AHEAD` (installed hook NEWER than this plugin ships — a
+     sibling worktree ran a newer ohd) → the plugin cache is stale, not the
+     hook: `/reload-plugins` or update the plugin, then re-run checkup. Do
+     NOT reinstall the hook; that downgrades it.
    - CLAUDE.md wiring gaps → MERGE the missing blocks/clauses into the
      existing file from the template's shape; never replace the file.
    - `RETIRED-ROUTE` → replace the named mechanism with the superseding route,

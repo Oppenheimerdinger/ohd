@@ -82,9 +82,12 @@ Three routes, in preference order:
   deferral is the pre-v0.4.19 fossil this route list exists to kill; if the
   review has not happened, that case IS route 1: invoke the plugin yourself.
 - **A review subagent** — fallback when the plugin is absent or there is no
-  PR. Dispatch one scoped to the final diff: give it the diff range, the
-  files, and the *claims the campaign doc makes*, and ask it to check the
-  claims against the diff. Findings that came back this way in the field:
+  PR, and the normal instrument for round 2+ of the log below: the code-review
+  plugin runs once per PR (way-of-working owns that constraint), so the second
+  look at the fixed SHA is a subagent, not a re-run. Dispatch one scoped to the
+  final diff: give it the diff range, the files, and the *claims the campaign
+  doc makes*, and ask it to check the claims against the diff. Findings that
+  came back this way in the field:
   tests that could not fail, a "fix" that was a provable no-op, and a `[x]`
   on a phase that delivered one of its three required parts.
 
@@ -94,14 +97,15 @@ evidence — findings count and disposition, or the review output ref. The
 route name alone is a label, not evidence.
 
 **The evidence cell carries the CONVERGENCE LOG, not just the last verdict.**
-One line per round: the reviewer that round used and the SHA that round
-reviewed, ending either in a round that came back CLEAN or with every residual
-finding carrying an explicit ruling recorded in this doc (review-to-convergence
-supplies the rule; a finding closed by the author's own fiat is not a ruling).
-Shape:
+The log lines follow review-to-convergence's format — reviewer and reviewed
+SHA per round, findings and their disposition — flattened into the cell; that
+skill owns the format, this one only says the cell carries it. It ends either
+in a round that came back CLEAN or with every residual finding carrying an
+explicit ruling recorded in this doc (r2c supplies that rule; a finding closed
+by the author's own fiat is not a ruling). Shape:
 
 ```
-| 3 quality gate | yes | r1 code-review:code-review PR#16 @a1b2c3d → 2 findings, both fixed; r2 review subagent (bugs lens) @e4f5a6b → clean. simplifier: not needed — diff is one guard clause |
+| 3 quality gate | yes | round 1: 1× code-review:code-review PR#16 @a1b2c3d → 2 findings → fixed; round 2: 1× review subagent (bugs lens) @e4f5a6b → clean. simplifier: not needed — diff is one guard clause |
 ```
 
 - A first round that finds nothing IS a complete log — one line. Rounds exist
@@ -188,12 +192,17 @@ accepts it.
   docs/backlog.md`) or the skip with its artifact (`sanity: skip — diff
   touches no docs/memory: git diff --name-only <base>..HEAD → src/x.py,
   tests/x_test.py`). An evidence cell that does not demand the item by name
-  loses it silently: a field check over two consecutive recent lands found the
-  sanity run skipped in BOTH while their diffs touched docs and
-  memory — no skip row, the skip condition not applicable, and in one of them a
-  validator's lock-step check substituted for it, which this skill forbids by
-  name. Another naming failure with the same root cause: `simplifier: not
-  needed` with no reason (Phase 3).
+  loses it silently: a field check over the three most recent lands, all the
+  MAINTAINER'S OWN, found three of three failing this contract — the sanity run
+  skipped in all three while their diffs touched docs and memory, the skip
+  condition applicable to none; two wrote no `sanity:` row at all, one of those
+  substituting a validator's lock-step check for it (which this skill forbids by
+  name), and the third named the gap honestly but still did not run the audit.
+  Another naming failure with the same root cause: `simplifier: not needed`
+  with no reason (Phase 3).
+  **Forward-only**: this contract and Phase 3's convergence log bind lands from
+  here on. Historical land reports are not retroactively audited — no script
+  reads these cells — and are expected to fail the new wording.
 
 ## Land report — MANDATORY gate before Phase 7
 

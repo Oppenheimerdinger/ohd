@@ -1,6 +1,6 @@
 ---
 name: review-to-convergence
-description: Use when about to dispatch a reviewer, hand off or finalize a deliverable, or call something done — right after fixing review findings, or once a plan/spec/handoff is written ("plan 다 썼다", "이제 리뷰 돌리자"). Wraps code-review; never replaces it. NOT for discussing, reading, or routing reviews.
+description: Use when about to dispatch a reviewer, hand off or finalize a deliverable, or call something done — right after fixing review findings, or once a plan/spec/handoff is written ("plan 다 썼다", "이제 리뷰 돌리자"). Wraps code-review; never replaces it. NOT for merely discussing, reading, or summarizing reviews.
 ---
 
 # Review to Convergence
@@ -38,11 +38,15 @@ finding yourself to avoid a fix is closure by fiat. "The reviewer
 misunderstood" is itself a finding — against your artifact's clarity.
 
 **Convergence log (artifact, hand-off blocker):** when declaring done, print
-one line per round — `round N: <reviewers>× <lens> → X findings →
-fixed/rebutted-upheld/minor-logged` — ending in the clean pass. The lens and
-reviewer count are part of the log: "clean" from one design-lens pass must
-not relay as the multi-reviewer rigor it wasn't. No log line for a clean
-final pass = not converged; go run it. **When the deliverable is a committed
+one line per round — `round N: <reviewers>× <lens> @<sha> → X findings →
+fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ clean`.
+**This is the one format**; other skills point here rather than restate it.
+The lens and reviewer count are part of the log: "clean" from one design-lens
+pass must not relay as the multi-reviewer rigor it wasn't. `@<sha>` is the
+tree that round reviewed — re-reviewing the same SHA is not a new round —
+and is dropped only when the deliverable is not a tree (a plan, a problem
+statement). No log line for a clean final pass = not converged; go run it.
+**When the deliverable is a committed
 file** (design doc, ADR, analysis), the log goes INTO it (a short `## Review
 log` footer) or its commit message — the file outlives the chat that
 reviewed it.
