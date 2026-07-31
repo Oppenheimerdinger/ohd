@@ -36,11 +36,29 @@ ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git rep
 cd "$ROOT"
 
 # Worktree roots are per-project: a flat shared root collides as soon as two
-# sibling projects both number campaigns from 001 (issue #10). The project
-# name must come from the MAIN worktree: inside a linked worktree,
-# --show-toplevel returns the worktree path (issue #10 follow-up).
-PROJECT_ROOT="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"
-WT_ROOT="${WT_ROOT:-$HOME/wt/$(basename "$PROJECT_ROOT")}"
+# sibling projects both number campaigns from 001 (issue #10). The project name
+# must be the SAME from every checkout of one project, so it is read from the
+# first 'git worktree list --porcelain' entry — git lists the MAIN worktree
+# first, from a linked worktree as well as from the main one. --show-toplevel
+# cannot do this: inside a linked worktree it returns the worktree's own path,
+# so every campaign would open a slot named after the previous campaign (issue
+# #10 follow-up). Deriving the name from the git dir's PARENT is no substitute
+# either: under 'clone --separate-git-dir' every sibling project resolves to the
+# shared gitdir parent (siblings collide again), and inside a submodule every
+# submodule collapses onto its 'modules/…' parent. The entry is read with sed,
+# not awk: porcelain does NOT quote paths, so splitting on whitespace truncates
+# any project path containing a space or tab.
+# Under 'clone --separate-git-dir' that first entry is the GIT DIR rather than a
+# checkout, from either side — git records no back-pointer to the main worktree
+# there (core.worktree is unset) — so the git dir's own name, '.git' stripped,
+# is the project name. It is the only identity available to BOTH the main
+# checkout and a linked worktree, which is why this derivation is UNBRANCHED: a
+# branch on layout made those two disagree (main → checkout dir name, linked →
+# git dir name), and 'clean' from the losing side deleted both branches while
+# the worktree survived, untouched, at the other slot. Sibling clones keep
+# distinct '<name>.git' dirs and so still land in distinct slots — issue #10.
+PROJECT_ROOT="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"
+WT_ROOT="${WT_ROOT:-$HOME/wt/$(basename "$PROJECT_ROOT" .git)}"
 
 check_name() {
   local n="${1:-}"
@@ -113,7 +131,7 @@ cmd_land() {
   # only remaining work.
   if [ "${2:-}" = "--report" ]; then
     [ -f "$doc" ] || die "no state doc at $doc (run 'campaign.sh new' first?)"
-    grep -qiE '^##[[:space:]]*land[- ]report|\| phase \|' "$doc" && die "$doc already has a land-report table"
+    grep -qiE '^##[[:space:]]*land[- ]report|^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$doc" && die "$doc already has a land-report table"
     cat >> "$doc" <<'TBL'
 
 ## land report
@@ -139,9 +157,10 @@ TBL
   # artifact BEFORE push+PR. Prose reminders here were skipped twice in the
   # field; die-gates never were. Existence-only check — content honesty stays
   # with the campaign-land skill (re-load it on EVERY land; do not re-enact
-  # from memory).
+  # from memory). The header match is line-anchored: a plan bullet that merely
+  # MENTIONS '| phase |' is prose, not the artifact.
   if [ "${LAND_GUARD:-1}" != "0" ] \
-     && ! grep -qi '| phase |' "$doc" 2>/dev/null \
+     && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$doc" 2>/dev/null \
      && ! grep -qiE '^##[[:space:]]*land[- ]report' "$doc" 2>/dev/null \
      && ! grep -qiE '^[[:space:]]*-?[[:space:]]*land-report[[:space:]]*:' "$doc" 2>/dev/null; then
     die "refusing land: '$doc' has no land-report — the gate matches the '## land report' heading or the '| phase |' header (keep those lines intact; row content is yours). Scaffold: 'campaign.sh land $n --report'. Bypass: LAND_GUARD=0 campaign.sh land $n"
@@ -219,15 +238,45 @@ cmd_list() {
   done
 }
 
+# teardown <name> <del_remote> — returns NON-ZERO if a worktree for this
+# campaign is still on disk afterwards. Both deletions are ATTEMPTED either way,
+# so a caller that printed success unconditionally would report a finished
+# teardown while a live worktree holding uncommitted work sits on disk. Two ways
+# that happens: something else occupies our slot, or the campaign's worktree is
+# registered at a DIFFERENT path than the slot we computed (a hand-moved
+# worktree, or a WT_ROOT that changed between 'new' and 'clean').
+# What survives differs between the two, and the messages must not flatten it:
+# with an occupied slot the branch is checked out nowhere, so 'branch -D' really
+# deletes it; with a stray worktree the branch is still checked out THERE, git
+# refuses to delete a checked-out branch, and that refusal is swallowed by the
+# '|| true' below. The stray case is therefore the recoverable one — the
+# surviving local branch plus 'git worktree remove <stray>' is the whole
+# recovery — commit anything uncommitted there first (or remove needs
+# --force); no hand-salvage needed. The remote delete (clean, or abort --purge)
+# goes through in both cases. 'worktree list' is consulted for the stray, before
+# 'branch -D' runs, so the WARN can name the path.
 teardown() {
-  local n="$1" del_remote="$2"
+  local n="$1" del_remote="$2" rc=0 stray=""
   local wt; wt="$(wt_path "$n")"
   git worktree remove --force "$wt" 2>/dev/null || true
-  [ -e "$wt" ] && echo "WARN: $wt still exists (not this repo's worktree?) — left in place" >&2
+  git worktree prune
+  if [ -e "$wt" ]; then
+    echo "WARN: $wt still exists (not this repo's worktree?) — left in place" >&2
+    rc=1
+  fi
+  # substr, not fields: porcelain does not quote paths with spaces or tabs.
+  stray="$(git worktree list --porcelain | awk -v b="refs/heads/$n" '
+    /^worktree /{p = substr($0, 10)}
+    /^branch /{if (substr($0, 8) == b) print p}')"
+  if [ -n "$stray" ]; then
+    echo "WARN: campaign '$n' is still checked out at $stray (expected $wt) — left in place" >&2
+    rc=1
+  fi
   git branch -D "$n" 2>/dev/null || true
   if [ "$del_remote" = yes ]; then git push origin --delete "$n" 2>/dev/null || true; fi
   git worktree prune
   rmdir "$WT_ROOT" 2>/dev/null || true
+  return $rc
 }
 
 cmd_clean() {
@@ -255,25 +304,64 @@ cmd_clean() {
     fi
   fi
   # tip empty => both origin and local refs already gone => idempotent cleanup.
-  # Land-report gate: the state doc must carry a filled verdict/result line
-  # (campaign-land Phase 4, "docs in the SAME land") BEFORE the worktree is
-  # destroyed. Content after the colon is required — the scaffold's empty
-  # '- result / verdict:' line does not count. Bullet-anchored on purpose: a
-  # 'result:' inside the ## plan section must not satisfy this gate.
+  # Land-report gate: the state doc's SCAFFOLD verdict row must be FILLED before
+  # the worktree is destroyed (campaign-land Phase 4, "docs in the SAME land").
+  #
+  # This gate and checkup.sh's land-report audit deliberately use DIFFERENT
+  # rules. Their inputs differ, so one shared rule cannot serve both:
+  #   * 'clean' only ever runs on a campaign 'new' opened, and 'new' writes the
+  #     literal '- result / verdict:' row, so an EXACT anchor is available here.
+  #   * the audit reads LEGACY docs, of which only 84 of 365 carry that row, so
+  #     it must stay tolerant of decorated, translated and 'status:'-labelled
+  #     rows — that recognition is v0.5.22's headline fix.
+  # Sharing forced the tolerant, prose-adjacent pattern onto this consumer, and
+  # three rounds of tightening it failed, because '- **verdict**: LANDS' (a real
+  # verdict, must pass) and '- **VERDICT: nrxx-tiling genuinely reduces the
+  # peak.**' (a mid-campaign sub-conclusion in a doc whose campaign is still
+  # OPEN, must not) are lexically near-identical. Only the scaffold row separates
+  # them, and it separates them without any regex cleverness at all.
+  #
+  # So: the literal scaffold phrase, with non-whitespace after the colon. The
+  # test is position-free — 25 of the 139 live docs carrying a verdict line keep
+  # it BELOW a heading — and allows emphasis around the label, which 2 of the 84
+  # live scaffold rows use. The untouched scaffold row does not pass.
+  #
+  # Cost, accepted knowingly: a doc recording its verdict ONLY as a substitute
+  # row ('- **verdict**: LANDS', '- 결론: LANDS', '- [x] LANDED as PR #7',
+  # '- status: LANDED (PR #12 merged)') no longer satisfies 'clean' — it still
+  # satisfies the audit. Emphasis is the only decoration allowed on the scaffold
+  # row itself, so a CHECKED box in front of the label ('- [x] result / verdict:
+  # LANDS') is refused here while the audit accepts it — 0 of 365 corpus docs
+  # write the row that way, so the asymmetry is documented rather than closed.
+  # A campaign whose doc pre-dated 'new' (which leaves an existing doc alone)
+  # has no scaffold row at all and is refused until one is added, so coverage
+  # here is high by construction but not total. All are fail-SAFE refusals of a
+  # command whose failure mode is destroying a live worktree holding uncommitted
+  # work; FORCE_CLEAN=1 is the escape.
+  #
+  # Known fail-OPEN, unwitnessed: the test is line-based, so a filled scaffold
+  # row quoted inside a ``` code fence satisfies it (0 of 365 corpus docs;
+  # plausible only when a campaign's own subject is this harness).
   local doc="$STATE_DIR/$n.md"
   if [ "${FORCE_CLEAN:-0}" != "1" ] && [ -f "$doc" ] && \
-     ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|^[[:space:]]*[-*][[:space:]]*\b(LANDS|LANDED|ABANDONED)\b' "$doc"; then
-    die "refusing clean: '$doc' has no filled verdict/result line — update the state doc (campaign-land Phase 4) first. Bypass: FORCE_CLEAN=1 campaign.sh clean $n"
+     ! grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*result[[:space:]]*/[[:space:]]*verdict[*_`]*[[:space:]]*:[[:space:]]*[^[:space:]]' "$doc"; then
+    die "refusing clean: '$doc' has no FILLED scaffold verdict row — put the verdict after the '- result / verdict:' line (campaign-land Phase 4), then re-run. This is stricter than /ohd-checkup's land-report audit ON PURPOSE: a decorated or translated row ('- **verdict**: LANDS', '- 결론: LANDS'), or the scaffold row itself with a checkbox in front of the label ('- [x] result / verdict: LANDS'), satisfies the AUDIT but does not authorize teardown — emphasis around the label is the only decoration accepted here. Bypass: FORCE_CLEAN=1 campaign.sh clean $n"
   fi
-  teardown "$n" yes
-  echo "cleaned $n (worktree + local & remote branch)"
+  if teardown "$n" yes; then
+    echo "cleaned $n (worktree + local & remote branch)"
+  else
+    die "PARTIAL clean of '$n': the remote branch was deleted but the worktree SURVIVED (see the WARN above). The LOCAL branch survives whenever that worktree still has it checked out — the hand-moved case — so recover with: commit anything uncommitted there, then 'git worktree remove <path>' and 'git branch -D $n'. If the WARN named an OCCUPIED slot instead, no worktree of ours was there and the local branch is already deleted."
+  fi
 }
 
 cmd_abort() {
   local n="$1"; check_name "$n"; local purge="${2:-}"
   local del=no; [ "$purge" = --purge ] && del=yes
-  teardown "$n" "$del"
-  echo "aborted $n (remote branch: $([ "$del" = yes ] && echo purged || echo kept))"
+  if teardown "$n" "$del"; then
+    echo "aborted $n (remote branch: $([ "$del" = yes ] && echo purged || echo kept))"
+  else
+    die "PARTIAL abort of '$n': the worktree SURVIVED (see the WARN above). The LOCAL branch survives whenever that worktree still has it checked out — 'git worktree remove <path>' then 'git branch -D $n' finishes the job; with an OCCUPIED slot the local branch is already deleted."
+  fi
 }
 
 cmd_pin() {
