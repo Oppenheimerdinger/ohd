@@ -7,7 +7,9 @@
 # always exits 0. --sync rewrites tools/campaign.sh from the plugin's template,
 # PRESERVING the project's config-block values (key-based merge: project value
 # wins per variable; template supplies new variables; project-only custom
-# variables are kept) and stamping `# synced-from ohd v<version>`.
+# variables are kept), REPLACING the body wholesale (body-level customizations
+# do not survive — a pre-sync backup is written), and stamping
+# `# synced-from ohd v<version>`.
 #
 # DRY: this script restates NO harness content. The template next to it IS the
 # single source of truth; the script only compares and splices.
@@ -111,8 +113,14 @@ elif [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
     sed -n "${TE}p" "$TPL"
     tail -n +"$((TE + 1))" "$TPL"
   } > "$NEW"
+  if [ -f "$DST" ]; then
+    BAK="$DST.pre-sync.$(date +%F-%H%M%S)"
+    cp -p "$DST" "$BAK"
+  else
+    BAK=""
+  fi
   mv "$NEW" "$DST"; chmod +x "$DST"
-  report "campaign.sh" "SYNCED" "review with 'git diff $DST' before committing"
+  report "campaign.sh" "SYNCED" "body reset to template v$PLUGVER — body-level customizations do NOT survive sync (config keys did)${BAK:+; pre-sync copy: $BAK}; review with 'git diff $DST'"
 fi
 
 # ---- trunk hook ----

@@ -9,7 +9,7 @@ standard single-repo project.
 | Question | Config | Default (recommended) |
 |---|---|---|
 | Trunk branch? | `TRUNK` | `main` |
-| Where should worktrees live? | `WT_ROOT` | `$HOME/wt` |
+| Where should worktrees live? | `WT_ROOT` | (empty — derives `$HOME/wt/<repo-name>/`, per-project) |
 | Campaign naming: free-form or numbered `NNN-slug`? | `NAMING` | `free` (numbered suits milestone-style projects) |
 | Who merges? One anchored coordinator session, or a GitHub review gate? | `MERGE_MODEL` | `coordinator` for a single-owner repo; `review-gate` for collaborative repos |
 | Where do campaign state docs live? | `STATE_DIR` | `docs/campaigns` |
