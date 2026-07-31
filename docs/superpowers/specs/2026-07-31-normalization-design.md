@@ -34,7 +34,7 @@ negative clause excluding merely discussing/reading/summarizing reviews (the
 routing layer must still be able to route TO it), and the line
 "wraps code-review; never replaces it" (the corpus shows r2c DISPLACING the
 review instrument in 3 of ~15 firings). Under the ~50-word budget; the current
-description is 76 words, so this is a convention repair, not growth.
+description is 75 words, so this is a convention repair, not growth.
 Rationale for act-scoping: a topic-word trigger fires on every conversation
 *about* review — including the harness's own maintenance sessions, where it was
 observed misfiring live.

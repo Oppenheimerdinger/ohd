@@ -37,13 +37,26 @@ the next reviewer's input and let that reviewer close or uphold it. Severity
 finding yourself to avoid a fix is closure by fiat. "The reviewer
 misunderstood" is itself a finding — against your artifact's clarity.
 
+**Every finding ends in a DISPOSITION, and those dispositions ARE the
+"rulings" other skills cite.** "Zero findings" in step 5 means zero NEW
+findings: a residual survives the terminal round only as a logged disposition
+carrying its reason — `rebutted-upheld` (a reviewer, not you, upheld the
+rebuttal) or `minor-logged` (triaged, naming what was deferred) — recorded in
+that round's log line and, when working inside a campaign, in the state doc. A
+residual with no recorded disposition means NOT converged: that is closure by
+fiat with a log line drawn around it.
+
 **Convergence log (artifact, hand-off blocker):** when declaring done, print
 one line per round — `round N: <reviewers>× <lens> @<sha> → X findings →
 fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ clean`.
 **This is the one format**; other skills point here rather than restate it.
 The lens and reviewer count are part of the log: "clean" from one design-lens
-pass must not relay as the multi-reviewer rigor it wasn't. `@<sha>` is the
-tree that round reviewed — re-reviewing the same SHA is not a new round —
+pass must not relay as the multi-reviewer rigor it wasn't. A fixed-pipeline
+INSTRUMENT counts as one under its own name, and that name stands as the lens
+(`1× code-review:code-review` — the plugin's set of review lenses is fixed and
+documented); an ad-hoc reviewer names its lens itself (`1× review subagent
+(bugs lens)`). `@<sha>` is the tree that round reviewed — re-reviewing the
+same SHA is not a new round —
 and is dropped only when the deliverable is not a tree (a plan, a problem
 statement). No log line for a clean final pass = not converged; go run it.
 **When the deliverable is a committed

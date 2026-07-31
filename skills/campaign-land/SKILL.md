@@ -101,8 +101,9 @@ The log lines follow review-to-convergence's format — reviewer and reviewed
 SHA per round, findings and their disposition — flattened into the cell; that
 skill owns the format, this one only says the cell carries it. It ends either
 in a round that came back CLEAN or with every residual finding carrying an
-explicit ruling recorded in this doc (r2c supplies that rule; a finding closed
-by the author's own fiat is not a ruling). Shape:
+explicit ruling recorded in this doc (r2c supplies that rule — a ruling is its
+recorded disposition, and a finding closed by the author's own fiat is not
+one). Shape:
 
 ```
 | 3 quality gate | yes | round 1: 1× code-review:code-review PR#16 @a1b2c3d → 2 findings → fixed; round 2: 1× review subagent (bugs lens) @e4f5a6b → clean. simplifier: not needed — diff is one guard clause |

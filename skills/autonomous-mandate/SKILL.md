@@ -124,9 +124,12 @@ loop for it. This skill is for session-scope, user-absent mandates.
      state doc, staleness listing, and cleanup ownership). Two agents in one
      worktree contaminate each other's gate runs.
    - LAST RESORT — not a "works": genuinely gated on wall-clock with
-     nothing dispatchable and no backgroundable watch, keep the turn short
-     and SAY that. This IS the no-op-turn failure named above, unsolved —
-     merely the smallest evil (smaller than manufactured work or a sleep).
+     nothing dispatchable and no backgroundable watch — or the only
+     actionable item was a legitimate micro-edit and it is already done —
+     keep the turn short and NAME which of the two the iteration was. This
+     IS the un-advanced iteration named above (an empty turn, or one whose
+     only content was your own edit), unsolved — merely the smallest evil
+     (smaller than manufactured work or a sleep).
      **Do not manufacture work to fill an iteration** — an artifact written
      to justify a turn costs more to review than the empty turn it
      replaced. If iterations keep landing here, record in the state doc

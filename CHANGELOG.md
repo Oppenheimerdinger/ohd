@@ -1,6 +1,6 @@
 ## v0.5.23 (2026-07-31)
 
-BEHAVIOR-CHANGE: the land report's Phase 3 evidence cell now carries a CONVERGENCE LOG rather than just a final verdict — one line per round naming the reviewer and the SHA that round reviewed, ending in a round that came back clean or with every residual finding carrying an explicit ruling recorded in the state doc.
+BEHAVIOR-CHANGE: the land report's Phase 3 evidence cell now carries a CONVERGENCE LOG rather than just a final verdict — one line per round naming the reviewer and the SHA that round reviewed, ending in a round that came back clean or with every residual finding carrying an explicit ruling (r2c's recorded disposition — `rebutted-upheld` / `minor-logged`) in the state doc.
 
 BEHAVIOR-CHANGE: the land report's Phase 6 evidence cell must contain `sanity:` BY NAME — either the `claude-md-sanity` findings and their disposition, or the skip quoting its named condition WITH the `git diff --name-only <base>..HEAD` artifact the rule already required.
 
@@ -8,7 +8,7 @@ BEHAVIOR-CHANGE: the autonomous-mandate skill no longer accepts work the coordin
 
 BEHAVIOR-CHANGE: a campaign-scale plan is now CONVERGED (`review-to-convergence`) BEFORE execution begins — before the user's approval gate, so the user approves an already-reviewed plan — and its items are then materialized into the session task list (TaskCreate / todos), with results written back to the state doc's `## plan` section as units complete.
 
-BEHAVIOR-CHANGE: being INSIDE the superpowers flow is no longer an exemption from review-to-convergence — the spec and the plan are reviewed by their AUTHOR only, so each gets an independent r2c pass before execution begins, and SDD's own review loop, which terminates on ADJUDICATION rather than on a clean pass, now takes r2c's stopping rule: the last round comes back clean, or every residual carries an explicit ruling recorded in the state doc.
+BEHAVIOR-CHANGE: being INSIDE the superpowers flow is no longer an exemption from review-to-convergence — the spec and the plan are reviewed by their AUTHOR only, so each gets an independent r2c pass before execution begins, and SDD's own review loop, which terminates on ADJUDICATION rather than on a clean pass, now takes r2c's stopping rule: the last round comes back clean, or every residual carries an explicit ruling (r2c's recorded disposition — `rebutted-upheld` / `minor-logged`) in the state doc.
 
 BEHAVIOR-CHANGE: the trunk pre-commit hook written by `assets/install-hooks.sh` now carries a version stamp (`# ohd-hook v2`) that /ohd-checkup compares DIRECTIONALLY — an older stamp reports `trunk-hook | STALE` with the re-install command instead of passing as INSTALLED, while a stamp NEWER than the running plugin's reports `trunk-hook | AHEAD` and points at the stale plugin cache rather than recommending a downgrade.
 
@@ -28,8 +28,10 @@ BEHAVIOR-CHANGE: the trunk pre-commit hook written by `assets/install-hooks.sh` 
   motivated it was ONE finding on a small diff; and `simplifier: not needed` now
   requires a one-clause reason, a bare `not needed` being a self-attestation
   with nothing in it to disagree with. `review-to-convergence` owns the line
-  format — campaign-land and deep-solve point at it instead of restating it,
-  which is how three slightly different formats got written in the first place.
+  format — campaign-land points at it rather than restating it, and deep-solve
+  carries a synced copy that names its one deviation (no `@<sha>`: a brief is
+  not a tree) — since independent restatement is how three slightly different
+  formats got written in the first place.
 - **Both evidence contracts apply FORWARD only.** Historical land reports are
   not retroactively audited — no script reads these cells — and are expected to
   fail the new wording.

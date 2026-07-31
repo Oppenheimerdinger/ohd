@@ -36,7 +36,7 @@ Run it as 2–3 independent fresh-context reviewers with distinct lenses (design
 soundness, correctness, simplicity), each given the goal + the diff; reconcile
 findings before banking, and close on review-to-convergence's rule rather than
 by adjudication: a final pass comes back clean, or every residual carries an
-explicit ruling.
+explicit ruling — r2c's recorded disposition, never the author's own fiat.
 
 ## Two force-multipliers (defaults, not ad-hoc)
 
@@ -82,9 +82,10 @@ Inside an open campaign the default is that an edit belongs to the plan —
 "standalone" is a claim you support by pointing at the plan section, not the
 fallback when no plan exists (no plan line yet = the signal to write one, not
 a license to edit). An exploratory campaign whose plan is a one-line
-next-probe has dispatched nothing: row 1's precondition is met there — its
-disqualifiers still decide — and the probe's result gets written back into the
-plan line (writing that result is analysis, not a code edit).
+next-probe has dispatched nothing: the probe belongs to that plan, so what
+decides is row 1's DISQUALIFIERS rather than the standalone test — and the
+probe's result gets written back into the plan line (writing that result is
+analysis, not a code edit).
 
 ## Campaign sizing — a campaign is ONE coherent increment
 
@@ -231,9 +232,9 @@ at it with fresh eyes… Fix any issues inline. No need to re-review") — so ea
 gets an independent r2c pass before execution begins. **(ii) SDD's own review loop terminates on ADJUDICATION, not on a clean
 pass** ("there is no second fix wave — residual load-bearing findings surface to
 your human partner"), so r2c supplies the stopping rule it lacks: the last round
-comes back clean, or every residual carries an explicit ruling recorded in the
-state doc. The instrument stays SDD's own reviewer — this adds no tool, only a
-termination condition — and it binds hardest under an unattended mandate, where
+comes back clean, or every residual carries an explicit ruling — r2c's recorded
+disposition — in the state doc. The instrument stays SDD's own reviewer — this
+adds no tool, only a termination condition — and it binds hardest under an unattended mandate, where
 the "surface to your human partner" exit does not exist. A completion claim NAMES its review pass (what
 reviewed it, verdict) — a claim that names none is unreviewed work, whatever
 its confidence. This is why superpowers is
