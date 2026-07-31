@@ -24,6 +24,7 @@ router — which tool, when.
 | The ohd plugin may have updated since session start | `/reload-plugins` (or restart) → `/ohd-checkup` per project — the session stays pinned to its start-time version otherwise (checkup reports `plugin-cache | STALE` when it can see this) |
 | Starting a new research project | `/ohd-new-project` (interview-driven scaffolder) |
 | Existing project: harness drift check / adoption ("하네스 점검") | `/ohd-checkup` (mechanical drift + CLAUDE.md wiring, repairs on approval) |
+| A campaign-scale ask (multi-day, several tasks) | draft the plan — plan mode or directly — and SAVE it into the campaign state doc's `## plan` section before starting; an approved plan left in chat evaporates at the next compaction |
 
 **Workflow-review trigger (default, user-adjustable):** work where judgment
 (not a single right answer) shaped the result — a new design, a new module, an
@@ -60,8 +61,8 @@ edit; the boundary:
 
 | Work | Who | Vehicle |
 |---|---|---|
-| Micro-edit (one file, tens of lines, instantly verifiable) | main session directly | — (delegation would cost more) |
-| Planned multi-file implementation | fresh implementer per task | superpowers:subagent-driven-development |
+| Micro-edit — a STANDALONE fix outside any plan or dispatched task (one file, tens of lines, instantly verifiable) | main session directly | — (delegation would cost more) |
+| Any step of a written plan's implementation task, regardless of size | fresh implementer per task | superpowers:subagent-driven-development |
 | Bulk writing (docs, reports, large generated text) | a writer/executor subagent | Agent tool (oh-my-claudecode's tiered `writer`/`executor` roster, when installed) |
 | Separable hard reasoning | fresh agent with a verified brief | force-multiplier 1, escalating to `deep-solve` |
 | Must-complete long-running work | a persistence loop (independent evaluator judges termination — below) | `/loop` / schedule / ralph |
@@ -71,6 +72,13 @@ When in doubt, weigh the actual costs: if writing the brief plus reading and
 verifying the reply costs more than just doing the work, do it directly
 (row 1's case); otherwise delegate — the output then lives in the subagent's
 context, not yours.
+
+Inside an open campaign the default is that an edit belongs to the plan —
+"standalone" is a claim you support by pointing at the plan section, not the
+fallback when no plan exists (no plan line yet = the signal to write one, not
+a license to edit). An exploratory campaign whose plan is a one-line
+next-probe has dispatched nothing: row 1 still applies there, and the probe's
+result gets written back into the plan line.
 
 ## Campaign sizing — a campaign is ONE coherent increment
 
@@ -84,7 +92,21 @@ field observation behind this rule.
   brainstorming and writing-plans already carry the scope checks (their
   rule: each sub-plan yields independently working, testable software).
   **One sub-plan = one campaign = one land.** Open campaigns cut to the
-  increment you intend to land, not to the whole ambition.
+  increment you intend to land, not to the whole ambition. Work that arrives
+  WITHOUT that decomposition — most exploratory research — is sized here
+  instead, and its plan is the state doc's `## plan` section (below).
+- **Plans are layered by volatility**: direction (roadmap doc, stable) →
+  campaign (the state doc's `## plan` section — living, and TRUNK-owned like
+  the rest of that doc: edited at the anchor, never on the campaign branch) →
+  task (frozen brief via writing-plans/SDD; a dispatched brief never mutates
+  — kill the task and cut a new one). Depth follows certainty: known stretch
+  = task checkboxes; unknown stretch = ONE line, next probe + decision rule —
+  replanning is then cheap and normal (edit the line, add a one-line reason).
+  A plan line that turns implementation-shaped gets a plan FILE cut by
+  writing-plans and becomes a pointer to it — the plan section itself is
+  never an SDD plan file (it lives on trunk, outside the worktree SDD runs
+  in). And a gate demanding a plan you don't have means you entered from the
+  wrong end: do not backfill — stop and write the honest plan line first.
 - **The land signal is state, not calendar**: the moment you catch yourself
   stacking the NEXT increment on top of already-validated work, land first.
   Batching related commits into one coherent increment is normal; one
