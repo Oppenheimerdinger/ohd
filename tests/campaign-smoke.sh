@@ -16,6 +16,14 @@ echo hello > README.md && git add . && git commit -qm init && git push -q origin
 git fetch -q origin && git checkout -q main 2>/dev/null || git checkout -qb main origin/main
 
 export CAMPAIGN_WT_ROOT="$TMP/wt"
+
+# issue #10: with no CAMPAIGN_WT_ROOT, the default root is per-project
+( unset CAMPAIGN_WT_ROOT
+  mkdir -p "$TMP/fakehome"
+  HOME="$TMP/fakehome" "$CS" new d1 >/dev/null
+  [ -d "$TMP/fakehome/wt/$(basename "$PWD")/d1" ] || fail "default WT_ROOT not per-project (expected \$HOME/wt/<repo>/d1)"
+  HOME="$TMP/fakehome" "$CS" abort d1 >/dev/null
+)
 export CAMPAIGN_TRUNK=main
 
 # new: worktree + branch + state doc

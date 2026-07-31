@@ -111,8 +111,14 @@ elif [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
     sed -n "${TE}p" "$TPL"
     tail -n +"$((TE + 1))" "$TPL"
   } > "$NEW"
+  if [ -f "$DST" ]; then
+    BAK="$DST.pre-sync.$(date +%F)"
+    cp -p "$DST" "$BAK"
+  else
+    BAK=""
+  fi
   mv "$NEW" "$DST"; chmod +x "$DST"
-  report "campaign.sh" "SYNCED" "review with 'git diff $DST' before committing"
+  report "campaign.sh" "SYNCED" "body reset to template v$PLUGVER — body-level customizations do NOT survive sync (config keys did)${BAK:+; pre-sync copy: $BAK}; review with 'git diff $DST'"
 fi
 
 # ---- trunk hook ----

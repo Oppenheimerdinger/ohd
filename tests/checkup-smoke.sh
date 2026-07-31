@@ -29,6 +29,8 @@ grep -q 'OLD_IMPL' tools/campaign.sh                 && fail "sync kept drifted 
 grep -q '^# instantiated 2026-01-01' tools/campaign.sh || fail "sync lost instantiated line"
 grep -q '^# synced-from ohd v' tools/campaign.sh     || fail "sync missing synced-from stamp"
 bash -n tools/campaign.sh                            || fail "synced script has syntax errors"
+ls tools/campaign.sh.pre-sync.* >/dev/null 2>&1      || fail "sync left no pre-sync backup (issue #11)"
+grep -q 'OLD_IMPL' tools/campaign.sh.pre-sync.*      || fail "pre-sync backup is not the pre-sync body"
 
 # 3) post-sync: IN-SYNC (config differences must NOT count as drift)
 out="$("$CK" .)"; grep -q "campaign.sh | IN-SYNC" <<<"$out" || fail "expected IN-SYNC after sync"

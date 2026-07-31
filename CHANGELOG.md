@@ -1,3 +1,22 @@
+## v0.5.21 (2026-07-31)
+
+BEHAVIOR-CHANGE: the campaign worktree default root is now per-project (`$HOME/wt/<repo-basename>/`) — `CAMPAIGN_WT_ROOT` still overrides, existing projects keep their config's explicit old value through sync, and teardown now WARNs instead of claiming success when a worktree it cannot remove survives.
+
+BEHAVIOR-CHANGE: `checkup.sh --sync` now writes a pre-sync backup (`tools/campaign.sh.pre-sync.<date>`) and its SYNCED report states plainly that body-level customizations do not survive a sync (config keys do).
+
+BEHAVIOR-CHANGE: /ohd-checkup step 7 no longer claims the docs-only trunk hook allows `tools/` paths (it never did — default ALLOW_RE is `^docs/|\.md$`): `tools/` repairs commit with `--no-verify` plus the reason, never by widening ALLOW_RE.
+
+- All three fixes answer externally reported issues with reproductions
+  (#10 flat worktree-root collision between sibling projects, #11 sync
+  silently discarding body customizations without backup or warning,
+  #12 checkup step-7's false hook claim steering agents toward weakening
+  trunk protection). Thanks to the reporter for live repro cases,
+  including the config-survives-while-its-body-dies corruption in #11.
+- Migration note (#10): the per-project default is derived AFTER the
+  config block, so a synced project whose config still pins the old flat
+  root keeps it — open campaigns are unaffected; new instantiations get
+  the namespaced root.
+
 ## v0.5.20 (2026-07-31)
 
 BEHAVIOR-CHANGE: campaign state docs now scaffold a `## plan` section (the living campaign plan: task checkboxes where the path is known, ONE line — next probe + decision rule — where it is not) and the land report gains a `0.5 plan recorded` row attesting it at land.

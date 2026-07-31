@@ -93,8 +93,11 @@ plugin updates, this command's standard updates with it.
    touched (or the user asks), invoke the `ohd:claude-md-sanity` skill — do NOT
    re-implement its audit here.
 7. Uncommitted repairs at the end: remind the user to review `git diff` and
-   commit (docs-only trunk hooks allow the .md and tools/ paths involved —
-   if a hook blocks, say which paths and why instead of forcing). A
+   commit. `.md` repairs pass the default docs-only trunk hook, but `tools/`
+   repairs do NOT (default ALLOW_RE is `^docs/|\.md$`) — commit those with
+   `--no-verify` and the reason in the commit message (harness maintenance,
+   not campaign work); do NOT widen ALLOW_RE to make them pass, and if a
+   hook blocks, say which paths and why instead of forcing silently. A
    `RETIRED-ROUTE` repair applied to the out-of-repo auto-memory store is not
    under version control and so never shows up in that `git diff` — call it
    out separately and point the user at the edited memory file(s) directly.

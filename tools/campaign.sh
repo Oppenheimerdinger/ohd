@@ -6,7 +6,7 @@ set -euo pipefail
 
 # ── config (drop-in interview fills these; CAMPAIGN_* env vars override) ──
 TRUNK="${CAMPAIGN_TRUNK:-main}"
-WT_ROOT="${CAMPAIGN_WT_ROOT:-$HOME/wt}"
+WT_ROOT="${CAMPAIGN_WT_ROOT:-}"   # empty = per-project default, derived after ROOT below
 NAMING="${CAMPAIGN_NAMING:-free}"                    # free | numbered (NNN-slug)
 MERGE_MODEL="${CAMPAIGN_MERGE_MODEL:-coordinator}"   # coordinator | review-gate
 STATE_DIR="${CAMPAIGN_STATE_DIR:-docs/campaigns}"
@@ -35,6 +35,10 @@ USG
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git repo"
 cd "$ROOT"
+
+# Worktree roots are per-project: a flat shared root collides as soon as two
+# sibling projects both number campaigns from 001 (issue #10).
+WT_ROOT="${WT_ROOT:-$HOME/wt/$(basename "$ROOT")}"
 
 check_name() {
   local n="${1:-}"
@@ -217,6 +221,7 @@ teardown() {
   local n="$1" del_remote="$2"
   local wt; wt="$(wt_path "$n")"
   git worktree remove --force "$wt" 2>/dev/null || true
+  [ -e "$wt" ] && echo "WARN: $wt still exists (not this repo's worktree?) — left in place" >&2
   git branch -D "$n" 2>/dev/null || true
   if [ "$del_remote" = yes ]; then git push origin --delete "$n" 2>/dev/null || true; fi
   git worktree prune
