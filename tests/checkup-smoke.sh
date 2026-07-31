@@ -85,6 +85,14 @@ cat > docs/campaigns/aborted.md <<'EOF'
 # campaign: aborted
 - result / verdict: ABANDONED — superseded
 EOF
+cat > docs/campaigns/openplan.md <<'EOF'
+# campaign: openplan
+- result / verdict:
+
+## plan
+- [ ] probe stress test → result: inconclusive, next: sweep k
+- [ ] check if this already LANDED upstream before redoing the work
+EOF
 cat > docs/campaigns/prose.md <<'EOF'
 # campaign: prose
 - goal: retries must not abort on transient errors
@@ -95,6 +103,8 @@ grep -q "prose.md" <<<"$out" || fail "incidental 'abort' prose wrongly exempted 
 rm docs/campaigns/prose.md
 grep -q "oldland.md" <<<"$out"  || fail "GAPS detail missing the offending doc"
 grep -q "aborted.md" <<<"$out" && fail "abandoned campaign wrongly flagged as land gap"
+grep -q "openplan.md" <<<"$out" && fail "open campaign's plan-line 'result:' wrongly read as landed"
+rm docs/campaigns/openplan.md
 { echo; grep -m1 '^| phase | ran? | evidence |$' "$FAKE_ASSETS/campaign.sh"; } >> docs/campaigns/oldland.md \
   || fail "producer table header not found in campaign.sh (scaffold/audit integration broken)" 
 out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "land-reports | OK" <<<"$out" || fail "expected land-reports OK after backfill"

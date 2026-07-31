@@ -170,6 +170,7 @@ still requires the filled verdict line. Fill rows as phases complete:
 | phase | ran? | evidence |
 |-------|------|----------|
 | 0 preconditions      | yes/skip | <command or output ref> |
+| 0.5 plan recorded    | yes/skip | ... |
 | 1 working-tree safety| yes/skip | ... |
 | 2 re-validation      | yes/skip | ... |
 | 2.5 reachability     | yes/skip | ... |
@@ -184,6 +185,9 @@ previous land's memory is itself a violation — both field recurrences began
 exactly that way (the second one with the rule already written in memory;
 memory is a soft layer, the script gate is the backstop).
 
+- Row 0.5 attests the state doc's `## plan` section reflects what actually
+  happened — existence and honesty, not a content gate (`skip` = the campaign
+  never had a plan; say why in the cell).
 - `evidence` must reference something that actually happened this land — a
   command you ran, an output you saw, a diff/commit hash. An empty or vague
   evidence cell means the phase DID NOT HAPPEN — go run it.

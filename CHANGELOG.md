@@ -1,3 +1,43 @@
+## v0.5.20 (2026-07-31)
+
+BEHAVIOR-CHANGE: campaign state docs now scaffold a `## plan` section (the living campaign plan: task checkboxes where the path is known, ONE line — next probe + decision rule — where it is not) and the land report gains a `0.5 plan recorded` row attesting it at land.
+
+BEHAVIOR-CHANGE: the clean-gate and checkup verdict greps now match only bullet-initial verdict/result lines — a `result:` inside a plan section no longer satisfies `campaign.sh clean` or flips checkup's land-reports audit to GAPS.
+
+BEHAVIOR-CHANGE: the micro-edit delegation license is scoped to STANDALONE fixes — inside an open campaign an edit belongs to the plan by default (no plan line yet = the signal to write one, not a license), and any step of a dispatched task goes to that task's implementer regardless of size.
+
+- Planning-layers doctrine (way-of-working): research plans are layered by
+  volatility — direction (roadmap doc) → campaign (the state doc's `## plan`
+  section: living, TRUNK-owned, edited at the anchor) → task (frozen brief
+  via writing-plans/SDD). Depth follows certainty; replanning is normal (edit
+  the line + a one-line reason); a plan line that turns implementation-shaped
+  gets a plan FILE cut by writing-plans and becomes a pointer to it — the
+  plan section is never an SDD plan file (it lives on trunk, outside the
+  worktree SDD runs in). Entering a gate that demands a plan you don't have
+  means backfilling is the wrong move: stop and write the honest plan line.
+- Design went through a 3-lens independent review (minimality / field
+  efficacy / doctrine coherence) before implementation; the original
+  new-section+table draft was cut ~80% on the minimality verdict, and the
+  verdict-grep anchoring plus the license inversion came out of the review.
+- Measured baseline for the efficacy claim: sessions spontaneously write a
+  `## plan` section in 6% of campaign state docs (33/522 across four adopting
+  projects); scaffold-field fill rates run ~38-76% and die-gated artifacts
+  ~75%. Post-ship the rate is directly measurable per project:
+  `grep -lc '^## plan' docs/campaigns/*.md`. Known residuals, accepted: no
+  surface fires at the moment of drift itself (no hooks by design), and a
+  bare plan bullet spelled exactly `- result: ...` still matches the verdict
+  grep, as does a bullet BEGINNING with a verdict word (`- LANDED as PR #7` —
+  that form is a legitimate free-form verdict; both are indistinguishable
+  even to a human reader). The delegation-license inversion itself is
+  prose-only — no artifact records who wrote an edit — its measurable proxy
+  is the plan section the license now points at.
+- Post-review fix (code-review:code-review on the PR, reproduced live): the
+  verdict grep's bare-word branch (LANDS/LANDED/ABANDONED) was only
+  line-anchored, so a plan bullet merely CONTAINING one of those words
+  satisfied the clean gate with the verdict still empty — now anchored to
+  the position right after the bullet marker, with smoke fixtures for the
+  bare-word case in both suites.
+
 ## v0.5.19 (2026-07-30)
 
 BEHAVIOR-CHANGE: under an autonomous mandate a session must never end a turn without a live agent or a just-issued dispatch — an iteration with nothing to do is a missing dispatch, not a reason to slow or stop the loop; padding turns with blocking waits is banned (it makes the session unreachable).
