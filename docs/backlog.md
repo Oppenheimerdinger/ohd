@@ -77,9 +77,23 @@ Sessions ending turns on declarative promises ("계속 진행하겠습니다") s
 unattended work (3 field occurrences). Research verdict (2026-07-30): the
 community-standard fix is STATE-based stop-blocking (ralph-style loops with
 completion conditions), not phrase heuristics on the last message — and
-plugin-shipped Stop hooks currently fail to continue (upstream #10412), so
-ohd cannot ship one anyway. Adopted instead: the way-of-working rule that an
+plugin-shipped Stop hooks using EXIT CODE 2 fail to continue (upstream
+#10412 — CORRECTED 2026-07-31: the bug is exit-2-specific; ralph-loop's
+JSON decision:block form works, field-verified by its loop re-firing across
+iterations). ohd still ships no Stop hook of its own. Adopted instead: the way-of-working rule that an
 autonomous mandate's first action is loop setup (v0.5.15). Revisit a
-phrase-tripwire hook only if stalls recur UNDER loops, and only after
-#10412 is fixed (or as a user-settings hook offered by ohd-setup, which
-sidesteps the plugin path).
+phrase-tripwire hook only if stalls recur UNDER loops — the plugin path is
+technically open today (JSON decision:block form, per the correction
+above); what keeps this deferred is the research verdict against phrase
+heuristics, not the upstream bug.
+
+## 10. Context exhaustion under a session-locked loop — OPEN (residual of PR #8)
+
+Step 6 reframes empty iterations as missing dispatches but does not slow
+the loop: the ralph-loop stop hook has no throttle, and when the critical
+path is truly gated on one agent's wall-clock, short status turns burn
+context (named, unsolved). Known levers: auto-compaction (session persists,
+the hook's session-id lock holds) and checkpoint+fresh-session — but the
+loop is session-id-locked, so a fresh session needs a re-arm trigger nobody
+has designed for an unattended run. Revisit on field evidence of a loop
+dying of context exhaustion. (2026-07-31)
