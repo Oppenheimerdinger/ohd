@@ -2,7 +2,11 @@
 
 BEHAVIOR-CHANGE: /ohd-checkup's land-report audit was silently UNDER-COUNTING since v0.5.20 — a landed state doc whose verdict row carried any decoration (`- status: LANDED (PR #12 merged)`, `- **verdict**: LANDS`, `- [x] LANDED as PR #7`, a translated label key such as `- 결론: LANDS`) was skipped without an error, so a green `land-reports` row was not evidence of coverage; projects audited under v0.5.20/v0.5.21 pick the fix up with `checkup.sh <root> --sync` (report-mode checkup only prints a DRIFT row — the gate regexes live in the project-local `tools/campaign.sh`, which only `--sync` rewrites).
 
-BEHAVIOR-CHANGE: `campaign.sh` derives the per-project worktree root from the layout again — under `clone --separate-git-dir` sibling projects no longer collapse onto the shared gitdir parent (reintroduced issue #10's cross-project collision) and submodules no longer collapse onto their `modules/…` parent; a project path containing a SPACE is no longer truncated at the space. Apply with `checkup.sh <root> --sync`.
+BEHAVIOR-CHANGE: `campaign.sh clean` now requires the state doc's SCAFFOLD row — the literal `- result / verdict:` line `campaign.sh new` writes — to carry content. Substitutes that used to satisfy it no longer do: `- **verdict**: LANDS`, `- 결론: LANDS`, `- [x] LANDED as PR #7`, `- status: LANDED (PR #12 merged)`, a bare `- LANDED as PR #7`. Those all still satisfy /ohd-checkup's land-report audit — the two consumers now use DIFFERENT rules on purpose (see below). Fill the scaffold row, or use `FORCE_CLEAN=1`. Apply with `checkup.sh <root> --sync`.
+
+BEHAVIOR-CHANGE: `campaign.sh clean` and `abort` now FAIL (non-zero, `PARTIAL clean/abort of '<name>'`) instead of printing `cleaned`/`aborted` when the branches were deleted but the campaign's worktree survived on disk — a hand-moved worktree, or a `CAMPAIGN_WT_ROOT` that differs between `new` and `clean`. Apply with `checkup.sh <root> --sync`.
+
+BEHAVIOR-CHANGE: `campaign.sh` derives the per-project worktree root from the first `git worktree list` entry in EVERY layout — under `clone --separate-git-dir` sibling projects no longer collapse onto the shared gitdir parent (reintroduced issue #10's cross-project collision) and submodules no longer collapse onto their `modules/…` parent; a project path containing a SPACE is no longer truncated at the space. Under `clone --separate-git-dir` specifically, the MAIN checkout's slot is now the GIT DIR's name (`$HOME/wt/<gitdir>/`), not the checkout directory's — that is the only name a linked worktree of the same project can also see, and the two used to disagree; move any existing `$HOME/wt/<checkout-dir>/` campaigns to the gitdir-named slot. Apply with `checkup.sh <root> --sync`.
 
 BEHAVIOR-CHANGE: the `land` gate, `land --report`'s duplicate-table detection, and checkup's audit exemption now match `| phase |` only at the START of a line instead of anywhere in it — a plan bullet that merely mentions the header no longer satisfies the land gate, no longer blocks `land --report` from scaffolding the real table, and no longer exempts a landed doc from the audit. Apply with `checkup.sh <root> --sync`.
 
@@ -18,48 +22,72 @@ BEHAVIOR-CHANGE: the `land` gate, `land --report`'s duplicate-table detection, a
   file on disk — every campaign worktree is a full checkout carrying the whole
   `docs/campaigns/` tree, so grepping across live worktrees counts each doc
   once per worktree and will show a much larger number. The flips concentrate
-  in the largest repo (37 of the 45), where the row goes from single digits to
+  in the largest repo (38 of the 45; the remaining 7 are all in one other),
+  where the row goes from single digits to
   dozens. This is BACKFILL OF A PRE-EXISTING BLIND SPOT, not new breakage:
   those lands really did happen without a land-report table, and the audit was
   simply unable to see them. Most are old already-landed campaigns that need no
   worktree action — annotate or backfill honestly. `- status: LANDED (PR #NN
   merged)` phrasing alone drove 33 of the 45.
-- `clean`'s verdict gate and checkup's audit now share one rule, and it is
-  STRUCTURAL rather than word-counting, because the earlier "prose intervenes"
-  discriminator fails exactly when the verdict word is the first token after a
-  label. A verdict row needs a REAL list marker (a space after `-`/`*`), a
-  checkbox only when CHECKED, and between marker and verdict only decoration —
-  emphasis and/or ONE space-free label key ending in `:`. So a bold PARAGRAPH
-  of sub-conclusions (`**Verdict: L2 is validated.**`, which long research docs
-  carry while the campaign is still OPEN) and an unchecked TODO
-  (`- [ ] TODO: LANDED upstream?`) are no longer verdicts, while
-  `- [ ] check if this already LANDED upstream …` stays blocked as before.
-  Known gaps, unclosed and stated plainly: `- risk: ABANDONED approach may
-  resurface` still reads as a labelled verdict, and a bold sub-conclusion
-  written as a REAL bullet (`- **VERDICT: nrxx-tiling reduces the peak.**`) is
-  structurally identical to a decorated canonical row (`- **verdict**: LANDS`)
-  — only position tells them apart. Scoping the search above the first `## `
-  heading would close both, but was rejected on measurement: of the 139 unique
-  docs carrying a verdict line at all, 25 keep it BELOW a heading, four in the
-  literal `- result / verdict:` form, so scoping would refuse legitimate
-  cleans. (Keying on `## plan` specifically rather than any heading is no
-  escape: only 13 of the 365 docs use that literal spelling — plans appear
-  under 40+ other headings.) Both
-  gaps sit behind `clean`'s merge check, which refuses an unmerged campaign
-  before the verdict gate is consulted at all.
+- `clean`'s verdict gate and checkup's audit now use DIFFERENT rules, and that
+  split is the point of this round. Three rounds of tightening one shared regex
+  all failed on the same pair: `- **verdict**: LANDS` (a real verdict, must
+  pass) and `- **VERDICT: nrxx-tiling genuinely reduces the peak.**` (a
+  mid-campaign sub-conclusion in a doc whose campaign is OPEN, must not) are
+  lexically near-identical. The two consumers do not have the same input, so
+  they should not have had the same rule:
+  - `clean` only ever runs on a campaign `new` opened, and `new` writes the
+    literal `- result / verdict:` row, so `clean` anchors on THAT row carrying
+    content. Position-free (25 of the 139 corpus docs with a verdict line keep
+    it below a heading) and emphasis-tolerant (2 of the 84 corpus docs with the
+    scaffold row decorate its label). No word counting, no label heuristics.
+  - the audit reads LEGACY docs, only 84 of the 365 of which carry that row, so
+    anchoring there would silently skip 77% of the corpus — the failure this
+    release exists to remove. It keeps the tolerant structural rule: a REAL list
+    marker (a space after `-`/`*`), a checkbox only when CHECKED, and between
+    marker and verdict only decoration — emphasis and/or ONE space-free label
+    key ending in `:`. A bold PARAGRAPH (`**Verdict: L2 is validated.**`) and an
+    unchecked TODO (`- [ ] TODO: LANDED upstream?`) are still not verdicts.
+  The audit's remaining over-report is deliberate: `- TODO: LANDED upstream?`
+  with no checkbox IS reported, because separating it from
+  `- status: LANDED (PR #12 merged)` needs a list of blessed label words. It
+  costs a human a look; the opposite error was a silent skip. `clean` refuses
+  both, because it destroys a worktree rather than printing a row.
+  The earlier claim that these gaps were "bounded by `clean`'s merge check" was
+  WRONG and is withdrawn: the merge check refuses UNMERGED campaigns, while this
+  gate exists precisely for merged ones, and on the tip-empty idempotent path
+  the merge check is skipped entirely. An open campaign whose branch was merged
+  mid-flight reached the gate with the worktree still holding uncommitted work,
+  and a bold sub-conclusion bullet was enough to destroy it — reproduced end to
+  end before the fix.
 - The label key carries no length bound. The previous `{1,16}` counted BYTES
   under `LC_ALL=C` (cron, systemd, `env -i`), so a Korean label past ~5
   characters silently stopped matching — the exact silent-skip failure this
   release exists to remove. Neither script pins a locale, so the bound had to
   go rather than the locale be assumed.
+- v0.5.21's claim that "teardown now WARNs instead of claiming success when a
+  worktree it cannot remove survives" was only half true: it WARNed on stderr
+  and then printed `cleaned` and exited 0 anyway, and it only noticed a worktree
+  sitting at the slot it computed — never one registered at a different path,
+  which is exactly what the slot split produced. Both halves are fixed here.
 - Fixture coverage added for every case above. Layout fixtures now cover: main
   worktree, linked worktree, sibling `--separate-git-dir` clones opening
   campaigns without collision, a linked worktree whose MAIN checkout used
   `--separate-git-dir` (git keeps no back-pointer there — `core.worktree` is
-  unset — so the git dir's own name, `.git` stripped, is the project name), a
-  repo path containing a space, and a linked worktree of that space-path repo.
-  Verdict-gate fixtures cover 15 accepted row forms (including a 24-byte
-  non-ASCII label exercised under `LC_ALL=C`) and 9 rejected ones.
+  unset and `git worktree list` reports the git dir from BOTH sides — so the git
+  dir's own name, `.git` stripped, is the project name), the MAIN checkout of
+  that same project resolving to the SAME slot (the checkout directory is named
+  differently from the git dir on purpose; when the two names coincide the
+  derivations agree by accident and a split stays invisible), a repo path
+  containing a space, and a linked worktree of that space-path repo.
+  `clean`-gate fixtures cover 9 accepted scaffold-row forms (including
+  non-ASCII content under `LC_ALL=C`) and 12 rejected rows plus a doc carrying
+  no scaffold row at all — among them the five substitutes this release stops
+  honoring and the bold-bullet row that destroyed a live worktree. The
+  audit's 15-row required-accept matrix moved to `tests/checkup-smoke.sh` and is
+  now that consumer's own contract, alongside a fixture pinning the deliberate
+  checkbox-free over-report. A fixture also asserts `clean` never prints
+  `cleaned` when the worktree survives.
 
 ## v0.5.21 (2026-07-31)
 

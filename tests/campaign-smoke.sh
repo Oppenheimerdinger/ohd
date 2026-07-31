@@ -84,6 +84,28 @@ export CAMPAIGN_TRUNK=main
     || fail "separate-git-dir LINKED worktree: slot is not the project name (got: $(ls "$TMP/lwhome/wt"))"
 )
 
+# ...and the MAIN checkout of that same project must resolve to the SAME slot.
+# The checkout directory is deliberately named differently from the git dir
+# here: when they coincide ('sep/alpha' + 'sepgit/alpha.git', as above) the two
+# derivations agree by accident and a split stays invisible. A split is not
+# cosmetic — 'clean' run from the side that guesses wrong deletes the branches
+# while the worktree survives untouched at the other slot.
+( unset CAMPAIGN_WT_ROOT
+  mkdir -p "$TMP/aghome" "$TMP/aggit"
+  git clone -q --separate-git-dir="$TMP/aggit/agproj.git" "$TMP/origin.git" "$TMP/agcheckout"
+  ( cd "$TMP/agcheckout" && git config user.email smoke@test && git config user.name smoke )
+  git -C "$TMP/agcheckout" worktree add -q "$TMP/aglinked" -b ag0
+  ( cd "$TMP/agcheckout" && HOME="$TMP/aghome" "$CS" new a1 >/dev/null ) \
+    || fail "separate-git-dir MAIN checkout: new failed"
+  ( cd "$TMP/aglinked"   && HOME="$TMP/aghome" "$CS" new a2 >/dev/null ) \
+    || fail "separate-git-dir LINKED worktree: new failed"
+  slots="$(ls "$TMP/aghome/wt" | wc -l)"
+  [ "$slots" = 1 ] \
+    || fail "separate-git-dir: main checkout and linked worktree of ONE project resolved to $slots slots ($(ls "$TMP/aghome/wt" | tr '\n' ' '))"
+  [ -d "$TMP/aghome/wt/agproj/a1" ] && [ -d "$TMP/aghome/wt/agproj/a2" ] \
+    || fail "separate-git-dir: shared slot is not the git dir's name (got: $(ls "$TMP/aghome/wt"))"
+)
+
 # new: worktree + branch + state doc
 "$CS" new c1 >/dev/null
 [ -d "$TMP/wt/c1" ]                       || fail "worktree missing"
@@ -240,38 +262,105 @@ GH_MOCK="$(merged_pr 3 "$f3tip")" PATH="$ghp" "$CS" clean f3 >/dev/null \
   || fail "F3: clean refused a squash-merged branch (matching tip)"
 
 
-# ---- verdict gate: decoration is allowed, prose is not (v0.5.20 over-anchored) ----
-# Each form below is a verdict row a real state doc carries; the gate must accept
-# it. Acceptance is destructive (clean tears the campaign down), so one campaign
-# per form.
-verdict_ok() {   # <campaign name> <verdict row>
+# ---- clean's verdict gate: the SCAFFOLD ROW, filled ----
+# This gate and checkup's land-report audit use DIFFERENT rules on purpose (see
+# cmd_clean's comment). 'clean' only ever runs on campaigns 'new' opened, and
+# 'new' always writes the literal '- result / verdict:' row, so an exact anchor
+# is available here — and only an exact anchor separates a real verdict from a
+# mid-campaign bold sub-conclusion, which is lexically identical to a decorated
+# canonical row. Acceptance is destructive (clean tears the campaign down), so
+# one campaign per accepted row.
+clean_ok() {   # <campaign name> <row that replaces the scaffold's>
   local n="$1" row="$2"
   "$CS" new "$n" >/dev/null
   ( cd "$TMP/wt/$n" && echo w > "$n.txt" && git add . && git commit -qm "$n" && git push -q -u origin "$n" )
   git fetch -q origin && git merge -q --no-ff "origin/$n" -m "merge $n" && git push -q origin main
-  printf '%s\n' "$row" >> "docs/campaigns/$n.md"
-  env ${VERDICT_ENV:-} "$CS" clean "$n" >/dev/null \
-    || fail "verdict gate refused a legitimate row${VERDICT_ENV:+ (${VERDICT_ENV})}: $row"
+  # drop the scaffold's empty row and re-add the filled one at the END of the
+  # doc, i.e. BELOW '## plan' — the anchor is position-free, because 25 of the
+  # 139 live docs carrying a verdict line keep it under a heading.
+  grep -v '^- result / verdict:$' "docs/campaigns/$n.md" > "$TMP/doc.tmp"
+  { cat "$TMP/doc.tmp"; printf '%s\n' "$row"; } > "docs/campaigns/$n.md"
+  env ${CLEAN_ENV:-} "$CS" clean "$n" >/dev/null \
+    || fail "clean refused a FILLED scaffold row${CLEAN_ENV:+ (${CLEAN_ENV})}: $row"
+  [ ! -d "$TMP/wt/$n" ] || fail "clean reported success but left the worktree: $row"
 }
-verdict_ok v1 '- **verdict**: LANDS — merged as PR #13'
-verdict_ok v2 '- 결론: LANDS — PR #13 머지됨'
-verdict_ok v3 '- [x] LANDED as PR #7'
-verdict_ok v4 '- `verdict`: LANDS'
-verdict_ok v5 '- result / verdict: LANDS — ok'
-verdict_ok v6 '- LANDED as PR #7'
-verdict_ok v7 '- ABANDONED — superseded'
-verdict_ok v8 '  - result / verdict: LANDS'
-verdict_ok v9 '* result: LANDS'
-verdict_ok v10 '- [X] LANDED as PR #7'
-verdict_ok v11 '- [x] verdict: LANDS'
-verdict_ok v12 '- _verdict_: LANDS'
-verdict_ok v13 '- **LANDS** — ok'
-verdict_ok v14 '- status: LANDED (PR #12 merged)'
-# Locale independence: a character-counted bound on the label group counts
-# BYTES under LC_ALL=C (cron, systemd, env -i), so a non-ASCII label silently
-# stopped matching past ~5 characters — the exact silent skip this gate exists
-# to remove. This row is 24 bytes of label under a C locale.
-VERDICT_ENV='LC_ALL=C' verdict_ok v15 '- 결론결론결론결론: LANDS — PR #13 머지됨'
+clean_ok k01 '- result / verdict: LANDS — merged as PR #13'
+clean_ok k02 '- result / verdict: ABANDONED — superseded'
+clean_ok k03 '  - result / verdict: LANDS'
+clean_ok k04 '* result / verdict: LANDS'
+clean_ok k05 '- Result / Verdict: LANDS'
+clean_ok k06 '- result/verdict: LANDS'
+# 2 of the 84 live docs carrying this row decorate the label, so emphasis around
+# the phrase is accepted; the literal phrase is the anchor, not the decoration.
+clean_ok k07 '- **result / verdict**: LANDS'
+clean_ok k08 '- **result / verdict: DONE.** both arms, identically'
+# Locale independence: a character-counted bound on a label group counts BYTES
+# under LC_ALL=C (cron, systemd, env -i), which silently dropped non-ASCII
+# content past ~5 characters — the exact silent skip this gate exists to remove.
+CLEAN_ENV='LC_ALL=C' clean_ok k09 '- result / verdict: 랜딩됨 — PR #13 머지됨'
+
+# Rows that do NOT fill the scaffold row. Refusal is non-destructive, so they
+# all run against ONE merged campaign whose scaffold row is still empty.
+"$CS" new k10 >/dev/null
+( cd "$TMP/wt/k10" && echo w > k10.txt && git add . && git commit -qm k10 && git push -q -u origin k10 )
+git fetch -q origin && git merge -q --no-ff origin/k10 -m "merge k10" && git push -q origin main
+clean_refuses() {   # <row appended to an OPEN doc>
+  printf '%s\n' "$1" >> docs/campaigns/k10.md
+  if "$CS" clean k10 2>/dev/null; then fail "clean accepted a row that does not fill the scaffold: $1"; fi
+  [ -d "$TMP/wt/k10" ] || fail "worktree destroyed by a REFUSED clean: $1"
+}
+# BEHAVIOR-CHANGE (v0.5.22): these substitutes still satisfy checkup's audit,
+# but they no longer authorize teardown.
+clean_refuses '- **verdict**: LANDS — merged as PR #13'
+clean_refuses '- [x] LANDED as PR #7'
+clean_refuses '- status: LANDED (PR #12 merged)'
+clean_refuses '- LANDED as PR #7'
+clean_refuses '- `verdict`: LANDS'
+clean_refuses '- ABANDONED — superseded'
+clean_refuses '- **LANDS** — ok'
+# The row that destroyed a real worktree: a bold sub-conclusion written as a
+# REAL bullet, in a doc whose scaffold row is still empty and whose campaign is
+# open ("NOT built, NOT measured"). Structurally identical to a decorated
+# canonical row — only the scaffold anchor tells them apart.
+clean_refuses '- **VERDICT: nrxx-tiling genuinely reduces the peak.** Keep the grids HOST;'
+# A label whose value STARTS with the verdict word, with no checkbox to betray
+# it as a plan item — the hole that survived three rounds of regex tightening.
+clean_refuses '- TODO: LANDED upstream? check before redoing'
+clean_refuses '- 확인: LANDED 됐는지 먼저 보기'
+# An empty scaffold row is not a filled one, whitespace included.
+clean_refuses '- result / verdict:'
+clean_refuses '- result / verdict:      '
+# A doc with NO scaffold row at all is REFUSED rather than waved through. 'new'
+# leaves the doc alone when one already exists, so this is reachable.
+printf '# campaign: k10\n- goal: x\n- **verdict**: LANDS\n' > docs/campaigns/k10.md
+if "$CS" clean k10 2>/dev/null; then fail "clean accepted a doc carrying no scaffold verdict row"; fi
+[ -d "$TMP/wt/k10" ] || fail "worktree destroyed by a refused clean (no scaffold row)"
+# ...and FORCE_CLEAN=1 remains the escape for exactly that case.
+FORCE_CLEAN=1 "$CS" clean k10 >/dev/null || fail "FORCE_CLEAN=1 did not bypass the verdict gate"
+[ ! -d "$TMP/wt/k10" ] || fail "FORCE_CLEAN=1 did not tear the worktree down"
+
+# ---- teardown must not report success it did not achieve ----
+# If the worktree is not where teardown looked — moved by hand, or a WT_ROOT
+# that differs between 'new' and 'clean' — the BRANCHES still get deleted.
+# Printing "cleaned" there leaves a live worktree holding uncommitted work with
+# no branch left to recover it from. That is the shape the --separate-git-dir
+# slot split produced before the derivation above was unified.
+"$CS" new t1 >/dev/null
+( cd "$TMP/wt/t1" && echo w > t1.txt && git add . && git commit -qm t1 && git push -q -u origin t1 )
+git fetch -q origin && git merge -q --no-ff origin/t1 -m "merge t1" && git push -q origin main
+sed -i 's|- result / verdict:|- result / verdict: LANDS|' docs/campaigns/t1.md
+echo "UNCOMMITTED WORK" > "$TMP/wt/t1/inprogress.txt"
+out="$(CAMPAIGN_WT_ROOT="$TMP/elsewhere" "$CS" clean t1 2>&1)" && rc=0 || rc=1
+[ -d "$TMP/wt/t1" ] || fail "teardown fixture is not exercising the surviving-worktree case"
+grep -q '^cleaned t1' <<<"$out" && fail "clean printed 'cleaned' while the worktree survived at $TMP/wt/t1"
+[ "$rc" = 1 ] || fail "clean exited 0 while the worktree survived"
+grep -q "$TMP/wt/t1" <<<"$out" || fail "clean did not name the surviving worktree's real path"
+"$CS" abort t1 --purge >/dev/null 2>&1 || true
+
+# The 15-row required-accept matrix that used to live here — every decorated,
+# translated and checkboxed verdict row a real doc carries — is now the AUDIT's
+# contract and lives in tests/checkup-smoke.sh §9e. Under clean's scaffold
+# anchor most of those rows are refusals, asserted above.
 
 # ---- land gate: state doc must carry the land-report artifact before push ----
 "$CS" new g1 >/dev/null

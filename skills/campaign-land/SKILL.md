@@ -116,6 +116,11 @@ Living documents drift silently unless updated in the same PR/merge: update
 the campaign state doc (final RESULT / VERDICT / follow-on) and any living map
 the change touches, now — not "later".
 
+Put the verdict on the scaffold's own `- result / verdict:` row. Phase 7's
+`clean` matches THAT row and nothing else: a substitute written elsewhere
+(`- **verdict**: LANDS`, `- 결론: LANDS`, `- [x] LANDED as PR #7`) reads fine to
+a human and satisfies /ohd-checkup's audit, but will not authorize teardown.
+
 ## Phase 5 — PR merge mechanics (the gotchas)
 
 - ⚠ **Stacked-PR base check**: `gh pr view <n> --json baseRefName`. A PR whose
@@ -164,7 +169,9 @@ intact. (2) The state doc is TRUNK-owned — the coordinator commits it at the
 anchor; the campaign branch must NOT track it (add/add conflict at merge —
 `land` warns if it does; resolve as UNION per Phase 5). Scaffold it with `campaign.sh land <name> --report` (appends the blank
 table); `campaign.sh land` REFUSES to push without it, and Phase-7 cleanup
-still requires the filled verdict line. Fill rows as phases complete:
+additionally requires the scaffold's `- result / verdict:` row to be filled —
+that exact row, not a substitute elsewhere in the doc. Fill rows as phases
+complete:
 
 ```
 | phase | ran? | evidence |
@@ -203,9 +210,9 @@ memory is a soft layer, the script gate is the backstop).
 
 ## Phase 7 — cleanup (only after ALL PRs merged)
 
-`campaign.sh clean <name>` (verifies merge AND a filled verdict/result line in
-the state doc before deleting — Phase 4's on-disk artifact; `FORCE_CLEAN=1`
-bypasses) — or manually:
+`campaign.sh clean <name>` (verifies merge AND that the scaffold's
+`- result / verdict:` row carries content — Phase 4's on-disk artifact;
+`FORCE_CLEAN=1` bypasses) — or manually:
 verify with the campaign-status verdict first, then remove worktree + local +
 remote branch: `git worktree remove <wt> && git branch -D <br> && git push origin --delete <br> && git worktree prune`.
 Whoever spawned the worktree owns its teardown. ⚠ Parallel

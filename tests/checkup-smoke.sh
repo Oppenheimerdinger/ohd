@@ -181,6 +181,66 @@ grep -q "boxabandon.md" <<<"$out" && fail "checkbox ABANDONED row wrongly counte
 rm docs/campaigns/boldpara.md docs/campaigns/todobox.md docs/campaigns/longkorean.md \
    docs/campaigns/boxabandon.md
 
+# 9d) A label whose value STARTS with the verdict word, with NO checkbox to
+#     betray it as a plan item, IS reported. Deliberate, not an oversight:
+#     '- TODO: LANDED upstream?' and '- status: LANDED (PR #12 merged)' are
+#     lexically the same shape, and separating them needs a list of blessed
+#     label words — the game v0.5.20/v0.5.21 lost twice. The AUDIT is allowed to
+#     over-report because its output is a prompt to go look ("backfill honestly
+#     or annotate"), and under-reporting is the silent skip this release exists
+#     to remove. `campaign.sh clean` makes the opposite trade for the opposite
+#     reason: it DESTROYS a worktree, so it anchors on the scaffold row instead
+#     and refuses every row in this block.
+cat > docs/campaigns/todonobox.md <<'EOF'
+# campaign: todonobox
+- status: OPEN (2026-07-20)
+- result / verdict:
+
+## plan
+- TODO: LANDED upstream? check before redoing
+EOF
+cat > docs/campaigns/konobox.md <<'EOF'
+# campaign: konobox
+- status: OPEN (2026-07-20)
+- result / verdict:
+
+## plan
+- 확인: LANDED 됐는지 먼저 보기
+EOF
+out="$(LC_ALL=C "$FAKE_ASSETS/checkup.sh" .)"
+grep -q "todonobox.md" <<<"$out" \
+  || fail "checkbox-free labelled verdict row stopped being audited (behavior change: pin or update 9d)"
+grep -q "konobox.md" <<<"$out" \
+  || fail "checkbox-free non-ASCII labelled row stopped being audited (behavior change: pin or update 9d)"
+rm docs/campaigns/todonobox.md docs/campaigns/konobox.md
+
+# 9e) required-accept matrix for the AUDIT. Every row here is a verdict line a
+#     real state doc carries; the audit must RECOGNIZE all of them (that
+#     recognition is v0.5.22's headline fix). These are the rows that no longer
+#     authorize `campaign.sh clean` — the two consumers diverge here by design,
+#     so this matrix is the audit's own contract and does not track clean's.
+audit_sees() {   # <slug> <verdict row>
+  printf '# campaign: %s\n%s\n' "$1" "$2" > "docs/campaigns/m_$1.md"
+  local out; out="$(LC_ALL=C "$FAKE_ASSETS/checkup.sh" .)"
+  grep -q "m_$1.md" <<<"$out" || fail "audit no longer recognizes a legitimate verdict row: $2"
+  rm "docs/campaigns/m_$1.md"
+}
+audit_sees a01 '- **verdict**: LANDS — merged as PR #13'
+audit_sees a02 '- 결론: LANDS — PR #13 머지됨'
+audit_sees a03 '- [x] LANDED as PR #7'
+audit_sees a04 '- `verdict`: LANDS'
+audit_sees a05 '- result / verdict: LANDS — ok'
+audit_sees a06 '- LANDED as PR #7'
+audit_sees a07 '  - result / verdict: LANDS'
+audit_sees a08 '* result: LANDS'
+audit_sees a09 '- [X] LANDED as PR #7'
+audit_sees a10 '- [x] verdict: LANDS'
+audit_sees a11 '- _verdict_: LANDS'
+audit_sees a12 '- **LANDS** — ok'
+audit_sees a13 '- status: LANDED (PR #12 merged)'
+audit_sees a14 '- 결론결론결론결론: LANDS — PR #13 머지됨'
+audit_sees a15 '- verdict: LANDED'
+
 { echo; grep -m1 '^| phase | ran? | evidence |$' "$FAKE_ASSETS/campaign.sh"; } >> docs/campaigns/oldland.md \
   || fail "producer table header not found in campaign.sh (scaffold/audit integration broken)" 
 out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "land-reports | OK" <<<"$out" || fail "expected land-reports OK after backfill"

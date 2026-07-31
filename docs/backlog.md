@@ -97,3 +97,27 @@ the hook's session-id lock holds) and checkpoint+fresh-session — but the
 loop is session-id-locked, so a fresh session needs a re-arm trigger nobody
 has designed for an unattended run. Revisit on field evidence of a loop
 dying of context exhaustion. (2026-07-31)
+
+## 11. `clean`'s scaffold anchor refuses docs it cannot see a verdict in — CARRIED (v0.5.22)
+
+`campaign.sh clean` matches only the scaffold's `- result / verdict:` row, while
+/ohd-checkup's land-report audit stays tolerant of decorated, translated and
+`status:`-labelled rows. Deliberate asymmetry: their inputs differ (100% scaffold
+coverage for campaigns `new` opened, 84 of 365 for legacy docs) and their failure
+modes differ (a report row vs a destroyed worktree). Three rounds of trying to
+tighten ONE shared regex failed, because `- **verdict**: LANDS` and
+`- **VERDICT: nrxx-tiling genuinely reduces the peak.**` are lexically
+near-identical.
+
+Two carried costs, both fail-SAFE and both `FORCE_CLEAN=1`-escapable:
+- a doc recording its verdict only as a substitute row is refused;
+- a campaign whose doc pre-dated `campaign.sh new` (which leaves an existing doc
+  alone) has no scaffold row at all, so it is refused until one is added. Not
+  measured in the field — the corpus has no witness — so if this shows up as
+  routine friction, the fix is `new` ensuring the row exists in a doc it adopts,
+  not loosening the gate.
+
+Also carried: the audit over-reports `- TODO: LANDED upstream?` (no checkbox) as
+a possible land gap. Separating it from `- status: LANDED (PR #12 merged)` needs
+a list of blessed label words; the audit's output is a prompt to look, so the
+over-report is the cheaper error. (2026-07-31)
