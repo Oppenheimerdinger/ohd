@@ -38,6 +38,18 @@ Rationale for act-scoping: a topic-word trigger fires on every conversation
 *about* review — including the harness's own maintenance sessions, where it was
 observed misfiring live.
 
+**1b — plan-mode sequencing (field-discovered by the owner, folded into items
+1 and 2 rather than added as an item).** The strongest observed pattern:
+enter plan mode, draft, CONVERGE THE PLAN (r2c) before the approval gate, then
+save the approved plan into the state doc's plan section and execute. The user
+then approves an already-reviewed plan — review happens before the approval
+gate consumes their attention, at the pipeline stage with the highest error
+replication factor. Encoding: one clause on the existing campaign-scale
+routing row ("converge it before execution begins"); the r2c description's
+"plan 다 썼다" trigger covers the moment. Instrument stays free — the field
+observation is that instrument selection self-organizes and only the MOMENTS
+need naming; cr:cr stays forced at land Phase 3 only.
+
 **2 — the superpowers-flow sentence stops granting a blanket exemption.**
 Today it says anything built OUTSIDE the flow gets r2c, which reads as "inside
 is covered". Two corrections: spec and plan are reviewed by their authors only
@@ -82,6 +94,20 @@ No scaling by diff size: the regression that motivated this had ONE finding on a
 small diff. This does not impose a new practice — 25 of 68 filled Phase-3 rows
 already record a second look, in a dozen ad-hoc phrasings; standardizing is what
 makes the behavior countable.
+
+**6b — the same evidence-cell contract, extended to the phases that silently
+drop.** Field check (2026-07-31, the maintainer's own two most recent lands):
+`claude-md-sanity` was skipped in both despite the diff touching docs and
+memory — the skip condition did not apply, no skip row was written, and a
+validator's lock-step check was substituted, which campaign-land forbids by
+name. `code-simplifier` passes on an unjustified self-attested "not needed".
+Root cause is the same as item 6's: an evidence cell that does not demand an
+item BY NAME loses it silently. Fix, riding the same die-gated artifact:
+the Phase 6 evidence cell must contain `sanity:` — either findings and their
+disposition, or `skip` quoting the named condition WITH the
+`git diff --name-only` artifact the rule already requires; and Phase 3's
+`simplifier: not needed` requires a one-clause reason. Two line-level edits
+to campaign-land, no new mechanism.
 
 **7 — a routing row for late entry into SDD/TDD.** Already implementing when you
 reach for the discipline? Enter at the NEXT unit. Existing verified work gets
