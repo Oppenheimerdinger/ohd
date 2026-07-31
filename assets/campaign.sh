@@ -254,7 +254,7 @@ cmd_clean() {
   # 'result:' inside the ## plan section must not satisfy this gate.
   local doc="$STATE_DIR/$n.md"
   if [ "${FORCE_CLEAN:-0}" != "1" ] && [ -f "$doc" ] && \
-     ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|^[[:space:]]*[-*].*\b(LANDS|LANDED|ABANDONED)\b' "$doc"; then
+     ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|^[[:space:]]*[-*][[:space:]]*\b(LANDS|LANDED|ABANDONED)\b' "$doc"; then
     die "refusing clean: '$doc' has no filled verdict/result line — update the state doc (campaign-land Phase 4) first. Bypass: FORCE_CLEAN=1 campaign.sh clean $n"
   fi
   teardown "$n" yes

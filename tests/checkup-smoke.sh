@@ -91,6 +91,7 @@ cat > docs/campaigns/openplan.md <<'EOF'
 
 ## plan
 - [ ] probe stress test → result: inconclusive, next: sweep k
+- [ ] check if this already LANDED upstream before redoing the work
 EOF
 cat > docs/campaigns/prose.md <<'EOF'
 # campaign: prose

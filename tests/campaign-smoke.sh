@@ -58,6 +58,9 @@ if "$CS" clean c1 2>/dev/null; then fail "clean accepted a land with an empty ve
 grep -q '^## plan' docs/campaigns/c1.md || fail "scaffold missing ## plan section"
 echo '- [ ] sweep k grid → result: inconclusive so far' >> docs/campaigns/c1.md
 if "$CS" clean c1 2>/dev/null; then fail "clean accepted a plan-line 'result:' as a verdict"; fi
+# ...and a plan bullet merely CONTAINING a verdict word must not either (bare-word branch)
+echo '- [ ] check if this already LANDED upstream before redoing the work' >> docs/campaigns/c1.md
+if "$CS" clean c1 2>/dev/null; then fail "clean accepted a plan-line containing LANDED as a verdict"; fi
 sed -i 's|- result / verdict:|- result / verdict: LANDS — smoke ok|' docs/campaigns/c1.md
 
 # clean now succeeds; worktree and branches gone

@@ -26,7 +26,17 @@ BEHAVIOR-CHANGE: the micro-edit delegation license is scoped to STANDALONE fixes
   `grep -lc '^## plan' docs/campaigns/*.md`. Known residuals, accepted: no
   surface fires at the moment of drift itself (no hooks by design), and a
   bare plan bullet spelled exactly `- result: ...` still matches the verdict
-  grep (indistinguishable even to a human reader).
+  grep, as does a bullet BEGINNING with a verdict word (`- LANDED as PR #7` —
+  that form is a legitimate free-form verdict; both are indistinguishable
+  even to a human reader). The delegation-license inversion itself is
+  prose-only — no artifact records who wrote an edit — its measurable proxy
+  is the plan section the license now points at.
+- Post-review fix (code-review:code-review on the PR, reproduced live): the
+  verdict grep's bare-word branch (LANDS/LANDED/ABANDONED) was only
+  line-anchored, so a plan bullet merely CONTAINING one of those words
+  satisfied the clean gate with the verdict still empty — now anchored to
+  the position right after the bullet marker, with smoke fixtures for the
+  bare-word case in both suites.
 
 ## v0.5.19 (2026-07-30)
 
