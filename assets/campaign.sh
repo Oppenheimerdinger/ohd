@@ -251,7 +251,8 @@ cmd_list() {
 # refuses to delete a checked-out branch, and that refusal is swallowed by the
 # '|| true' below. The stray case is therefore the recoverable one — the
 # surviving local branch plus 'git worktree remove <stray>' is the whole
-# recovery, no hand-salvage needed. The remote delete (clean, or abort --purge)
+# recovery — commit anything uncommitted there first (or remove needs
+# --force); no hand-salvage needed. The remote delete (clean, or abort --purge)
 # goes through in both cases. 'worktree list' is consulted for the stray, before
 # 'branch -D' runs, so the WARN can name the path.
 teardown() {
