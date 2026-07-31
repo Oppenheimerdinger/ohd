@@ -1,3 +1,23 @@
+## v0.5.19 (2026-07-30)
+
+BEHAVIOR-CHANGE: under an autonomous mandate a session must never end a turn without a live agent or a just-issued dispatch — an iteration with nothing to do is a missing dispatch, not a reason to slow or stop the loop; padding turns with blocking waits is banned (it makes the session unreachable).
+
+- v0.5.18 closed the kill path but left the pressure that motivated it: when
+  every remaining done-condition is owned by a running agent, iterations
+  become status checks. The session that deleted its own state file had
+  first tried two workarounds, both of which failed in the field:
+  short no-op turns (the loop re-fires in seconds; context is the binding
+  resource, and the session can end before the work does) and padding turns
+  with a blocking wait (frequency drops, but the session stops answering —
+  the user had to background the running command by hand to speak to it).
+  Neither failure was self-evident before it was measured, so step 6 records
+  both as named dead ends rather than leaving the next session to rediscover
+  them. The positive rule — a turn always ends with live work — reframes the
+  empty iteration as the missing-dispatch symptom it is; the escape valve
+  for a genuinely blocked critical path is a non-overlapping axis in a
+  SEPARATE worktree (same-worktree agents contaminate each other's gates).
+  Explicitly NOT licensed: manufacturing an artifact to justify a turn.
+
 ## v0.5.18 (2026-07-30)
 
 BEHAVIOR-CHANGE: a looping session never cancels its own loop — deleting the ralph-loop state file is self-grading termination, same as an unverdicted promise; cancellation is user-owned (/cancel-ralph or shell). The only session-side exit is the independent evaluator's verdict.

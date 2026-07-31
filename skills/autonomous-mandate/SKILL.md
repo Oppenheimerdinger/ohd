@@ -66,3 +66,29 @@ loop for it. This skill is for session-scope, user-absent mandates.
    verdicts — the loop, not the notifications, was the only real resume
    mechanism). If you believe the loop should end, dispatch the independent
    evaluator and exit through its verdict — there is no other exit.
+6. **An iteration with nothing to do is a symptom, not a signal to stop.**
+   The loop fires on every Stop, so iteration frequency equals YOUR turn
+   length — a five-second status check re-fires within seconds. Two
+   workarounds FAIL (both measured in the field):
+   - *Short no-op turns*: the loop re-fires almost immediately and each
+     iteration costs a full turn of context. The session can run out before
+     the work does — a worse failure than the empty turns it tolerates.
+   - *Padding the turn with a blocking wait*: frequency drops, but the
+     session stops answering — the user had to background the running
+     command by hand just to say something. Never lengthen a turn by
+     sleeping; an unattended mandate is not an unreachable one.
+
+   What actually works, in order:
+   - **Never end a turn without a live agent or a just-issued dispatch.**
+     An empty iteration is almost always a MISSING DISPATCH, not a bad loop
+     — that is the same failure the mandate exists to prevent, wearing a
+     different hat.
+   - **Read deliverables from git or the agent log, never from the
+     notification** (step 5: idle != done). "Agent notified" is not "agent
+     committed"; check, then tell it to finish.
+   - If the critical path is genuinely blocked on a running agent, open a
+     **non-overlapping axis in a SEPARATE worktree**. Two agents in one
+     worktree contaminate each other's gate runs.
+   - If there is still nothing: keep the turn short and SAY that. **Do not
+     manufacture work to fill an iteration** — an artifact written to
+     justify a turn costs more to review than the empty turn it replaced.
