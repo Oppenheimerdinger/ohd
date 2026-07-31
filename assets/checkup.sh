@@ -147,8 +147,8 @@ if [ -d "$SD" ]; then
   GAPS=""
   for d in "$SD"/*.md; do
     [ -f "$d" ] || continue
-    if grep -qiE '(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|LANDS|LANDED' "$d" 2>/dev/null \
-       && ! grep -qiE '(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
+    if grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|^[[:space:]]*[-*].*\b(LANDS|LANDED)\b' "$d" 2>/dev/null \
+       && ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
        && ! grep -qi '| phase |' "$d" 2>/dev/null; then
       GAPS="$GAPS$(basename "$d") "
     fi

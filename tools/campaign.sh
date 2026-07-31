@@ -84,6 +84,11 @@ cmd_new() {
 - validation gate:
 - result / verdict:
 - follow-on:
+
+## plan
+<!-- living plan: certain stretch = task checkboxes; uncertain stretch = ONE
+line (next probe + decision rule). Results edit this section, plus a one-line
+reason. -->
 DOC
     echo "state doc: $doc  (TRUNK-owned: commit it on trunk; do NOT commit it on the campaign branch — add/add conflicts at merge)"
   fi
@@ -112,6 +117,7 @@ default (that is exactly the 2.5 row, no more).
 | phase | ran? | evidence |
 |-------|------|----------|
 | 0 preconditions      | | |
+| 0.5 plan recorded    | | |
 | 1 working-tree safety| | |
 | 2 re-validation      | | |
 | 2.5 reachability     | | |
@@ -245,10 +251,11 @@ cmd_clean() {
   # Land-report gate: the state doc must carry a filled verdict/result line
   # (campaign-land Phase 4, "docs in the SAME land") BEFORE the worktree is
   # destroyed. Content after the colon is required — the scaffold's empty
-  # '- result / verdict:' line does not count.
+  # '- result / verdict:' line does not count. Bullet-anchored on purpose: a
+  # 'result:' inside the ## plan section must not satisfy this gate.
   local doc="$STATE_DIR/$n.md"
   if [ "${FORCE_CLEAN:-0}" != "1" ] && [ -f "$doc" ] && \
-     ! grep -qiE '(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|LANDS|LANDED|ABANDONED' "$doc"; then
+     ! grep -qiE '^[[:space:]]*[-*][[:space:]]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|^[[:space:]]*[-*].*\b(LANDS|LANDED|ABANDONED)\b' "$doc"; then
     die "refusing clean: '$doc' has no filled verdict/result line — update the state doc (campaign-land Phase 4) first. Bypass: FORCE_CLEAN=1 campaign.sh clean $n"
   fi
   teardown "$n" yes
