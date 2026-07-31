@@ -39,6 +39,25 @@ out="$("$CK" .)"; grep -q "campaign.sh | IN-SYNC" <<<"$out" || fail "expected IN
 out="$("$CK" .)"; grep -q "trunk-hook | MISSING" <<<"$out" || fail "expected hook MISSING"
 bash "$HERE/assets/install-hooks.sh" >/dev/null
 out="$("$CK" .)"; grep -q "trunk-hook | INSTALLED" <<<"$out" || fail "expected hook INSTALLED"
+
+# 4b) hook VERSION detection. Before v0.5.23 the check matched 'docs-only' — a
+#     string every previously installed hook also carries — so any future hook
+#     change reported as already installed and was never offered. A hook from an
+#     older ohd (no stamp, or an older stamp) must read STALE, not INSTALLED.
+HOOKF="$(git rev-parse --git-common-dir)/hooks/pre-commit"
+grep -q '^# ohd-hook v' "$HOOKF" || fail "install-hooks.sh writes no version stamp"
+grep -v '^# ohd-hook v' "$HOOKF" > "$HOOKF.tmp" && mv "$HOOKF.tmp" "$HOOKF" && chmod +x "$HOOKF"
+out="$("$CK" .)"; grep -q "trunk-hook | STALE" <<<"$out" || fail "stamp-less ohd hook not reported STALE"
+grep -q "install-hooks.sh" <<<"$out" || fail "STALE row does not offer the re-install"
+sed -i '2i # ohd-hook v1' "$HOOKF"
+out="$("$CK" .)"; grep -q "trunk-hook | STALE" <<<"$out" || fail "OLDER hook stamp not reported STALE"
+bash "$HERE/assets/install-hooks.sh" >/dev/null
+out="$("$CK" .)"; grep -q "trunk-hook | INSTALLED" <<<"$out" || fail "re-run of install-hooks did not restore INSTALLED"
+# a foreign pre-commit is still OTHER, not STALE (nothing of ours to upgrade)
+printf '#!/usr/bin/env bash\nexit 0\n' > "$HOOKF"; chmod +x "$HOOKF"
+out="$("$CK" .)"; grep -q "trunk-hook | OTHER" <<<"$out" || fail "foreign pre-commit misreported"
+bash "$HERE/assets/install-hooks.sh" >/dev/null
+
 out="$("$CK" .)"; grep -q "state-dir | MISSING" <<<"$out" || fail "expected state-dir MISSING"
 mkdir -p docs/campaigns
 out="$("$CK" .)"; grep -q "state-dir | PRESENT" <<<"$out" || fail "expected state-dir PRESENT"

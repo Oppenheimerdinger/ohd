@@ -1,6 +1,6 @@
 ---
 name: review-to-convergence
-description: Use when about to finalize or hand off ANY substantive deliverable — a math problem statement, a handoff/session summary, a design or plan doc, an experiment analysis, a research-informed decision, or non-trivial code — especially when it feels "simple enough", "ready as-is", or you are under time pressure to just ship it. For creative/structural work spanning 3+ files or ~100+ lines of new logic, escalate to a multi-reviewer workflow pass instead of a single reviewer.
+description: Use when about to dispatch a reviewer, hand off or finalize a deliverable, or call something done — right after fixing review findings, or once a plan/spec/handoff is written ("plan 다 썼다", "이제 리뷰 돌리자"). Wraps code-review; never replaces it. NOT for discussing, reading, or routing reviews.
 ---
 
 # Review to Convergence
@@ -10,7 +10,13 @@ A substantive deliverable is **not done when you think it is done**. It is done 
 Independent review repeatedly catches the *author's own* wrong assumptions — mistakes invisible to the person who made them. The more novel the work, the more this holds. **Your confidence is not evidence.**
 
 ## When to use
-Before finalizing / handing off: a math problem statement, a handoff, a design/plan/ADR, an experiment analysis, a research-informed decision, or non-trivial code.
+At the ACT, not the topic — you are about to dispatch a reviewer, about to
+finalize or hand off (a math problem statement, a handoff, a design/plan/ADR, an
+experiment analysis, a research-informed decision, non-trivial code), or you
+have just FIXED review findings: the fixed artifact still needs the next pass,
+and that is where this loop is abandoned most often. Creative/structural work
+spanning 3+ files or ~100+ lines of new logic escalates to a multi-reviewer
+workflow pass (way-of-working) instead of a single reviewer.
 
 Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial requires the loop.**
 

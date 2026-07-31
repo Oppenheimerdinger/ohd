@@ -1,3 +1,78 @@
+## v0.5.23 (2026-07-31)
+
+BEHAVIOR-CHANGE: the land report's Phase 3 evidence cell now carries a CONVERGENCE LOG, not just a final verdict — one line per round naming the reviewer and the SHA that round reviewed, ending in a round that came back clean or with every residual finding carrying an explicit ruling recorded in the state doc. A first round that finds nothing IS a complete log (one line). Re-reviewing the SAME SHA is not a round, and round N+1's scope is the fix diff, not a fresh full pass. This does NOT scale with diff size — the regression that motivated it was ONE finding on a small diff. `simplifier: not needed` now requires a one-clause reason; a bare `not needed` is a self-attestation with nothing in it to disagree with.
+
+BEHAVIOR-CHANGE: the land report's Phase 6 evidence cell must contain `sanity:` BY NAME — either the `claude-md-sanity` findings and their disposition, or the skip quoting its named condition WITH the `git diff --name-only <base>..HEAD` artifact the rule already required. Field check over two consecutive recent lands: the sanity run was skipped in BOTH while their diffs touched docs and memory, the skip condition did not apply, no skip row was written, and in one of them a validator's lock-step check was substituted for it — which campaign-land forbids by name.
+
+BEHAVIOR-CHANGE: under an autonomous mandate, "work you did directly this turn" NO LONGER counts as having ADVANCED the mandate for an iteration — a coordinator that did everything itself used to be in full compliance with the skill as written. Advancing is a fresh dispatch or a backgrounded watch; a micro-edit stays legitimate but is not an iteration's content. The loop prompt the skill writes now carries the lane rule and the work-size micro-edit disqualifiers (writes a new test / needs a mutation or negative control / needs a gate run to judge it), because the stop hook re-injects that prompt verbatim every iteration while a skill body read at minute zero does not survive compaction. The termination evaluator's brief gains two mandatory questions: which work units were delegated versus done by the coordinator, and does every deliverable claimed done name the review pass that cleared it.
+
+BEHAVIOR-CHANGE: a campaign-scale plan is now CONVERGED (`review-to-convergence`) BEFORE execution begins — before the user's approval gate, so the user approves an already-reviewed plan — and its items are then materialized into the session task list (TaskCreate / todos), with results written back to the state doc's `## plan` section as units complete. The plan section stays the durable artifact; the task list is the in-session execution tracker.
+
+BEHAVIOR-CHANGE: being INSIDE the superpowers flow is no longer an exemption from review-to-convergence. The spec and the plan are reviewed by their AUTHOR only (both superpowers skills say so verbatim — "a checklist you run yourself, not a subagent dispatch"), so each gets an independent r2c pass before execution; and because SDD's own review loop terminates on ADJUDICATION rather than on a clean pass, r2c now supplies the stopping rule it lacks — the last round comes back clean, or every residual carries an explicit ruling recorded in the state doc. No new tool: the instrument stays SDD's own reviewer. This binds hardest under an unattended mandate, where SDD's "surface to your human partner" exit does not exist.
+
+BEHAVIOR-CHANGE: the trunk pre-commit hook written by `assets/install-hooks.sh` now carries a version stamp (`# ohd-hook v2`), and /ohd-checkup version-DETECTS it: a hook installed by an older ohd reports `trunk-hook | STALE` with the re-install command instead of passing as INSTALLED. Through v0.5.22 that check matched `docs-only` — a string every hook ohd ever wrote also carries — so any future hook change reported as already installed and reached no adopted project. Projects with the hook installed: re-run the plugin's `assets/install-hooks.sh` (`CAMPAIGN_TRUNK` / `CAMPAIGN_TRUNK_ALLOW` still apply). A foreign pre-commit still reports `OTHER` and is never offered an overwrite.
+
+- **The first three of those are ONE intervention across three surfaces, not
+  three independent changes.** The r2c description rewrite, the superpowers-flow
+  exemption repair, and the Phase-3 convergence log all move the same metric —
+  whether a review loop actually terminates on a clean pass. If a later release
+  reads them as three data points and one of them appears to have "worked", that
+  reading is wrong by construction; they were shipped together on purpose.
+- Measured baselines for the post-ship re-count, over a corpus of 365 unique
+  campaign state docs (four repos, de-duplicated across worktree checkouts and
+  one stale clone): `"clean pass"` appears in **1** doc; docs naming
+  `review-to-convergence` number **7**. Re-count both in a month — those two
+  numbers are the honest test of this release. Reviewers are already reached
+  constantly (`code-review` is named in 158 of the 365), so the failure being
+  fixed is termination, not reach. Plan-section coverage (13 of 365 today) is
+  NOT evidence either way: it rises on its own as pre-scaffold campaigns retire.
+- `review-to-convergence`'s description is re-aimed at the ACT rather than the
+  topic (75 words → 47, `wc -w`): it fires on being about to dispatch a reviewer, hand
+  off, or call something done — especially right after fixing findings — and
+  carries an explicit negative clause excluding conversations that merely
+  discuss, read, or route reviews. A topic-word trigger fires on every
+  conversation *about* review, including this plugin's own maintenance sessions,
+  where it was observed misfiring live. It also says "wraps code-review; never
+  replaces it": in the corpus r2c DISPLACED the review instrument in 3 of ~15
+  firings. The 3+ files / ~100+ lines escalation clause moved from the
+  description into the skill body, where it is no longer competing for the
+  ~50-word trigger budget.
+- The delegation table's micro-edit row is re-cut from diff size to WORK size:
+  not a micro-edit if it writes a new test, needs a mutation or negative
+  control, or needs a gate run to judge it. Stated without illusions — the OLD
+  rule was already correct and was quoted by the violating session *while* it
+  was violating it, so the table row is not expected to carry the behavior. The
+  same disqualifiers ride the loop prompt above, which is where they are
+  expected to fire.
+- New routing row for LATE ENTRY into SDD/TDD: already implementing when you
+  reach for the discipline, enter at the NEXT unit — work already verified gets
+  reviewed, never reverted to RED. This is the only observed process failure
+  with a negative payoff: a session destroyed bitwise-verified work to restore
+  discipline, correctly applying TDD's iron law at the wrong moment.
+- Deliberately NOT shipped, with reasons recorded so they are not re-proposed
+  blind: a commit-time gate on an empty plan section (the state it fires on
+  occurs zero times in the corpus; its input is stale or absent in all ten live
+  worktrees measured, because the state doc is trunk-owned and edited at the
+  anchor; and it would reach no existing project until the hook-version fix
+  above lands); an edit-time PreToolUse hook (its unique capability — telling
+  the coordinator from an implementer via the agent id present only in subagent
+  payloads — pays off only when a plan EXISTS and the coordinator executes a
+  plan step anyway, which was not observed); and a machine matcher for plan
+  coverage (42 docs record plans under 20+ heading spellings). Also stated
+  plainly: none of this recovers context already burned in an incident —
+  prevention only.
+- The mechanical round-SHA check the design floated for `campaign.sh clean` is
+  NOT shipped. The land report's own contract says row CONTENT may be rewritten
+  or translated freely — only the `## land report` heading and the
+  `| phase | ran? | evidence |` header are load-bearing — so a parser over an
+  evidence cell would contradict the document it reads, and the 25 filled
+  Phase-3 rows that already record a second look do so in a dozen ad-hoc
+  phrasings. The convergence log is the artifact; no gate pretends to verify it.
+- No script logic changed in `campaign.sh` this release, so no `--sync` is
+  needed to pick these up: the land-report contracts live in the campaign-land
+  skill, which every land re-loads from the plugin. The hook stamp is the one
+  item needing an action in adopted projects (re-run `install-hooks.sh`).
+
 ## v0.5.22 (2026-07-31)
 
 BEHAVIOR-CHANGE: /ohd-checkup's land-report audit was silently UNDER-COUNTING since v0.5.20 — a landed state doc whose verdict row carried any decoration (`- status: LANDED (PR #12 merged)`, `- **verdict**: LANDS`, `- [x] LANDED as PR #7`, a translated label key such as `- 결론: LANDS`) was skipped without an error, so a green `land-reports` row was not evidence of coverage; projects audited under v0.5.20/v0.5.21 pick the fix up with `checkup.sh <root> --sync` (report-mode checkup only prints a DRIFT row — the gate regexes live in the project-local `tools/campaign.sh`, which only `--sync` rewrites).

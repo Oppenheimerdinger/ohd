@@ -124,11 +124,21 @@ elif [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
 fi
 
 # ---- trunk hook ----
+# VERSION-detected, not presence-detected: the stamp line install-hooks.sh
+# writes is the contract, read from that script (DRY — no restated hook content
+# here). Matching 'docs-only' alone, as this did through v0.5.22, matched every
+# hook ohd ever wrote, so a CHANGED hook reported as already installed and was
+# never offered to an adopted project.
+HOOK_WANT="$(grep -m1 '^# ohd-hook v' "$HERE/install-hooks.sh" 2>/dev/null || true)"
 if HOOKS="$(git rev-parse --git-common-dir 2>/dev/null)/hooks" && [ -f "$HOOKS/pre-commit" ]; then
-  if grep -q 'docs-only' "$HOOKS/pre-commit" 2>/dev/null; then
-    report "trunk-hook" "INSTALLED" "$HOOKS/pre-commit"
-  else
+  HOOK_HAVE="$(grep -m1 '^# ohd-hook v' "$HOOKS/pre-commit" 2>/dev/null || true)"
+  if ! grep -q 'docs-only' "$HOOKS/pre-commit" 2>/dev/null; then
     report "trunk-hook" "OTHER" "a pre-commit exists but is not ohd's docs-only hook — inspect before overwriting"
+  elif [ -z "$HOOK_WANT" ] || [ "$HOOK_HAVE" = "$HOOK_WANT" ]; then
+    # no shipped stamp to compare against = partial install; report as before
+    report "trunk-hook" "INSTALLED" "$HOOKS/pre-commit${HOOK_WANT:+ (${HOOK_WANT#\# })}"
+  else
+    report "trunk-hook" "STALE" "ohd's docs-only hook, but ${HOOK_HAVE:-unstamped (pre-v0.5.23)} != shipped ${HOOK_WANT#\# } — re-run the plugin's assets/install-hooks.sh to pick up hook changes (it overwrites $HOOKS/pre-commit; CAMPAIGN_TRUNK / CAMPAIGN_TRUNK_ALLOW still apply)"
   fi
 else
   report "trunk-hook" "MISSING" "optional; install via the plugin's assets/install-hooks.sh (skip for trunk-dev repos)"
