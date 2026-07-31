@@ -120,6 +120,10 @@ Put the verdict on the scaffold's own `- result / verdict:` row. Phase 7's
 `clean` matches THAT row and nothing else: a substitute written elsewhere
 (`- **verdict**: LANDS`, `- 결론: LANDS`, `- [x] LANDED as PR #7`) reads fine to
 a human and satisfies /ohd-checkup's audit, but will not authorize teardown.
+Leave the row's shape alone too — emphasis around the label is fine
+(`- **result / verdict**: LANDS`), but a checkbox in front of it
+(`- [x] result / verdict: LANDS`) is refused by `clean` even though the audit
+accepts it.
 
 ## Phase 5 — PR merge mechanics (the gotchas)
 

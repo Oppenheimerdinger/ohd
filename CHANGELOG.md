@@ -4,7 +4,7 @@ BEHAVIOR-CHANGE: /ohd-checkup's land-report audit was silently UNDER-COUNTING si
 
 BEHAVIOR-CHANGE: `campaign.sh clean` now requires the state doc's SCAFFOLD row — the literal `- result / verdict:` line `campaign.sh new` writes — to carry content. Substitutes that used to satisfy it no longer do: `- **verdict**: LANDS`, `- 결론: LANDS`, `- [x] LANDED as PR #7`, `- status: LANDED (PR #12 merged)`, a bare `- LANDED as PR #7`. Those all still satisfy /ohd-checkup's land-report audit — the two consumers now use DIFFERENT rules on purpose (see below). Fill the scaffold row, or use `FORCE_CLEAN=1`. Apply with `checkup.sh <root> --sync`.
 
-BEHAVIOR-CHANGE: `campaign.sh clean` and `abort` now FAIL (non-zero, `PARTIAL clean/abort of '<name>'`) instead of printing `cleaned`/`aborted` when the branches were deleted but the campaign's worktree survived on disk — a hand-moved worktree, or a `CAMPAIGN_WT_ROOT` that differs between `new` and `clean`. Apply with `checkup.sh <root> --sync`.
+BEHAVIOR-CHANGE: `campaign.sh clean` and `abort` now FAIL (non-zero, `PARTIAL clean/abort of '<name>'`) instead of printing `cleaned`/`aborted` when the campaign's worktree survived on disk — a hand-moved worktree, or a `CAMPAIGN_WT_ROOT` that differs between `new` and `clean`. The message states what actually happened rather than assuming the worst: the remote branch is deleted in both cases, but the LOCAL branch SURVIVES whenever that worktree still has it checked out (git refuses to delete a checked-out branch), which is exactly the hand-moved case — so the recovery is `git worktree remove` on the path the WARN names plus `git branch -D`, not hand-salvage. With an occupied slot the local branch is genuinely gone. Apply with `checkup.sh <root> --sync`.
 
 BEHAVIOR-CHANGE: `campaign.sh` derives the per-project worktree root from the first `git worktree list` entry in EVERY layout — under `clone --separate-git-dir` sibling projects no longer collapse onto the shared gitdir parent (reintroduced issue #10's cross-project collision) and submodules no longer collapse onto their `modules/…` parent; a project path containing a SPACE is no longer truncated at the space. Under `clone --separate-git-dir` specifically, the MAIN checkout's slot is now the GIT DIR's name (`$HOME/wt/<gitdir>/`), not the checkout directory's — that is the only name a linked worktree of the same project can also see, and the two used to disagree; move any existing `$HOME/wt/<checkout-dir>/` campaigns to the gitdir-named slot. Apply with `checkup.sh <root> --sync`.
 
@@ -27,8 +27,11 @@ BEHAVIOR-CHANGE: the `land` gate, `land --report`'s duplicate-table detection, a
   dozens. This is BACKFILL OF A PRE-EXISTING BLIND SPOT, not new breakage:
   those lands really did happen without a land-report table, and the audit was
   simply unable to see them. Most are old already-landed campaigns that need no
-  worktree action — annotate or backfill honestly. `- status: LANDED (PR #NN
-  merged)` phrasing alone drove 33 of the 45.
+  worktree action — annotate or backfill honestly. Measured by stripping the
+  candidate rows and re-running the audit: rows written literally as
+  `- status: LANDED …` alone account for 27 of the 45, and 33 once the
+  emphasised variants of that same label (`- **status**: LANDED …`,
+  `- status: **LANDED …**`) are counted with them.
 - `clean`'s verdict gate and checkup's audit now use DIFFERENT rules, and that
   split is the point of this round. Three rounds of tightening one shared regex
   all failed on the same pair: `- **verdict**: LANDS` (a real verdict, must

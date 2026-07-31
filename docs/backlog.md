@@ -121,3 +121,20 @@ Also carried: the audit over-reports `- TODO: LANDED upstream?` (no checkbox) as
 a possible land gap. Separating it from `- status: LANDED (PR #12 merged)` needs
 a list of blessed label words; the audit's output is a prompt to look, so the
 over-report is the cheaper error. (2026-07-31)
+
+Two documented edge cases in `clean`'s gate, each with 0 witnesses in the
+365-doc corpus, both left OPEN rather than fixed:
+- fail-OPEN: the gate greps line by line, so a filled scaffold row quoted
+  inside a ``` code fence satisfies it. Plausible only when a campaign's own
+  subject is this harness (the docs that quote the row are ohd's own). Closing
+  it means teaching a shell gate to track fence state — more machinery than the
+  risk justifies while the witness count is zero.
+- fail-CLOSED: a CHECKED box in front of the scaffold label
+  (`- [x] result / verdict: LANDS`) is refused by `clean` while the audit
+  accepts it. Documented in the die message and campaign-land Phase 4 instead
+  of allowed, because a checkbox on the scaffold row is a hand-decorated row —
+  the class `clean` refuses by design — and allowing only the checked variant
+  would leave `- [x] LANDED as PR #7` refused for a reason that no longer reads
+  as a rule. 0 of 365 docs write the row that way. If it ever shows up as
+  routine friction, the fix is one optional token in the anchor plus an
+  accept-matrix row. (2026-07-31)

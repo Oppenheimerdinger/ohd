@@ -240,14 +240,21 @@ cmd_list() {
 }
 
 # teardown <name> <del_remote> — returns NON-ZERO if a worktree for this
-# campaign is still on disk afterwards. The branches are deleted either way, so a
-# caller that printed success unconditionally would leave a live worktree holding
-# uncommitted work with no branch left to recover it from. Two ways that happens:
-# something else occupies our slot, or the campaign's worktree is registered at a
-# DIFFERENT path than the slot we computed (a hand-moved worktree, or a WT_ROOT
-# that changed between 'new' and 'clean'). 'worktree list' is consulted for the
-# second, before 'branch -D' runs — git refuses to delete a branch that is still
-# checked out somewhere, and that refusal is swallowed here.
+# campaign is still on disk afterwards. Both deletions are ATTEMPTED either way,
+# so a caller that printed success unconditionally would report a finished
+# teardown while a live worktree holding uncommitted work sits on disk. Two ways
+# that happens: something else occupies our slot, or the campaign's worktree is
+# registered at a DIFFERENT path than the slot we computed (a hand-moved
+# worktree, or a WT_ROOT that changed between 'new' and 'clean').
+# What survives differs between the two, and the messages must not flatten it:
+# with an occupied slot the branch is checked out nowhere, so 'branch -D' really
+# deletes it; with a stray worktree the branch is still checked out THERE, git
+# refuses to delete a checked-out branch, and that refusal is swallowed by the
+# '|| true' below. The stray case is therefore the recoverable one — the
+# surviving local branch plus 'git worktree remove <stray>' is the whole
+# recovery, no hand-salvage needed. The remote delete (clean, or abort --purge)
+# goes through in both cases. 'worktree list' is consulted for the stray, before
+# 'branch -D' runs, so the WARN can name the path.
 teardown() {
   local n="$1" del_remote="$2" rc=0 stray=""
   local wt; wt="$(wt_path "$n")"
@@ -322,20 +329,28 @@ cmd_clean() {
   # Cost, accepted knowingly: a doc recording its verdict ONLY as a substitute
   # row ('- **verdict**: LANDS', '- 결론: LANDS', '- [x] LANDED as PR #7',
   # '- status: LANDED (PR #12 merged)') no longer satisfies 'clean' — it still
-  # satisfies the audit. A campaign whose doc pre-dated 'new' (which leaves an
-  # existing doc alone) has no scaffold row at all and is refused until one is
-  # added, so coverage here is high by construction but not total. Both are
-  # fail-SAFE refusals of a command whose failure mode is destroying a live
-  # worktree holding uncommitted work; FORCE_CLEAN=1 is the escape.
+  # satisfies the audit. Emphasis is the only decoration allowed on the scaffold
+  # row itself, so a CHECKED box in front of the label ('- [x] result / verdict:
+  # LANDS') is refused here while the audit accepts it — 0 of 365 corpus docs
+  # write the row that way, so the asymmetry is documented rather than closed.
+  # A campaign whose doc pre-dated 'new' (which leaves an existing doc alone)
+  # has no scaffold row at all and is refused until one is added, so coverage
+  # here is high by construction but not total. All are fail-SAFE refusals of a
+  # command whose failure mode is destroying a live worktree holding uncommitted
+  # work; FORCE_CLEAN=1 is the escape.
+  #
+  # Known fail-OPEN, unwitnessed: the test is line-based, so a filled scaffold
+  # row quoted inside a ``` code fence satisfies it (0 of 365 corpus docs;
+  # plausible only when a campaign's own subject is this harness).
   local doc="$STATE_DIR/$n.md"
   if [ "${FORCE_CLEAN:-0}" != "1" ] && [ -f "$doc" ] && \
      ! grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*result[[:space:]]*/[[:space:]]*verdict[*_`]*[[:space:]]*:[[:space:]]*[^[:space:]]' "$doc"; then
-    die "refusing clean: '$doc' has no FILLED scaffold verdict row — put the verdict after the '- result / verdict:' line (campaign-land Phase 4), then re-run. This is stricter than /ohd-checkup's land-report audit ON PURPOSE: a decorated or translated row ('- **verdict**: LANDS', '- 결론: LANDS') satisfies the AUDIT but does not authorize teardown. Bypass: FORCE_CLEAN=1 campaign.sh clean $n"
+    die "refusing clean: '$doc' has no FILLED scaffold verdict row — put the verdict after the '- result / verdict:' line (campaign-land Phase 4), then re-run. This is stricter than /ohd-checkup's land-report audit ON PURPOSE: a decorated or translated row ('- **verdict**: LANDS', '- 결론: LANDS'), or the scaffold row itself with a checkbox in front of the label ('- [x] result / verdict: LANDS'), satisfies the AUDIT but does not authorize teardown — emphasis around the label is the only decoration accepted here. Bypass: FORCE_CLEAN=1 campaign.sh clean $n"
   fi
   if teardown "$n" yes; then
     echo "cleaned $n (worktree + local & remote branch)"
   else
-    die "PARTIAL clean of '$n': branches were deleted but the worktree SURVIVED (see the WARN above) — remove it by hand once you have salvaged anything uncommitted in it"
+    die "PARTIAL clean of '$n': the remote branch was deleted but the worktree SURVIVED (see the WARN above). The LOCAL branch survives whenever that worktree still has it checked out — the hand-moved case — so recover with: commit anything uncommitted there, then 'git worktree remove <path>' and 'git branch -D $n'. If the WARN named an OCCUPIED slot instead, no worktree of ours was there and the local branch is already deleted."
   fi
 }
 
@@ -345,7 +360,7 @@ cmd_abort() {
   if teardown "$n" "$del"; then
     echo "aborted $n (remote branch: $([ "$del" = yes ] && echo purged || echo kept))"
   else
-    die "PARTIAL abort of '$n': branches were handled but the worktree SURVIVED (see the WARN above) — remove it by hand"
+    die "PARTIAL abort of '$n': the worktree SURVIVED (see the WARN above). The LOCAL branch survives whenever that worktree still has it checked out — 'git worktree remove <path>' then 'git branch -D $n' finishes the job; with an OCCUPIED slot the local branch is already deleted."
   fi
 }
 

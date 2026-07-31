@@ -144,10 +144,13 @@ grep -q "decoabandon.md" <<<"$out" && fail "decorated ABANDONED row wrongly coun
 rm docs/campaigns/deco.md docs/campaigns/korean.md docs/campaigns/boxed.md \
    docs/campaigns/decoabandon.md docs/campaigns/fakephase.md
 
-# 9c) the audit must read the SAME structural rules as campaign.sh's clean gate:
-#     a bold paragraph is not a verdict row, an unchecked box is a TODO, and a
-#     long non-ASCII label must survive a C locale. The abandon exclusion is
-#     checked on the same shapes so an ABANDONED doc never becomes a "gap".
+# 9c) the AUDIT's own structural rules, on shapes that read like a verdict but
+#     are not one: a bold PARAGRAPH is not a verdict row, an unchecked box is a
+#     TODO, and a long non-ASCII label must still be seen under a C locale. The
+#     abandon exclusion is checked on the same shapes so an ABANDONED doc never
+#     becomes a "gap". campaign.sh's clean gate is NOT under test here — since
+#     round 4 the two consumers have DIFFERENT rules (clean anchors on the
+#     scaffold row), and clean's matrix lives in tests/campaign-smoke.sh.
 cat > docs/campaigns/boldpara.md <<'EOF'
 # campaign: boldpara
 - status: OPEN (2026-07-20)
