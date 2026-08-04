@@ -32,7 +32,7 @@ Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial 
 **Finding closure — the author never closes a finding by fiat.** A finding
 closes exactly two ways: (a) fix it, and the NEXT review pass sees the fixed
 artifact; or (b) you believe the finding is wrong — write the rebuttal INTO
-the next reviewer's input and let that reviewer close or uphold it. Severity
+the next reviewer's input and let that reviewer close the finding or uphold it against your rebuttal. Severity
 (Critical/Important/Minor) is the reviewer's classification; downgrading a
 finding yourself to avoid a fix is closure by fiat. "The reviewer
 misunderstood" is itself a finding — against your artifact's clarity.
@@ -48,7 +48,7 @@ fiat with a log line drawn around it.
 
 **Convergence log (artifact, hand-off blocker):** when declaring done, print
 one line per round — `round N: <reviewers>× <lens> @<sha> → X findings →
-fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ clean`.
+fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ clean`, or `→ X findings → <disposition each>` with no finding left undisposed.
 **This is the one format**; other skills point here rather than restate it.
 The lens and reviewer count are part of the log: "clean" from one design-lens
 pass must not relay as the multi-reviewer rigor it wasn't. A fixed-pipeline
@@ -58,7 +58,7 @@ documented); an ad-hoc reviewer names its lens itself (`1× review subagent
 (bugs lens)`). `@<sha>` is the tree that round reviewed — re-reviewing the
 same SHA is not a new round —
 and is dropped only when the deliverable is not a tree (a plan, a problem
-statement). No log line for a clean final pass = not converged; go run it.
+statement). No log line for a terminal pass that is clean or fully disposed = not converged; go run it.
 **When the deliverable is a committed
 file** (design doc, ADR, analysis), the log goes INTO it (a short `## Review
 log` footer) or its commit message — the file outlives the chat that
