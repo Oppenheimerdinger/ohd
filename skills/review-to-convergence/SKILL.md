@@ -27,7 +27,7 @@ Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial 
 4. Re-review → step 2.
 5. A pass with **zero findings** ⟹ done. Not before.
 
-**Violating the letter of this rule violates the spirit.** Do not stop at one pass; the last pass must be clean.
+**Violating the letter of this rule violates the spirit.** Do not stop at one pass; the last pass must be clean or fully disposed.
 
 **Finding closure — the author never closes a finding by fiat.** A finding
 closes exactly two ways: (a) fix it, and the NEXT review pass sees the fixed
