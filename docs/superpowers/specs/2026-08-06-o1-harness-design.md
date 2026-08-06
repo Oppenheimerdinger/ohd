@@ -186,7 +186,8 @@ NAMED item for the next campaign.sh-touching release.
 - Cell grammar law (campaign-land): a land-report cell carries verdict +
   pointer (≤~200 chars); the argument lives in a named section of the same doc
   (baseline: 155 cells >400 chars, max 2,935). v0.5.23's named cells
-  (convergence log, `sanity:`) KEEP their names — only argument mass moves.
+  (the convergence log, `simplifier:` with its reason, `sanity:`) KEEP their
+  names — only argument mass moves.
 - Owner corrections are trigger failures: each one gets a backlog entry naming
   the missed trigger (rides the existing backlog discipline; the metric is
   corrections-per-week).

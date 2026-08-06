@@ -138,3 +138,13 @@ Two documented edge cases in `clean`'s gate, each with 0 witnesses in the
   as a rule. 0 of 365 docs write the row that way. If it ever shows up as
   routine friction, the fix is one optional token in the anchor plus an
   accept-matrix row. (2026-07-31)
+
+## 12. v0.6.0 must narrow the brief-hygiene pointer — OPEN (carried from v0.5.24)
+
+v0.5.24's way-of-working brief-hygiene sentence is deliberately home-agnostic
+("the project's reference docs where they exist") because `docs/reference/`
+does not exist until v0.6.0 ships the tier — naming it early would be the
+dead-pointer class claude-md-sanity flags. When v0.6.0 lands the tier, narrow
+that sentence to name `docs/reference/` directly, or the read side never
+points at the new home. One-sentence edit; recorded here so it is not lost
+between releases (implementer finding, v0.5.24).
