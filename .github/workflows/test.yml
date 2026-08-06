@@ -12,4 +12,5 @@ jobs:
       - run: bash tests/campaign-smoke.sh
       - run: bash tests/new-project-smoke.sh
       - run: bash tests/checkup-smoke.sh
+      - run: bash tests/probes-smoke.sh
       - run: diff <(grep -vE '^# (instantiated|synced-from)' tools/campaign.sh) <(grep -vE '^# (instantiated|synced-from)' assets/campaign.sh)
