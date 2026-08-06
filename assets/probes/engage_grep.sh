@@ -27,7 +27,10 @@ exit: 0 route proven engaged | 1 assertion failed | 2 usage/setup
 EOF
 }
 die() { local c="$1"; shift; echo "$SELF: $*" >&2; exit "$c"; }
-val() { [ $# -ge 2 ] && [ -n "$2" ] || die 2 "$1 needs a value"; printf '%s' "$2"; }
+# Validate in the MAIN shell. Called from inside "$(...)" this exit kills the
+# subshell only, the missing value never shifts, and the parse loop below reads
+# the same flag forever — a hang where an exit code was the entire contract.
+need() { [ -n "$2" ] || die 2 "$1 needs a value"; }
 
 _case() {  # _case <expected-exit> <args...> — the probe run against itself
   local want="$1"; shift; local got=0
@@ -52,10 +55,10 @@ self_test() {
 MUST=(); NOT=(); FILES=(); ANCHOR=""; SKIP=""; MODE=-F
 while [ $# -gt 0 ]; do
   case "$1" in
-    --must)      MUST+=("$(val "$1" "${2:-}")"); shift 2 ;;
-    --must-not)  NOT+=("$(val "$1" "${2:-}")");  shift 2 ;;
-    --anchor)    ANCHOR="$(val "$1" "${2:-}")";  shift 2 ;;
-    --no-anchor) SKIP="$(val "$1" "${2:-}")";    shift 2 ;;
+    --must)      need "$1" "${2:-}"; MUST+=("$2"); shift 2 ;;
+    --must-not)  need "$1" "${2:-}"; NOT+=("$2");  shift 2 ;;
+    --anchor)    need "$1" "${2:-}"; ANCHOR="$2";  shift 2 ;;
+    --no-anchor) need "$1" "${2:-}"; SKIP="$2";    shift 2 ;;
     --regex)     MODE=-E; shift ;;
     --self-test) self_test; exit $? ;;
     -h|--help)   usage; exit 0 ;;

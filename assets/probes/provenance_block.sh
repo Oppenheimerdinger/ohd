@@ -30,7 +30,9 @@ exit: 0 block emitted | 1 a --require key is missing/unavailable | 2 usage
 EOF
 }
 die() { local c="$1"; shift; echo "$SELF: $*" >&2; exit "$c"; }
-val() { [ $# -ge 2 ] && [ -n "$2" ] || die 2 "$1 needs a value"; printf '%s' "$2"; }
+# Validate in the MAIN shell — inside "$(...)" this exit kills the subshell only,
+# the missing value never shifts, and the parse loop spins on the same flag.
+need() { [ -n "$2" ] || die 2 "$1 needs a value"; }
 
 _case() { local want="$1"; shift; local got=0; "$0" "$@" >/dev/null 2>&1 || got=$?
   [ "$got" = "$want" ] || { echo "$SELF self-test: expected exit $want, got $got — $*" >&2; return 1; }; }
@@ -51,15 +53,15 @@ add() { BODY="$BODY$1=$2
 "; }
 while [ $# -gt 0 ]; do
   case "$1" in
-    --field)      kv="$(val "$1" "${2:-}")"; case "$kv" in *=*) : ;; *) die 2 "--field wants <k>=<v>, got '$kv'";; esac
+    --field)      need "$1" "${2:-}"; kv="$2"; case "$kv" in *=*) : ;; *) die 2 "--field wants <k>=<v>, got '$kv'";; esac
                   add "${kv%%=*}" "${kv#*=}"; shift 2 ;;
-    --cmd)        kv="$(val "$1" "${2:-}")"; case "$kv" in *=*) : ;; *) die 2 "--cmd wants <k>=<command>, got '$kv'";; esac
+    --cmd)        need "$1" "${2:-}"; kv="$2"; case "$kv" in *=*) : ;; *) die 2 "--cmd wants <k>=<command>, got '$kv'";; esac
                   k="${kv%%=*}"; c=0; v="$(sh -c "${kv#*=}" 2>/dev/null | head -1)" || c=$?
                   [ "$c" = 0 ] && [ -n "$v" ] || v="unavailable($c)"
                   add "$k" "$v"; shift 2 ;;
-    --env-prefix) PREFIXES+=("$(val "$1" "${2:-}")"); shift 2 ;;
-    --require)    REQUIRE+=("$(val "$1" "${2:-}")"); shift 2 ;;
-    --out)        OUT="$(val "$1" "${2:-}")"; shift 2 ;;
+    --env-prefix) need "$1" "${2:-}"; PREFIXES+=("$2"); shift 2 ;;
+    --require)    need "$1" "${2:-}"; REQUIRE+=("$2"); shift 2 ;;
+    --out)        need "$1" "${2:-}"; OUT="$2"; shift 2 ;;
     --self-test)  self_test; exit $? ;;
     -h|--help)    usage; exit 0 ;;
     *)            usage >&2; die 2 "unknown argument: $1" ;;

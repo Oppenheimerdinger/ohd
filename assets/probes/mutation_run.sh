@@ -33,7 +33,9 @@ exit: 0 every arm caught | 1 assertion/control failed | 2 usage/setup
 EOF
 }
 die() { local c="$1"; shift; echo "$SELF: $*" >&2; exit "$c"; }
-val() { [ $# -ge 2 ] && [ -n "$2" ] || die 2 "$1 needs a value"; printf '%s' "$2"; }
+# Validate in the MAIN shell — inside "$(...)" this exit kills the subshell only,
+# the missing value never shifts, and the parse loop spins on the same flag.
+need() { [ -n "$2" ] || die 2 "$1 needs a value"; }
 run() { sh -c "$1" >/dev/null 2>&1; }
 
 _case() { local want="$1"; shift; local got=0; "$0" "$@" >/dev/null 2>&1 || got=$?
@@ -57,9 +59,9 @@ self_test() {
 CHECK=""; UNTOUCHED=""; ARMS=()
 while [ $# -gt 0 ]; do
   case "$1" in
-    --check)     CHECK="$(val "$1" "${2:-}")";     shift 2 ;;
-    --arm)       ARMS+=("$(val "$1" "${2:-}")");   shift 2 ;;
-    --untouched) UNTOUCHED="$(val "$1" "${2:-}")"; shift 2 ;;
+    --check)     need "$1" "${2:-}"; CHECK="$2";     shift 2 ;;
+    --arm)       need "$1" "${2:-}"; ARMS+=("$2");   shift 2 ;;
+    --untouched) need "$1" "${2:-}"; UNTOUCHED="$2"; shift 2 ;;
     --self-test) self_test; exit $? ;;
     -h|--help)   usage; exit 0 ;;
     *)           usage >&2; die 2 "unknown flag: $1 (arms run SERIALLY by construction — there is no parallel mode)" ;;
