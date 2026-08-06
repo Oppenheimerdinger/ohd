@@ -67,6 +67,21 @@ printf 'value = a.c\n' > lit.log
 [ "$(rc bash "$E" --regex --must 'a.c' --no-anchor t lit.log)" = 0 ] || fail "--regex did not enable regex matching"
 # a missing file is a hard error, never a vacuous pass
 [ "$(rc bash "$E" --must x --no-anchor t nosuch.log)" != 0 ] || fail "engage_grep passed on a missing file"
+# a value-taking flag with NO value must DIE, and die FAST. The `timeout` is the
+# regression guard, not decoration: the original bug dropped the validator's
+# `exit 2` inside a command substitution, so it killed the subshell only, the
+# flag was never shifted past, and the parse loop re-read it forever. A
+# regression must fail this suite, not wedge CI for its whole time budget.
+for bad in "--must" "--must-not" "--anchor" "--no-anchor"; do
+  # shellcheck disable=SC2086
+  [ "$(rc timeout 5 bash "$E" --must seed $bad)" = 2 ] \
+    || fail "engage_grep did not exit 2 on a trailing valueless $bad (124 = it hung)"
+done
+[ "$(rc timeout 5 bash "$E" --must)" = 2 ] || fail "engage_grep did not exit 2 on a lone valueless --must (124 = it hung)"
+# an EMPTY value is the same bug wearing a different hat: the subshell died, the
+# empty string was appended as a marker, and `--must ''` then matched every line
+[ "$(rc timeout 5 bash "$E" --must '' --no-anchor t lit.log)" = 2 ] \
+  || fail "engage_grep accepted an empty --must value (it matches every line)"
 
 # ---------- mutation_run: proving the tests CAN fail ----------
 M="$P/mutation_run.sh"
@@ -99,6 +114,14 @@ grep -qi 'serial' "$M" || fail "mutation_run does not state that arms run serial
 [ "$(rc bash "$M" --check "$CHK" --arm 'bad|sed -i s/GOOD/BAD/ impl.txt|true')" != 0 ] \
   || fail "mutation_run passed an arm whose restore left the tree dirty"
 echo GOOD > impl.txt
+# valueless flag -> exit 2, under a timeout (see the engage_grep block: the same
+# validator-in-a-subshell bug spun this parse loop forever)
+for bad in "--check" "--arm" "--untouched"; do
+  # shellcheck disable=SC2086
+  [ "$(rc timeout 5 bash "$M" --check "$CHK" $bad)" = 2 ] \
+    || fail "mutation_run did not exit 2 on a trailing valueless $bad (124 = it hung)"
+done
+[ "$(rc timeout 5 bash "$M" --check)" = 2 ] || fail "mutation_run did not exit 2 on a lone valueless --check (124 = it hung)"
 
 # ---------- provenance_block: which route ACTUALLY ran ----------
 cd "$TMP"
@@ -118,5 +141,12 @@ grep -q 'gpu=unavailable' <<<"$out"      || fail "an unresolvable --cmd was sile
 # the artifact form: a run's route proof is a recorded fact, not archaeology
 bash "$V" --field backend=fused --out prov.txt >/dev/null
 grep -q 'backend=fused' prov.txt         || fail "--out did not write the provenance block"
+# valueless flag -> exit 2, under a timeout (see the engage_grep block)
+for bad in "--field" "--cmd" "--env-prefix" "--require" "--out"; do
+  # shellcheck disable=SC2086
+  [ "$(rc timeout 5 bash "$V" --field backend=fused $bad)" = 2 ] \
+    || fail "provenance_block did not exit 2 on a trailing valueless $bad (124 = it hung)"
+done
+[ "$(rc timeout 5 bash "$V" --require)" = 2 ] || fail "provenance_block did not exit 2 on a lone valueless --require (124 = it hung)"
 
 echo "PROBES-SMOKE PASS"
