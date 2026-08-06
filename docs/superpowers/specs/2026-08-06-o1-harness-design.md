@@ -195,6 +195,34 @@ NAMED item for the next campaign.sh-touching release.
   cross-home contradiction check. (Recommendation + audit only — the global
   file is the user's.)
 
+## The writing router (owner question, 2026-08-06: "문서 작성 체계가 명시적인가")
+
+The home-set gives every document class a home; the ROUTER is the explicit
+decision rule a session consults BEFORE creating any document — absent it, the
+flat-corpus mechanism reproduces itself. It ships as a short table in the
+reference conventions file, with a one-line pointer in the CLAUDE.md hot
+kernel ("writing: consult the router before creating any new doc"):
+
+| you are about to write... | it goes to | form |
+|---|---|---|
+| campaign narrative / results | the campaign's state doc (append) | existing scaffold |
+| a present-tense fact, interface, gotcha, route | docs/reference/ | one line + executable-truth pointer |
+| what is running / in flight | the state registry | dated line, 14-day expiry |
+| a lesson / decision / failure | land-time distill (memory/backlog) | existing Phase-6 rules |
+| a plan / spec | docs/superpowers/ | archives when executed |
+| a one-off analysis | a SECTION of the requesting campaign's doc | never a new root doc |
+
+Rule: a NEW root-level document requires naming its home and why no existing
+home fits — the same attested-skip shape as every other gate.
+
+**Retrofit is explicit**: `/ohd-checkup structure` GENERATES the cleanup
+work-list (solidation candidates, orphan lists + allowlist proposals, archive
+moves, reference scaffold); EXECUTION is ordinary project campaigns driven by
+that list — the harness never bulk-moves a project's documents itself. The
+recursion is intended: cleanup campaigns run under the new rules, so the
+verification they touch takes the disposition row and the present-tense facts
+they excavate take the graduation row — retrofit IS the tier's first fill.
+
 ## Usage model and versioning (owner decision, 2026-08-06)
 
 Three entry paths, one skill:
