@@ -76,7 +76,9 @@ done
 done
 
 GIT="$(git rev-parse --short HEAD 2>/dev/null || echo n/a)"
-git diff --quiet 2>/dev/null || GIT="$GIT-dirty"
+# `git diff --quiet` exits 129 outside a work tree, which a bare `||` reads as
+# "dirty" — the n/a guard keeps an unknown revision from growing a fabricated flag
+[ "$GIT" = n/a ] || git diff --quiet 2>/dev/null || GIT="$GIT-dirty"
 BLOCK="--- ohd provenance ---
 ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 host=$(hostname 2>/dev/null || echo n/a)
