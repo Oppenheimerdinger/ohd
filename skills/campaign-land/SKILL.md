@@ -98,12 +98,13 @@ route name alone is a label, not evidence.
 
 **The evidence cell carries the CONVERGENCE LOG, not just the last verdict.**
 The log lines follow review-to-convergence's format — reviewer and reviewed
-SHA per round, findings and their disposition — flattened into the cell; that
-skill owns the format, this one only says the cell carries it. It ends either
-in a round that came back CLEAN or with every residual finding carrying an
-explicit ruling recorded in this doc (r2c supplies that rule — a ruling is its
-recorded disposition, and a finding closed by the author's own fiat is not
-one). Shape:
+SHA per round, findings and their disposition — flattened into the cell while
+it fits, terminal round line plus a pointer to the named log section when it
+does not; that skill owns the format, this one only says the cell carries it.
+It ends either in a round that came back CLEAN or with every residual finding
+carrying an explicit ruling recorded in this doc (r2c supplies that rule — a
+ruling is its recorded disposition, and a finding closed by the author's own
+fiat is not one). Shape:
 
 ```
 | 3 quality gate | yes | round 1: 1× code-review:code-review PR#16 @a1b2c3d → 2 findings → fixed; round 2: 1× review subagent (bugs lens) @e4f5a6b → clean. simplifier: not needed — diff is one guard clause |
@@ -252,11 +253,23 @@ memory is a soft layer, the script gate is the backstop).
 - **Two cells have NAMED contents, not free-form evidence** (both are Phase
   rules above, repeated here because this table is what actually gets filled):
   row 3 carries the convergence log — per round, the reviewer and the SHA it
-  reviewed, ending clean or with every residual ruled on — plus `simplifier:`
-  with a reason when it says `not needed`; row 6 carries `sanity:` with either
-  findings and their disposition or the skip and its `git diff --name-only`
-  artifact. An item an evidence cell does not name by name is the item that
+  reviewed, ending clean or with every residual ruled on, or, past ~2 rounds,
+  the terminal round line plus the pointer to the named log section (the
+  overflow rule below) — plus `simplifier:` with a reason when it says
+  `not needed`; row 6 carries `sanity:` with either findings and their
+  disposition or the skip and its `git diff --name-only` artifact. An item an evidence cell does not name by name is the item that
   goes missing.
+- **A cell carries the VERDICT plus a pointer** (aim ≤~200 chars; baseline: 155
+  cells measured >400 chars, max 2,935) — the supporting ARGUMENT lives in a
+  named section of the same state doc that the cell points at. The ~200-char
+  aim governs ARGUMENT mass only: the named cells' MANDATED lines (convergence
+  log rounds, `simplifier:`, `sanity:`) do not count against it. When the
+  convergence log runs past ~2 rounds, the cell carries the TERMINAL round line
+  plus a pointer to a named section holding the full round log — not because of
+  the char aim (mandated lines are exempt from it) but because a table cell
+  holding a long log is unscannable: the terminal line is the verdict, the
+  section is the record. **Forward-only** like Phase 6's contract: this binds
+  lands from here on; historical reports are expected to fail it.
 - **Substitution rationales are invalid.** A review that happened during
   implementation does not satisfy Phase 3 (it saw a different, earlier tree).
   "Low risk" is not an exemption. (A review **subagent** on the final diff is

@@ -47,7 +47,13 @@ explicit ruling — r2c's recorded disposition, never the author's own fiat.
    carries ONLY verified information: real numbers, real `file:line`; anything
    unverified is explicitly marked "unverified:" — never stated as fact. Invite
    the agent to challenge the premise. Withhold your tentative answer. (For the
-   full unattended loop, escalate to `deep-solve`.)
+   full unattended loop, escalate to `deep-solve`.) Briefs carry POINTERS, not
+   payloads — point at durable docs first (the project's reference docs where
+   they exist, the campaign state doc, `file:line`), inlining only what has no
+   home; and a fan-out wider than the situational default needs ONE stated
+   reason line in the dispatch message. A sweep that becomes root-cause
+   REASONING is two dispatches: the sweep, then a reasoning agent briefed on
+   its findings — one agent when the sweep is trivial.
 2. **Review to convergence before banking.** Any substantive deliverable gets
    an independent fresh-context reviewer until a clean pass. Your confidence is
    not evidence; a fresh solver's isn't either — gate load-bearing answers on
@@ -66,6 +72,7 @@ edit; the boundary:
 |---|---|---|
 | Micro-edit — a STANDALONE fix outside any plan or dispatched task, sized by the WORK not the diff: it is NOT a micro-edit if it writes a new test, needs a mutation or negative control, or needs a gate run to judge it | main session directly | — (delegation would cost more) |
 | Any step of a written plan's implementation task, regardless of size | fresh implementer per task | superpowers:subagent-driven-development |
+| Shell/filesystem INVESTIGATION — enumerating, measuring, censusing, grepping across a tree (a measured session spent 66% of its coordinator tool calls on Bash) | a read-only sweep subagent | `Explore` is the named vehicle — it reads excerpts, not whole files; model tier is an explicit lever (a mechanical sweep does not need the top model) |
 | Bulk writing (docs, reports, large generated text) | a writer/executor subagent | Agent tool (oh-my-claudecode's tiered `writer`/`executor` roster, when installed) |
 | Separable hard reasoning | fresh agent with a verified brief | force-multiplier 1, escalating to `deep-solve` |
 | Must-complete long-running work | a persistence loop (independent evaluator judges termination — below) | `/loop` / schedule / ralph |
@@ -75,8 +82,13 @@ Row 1's disqualifiers are a FLOOR, not a factor to be weighed: work that writes
 a new test, needs a mutation or negative control, or needs a gate run to judge
 it is not a micro-edit at any cost ratio. Once they pass, weigh the actual
 costs: if writing the brief plus reading and verifying the reply costs more
-than just doing the work, do it directly (row 1's case); otherwise delegate —
-the output then lives in the subagent's context, not yours.
+than just doing the work, do it directly — row 1's case, and the investigation
+row's too: one command answered in one breath stays inline, since that row is
+for SWEEPS, not one-liners. The exemption is per QUESTION, not per command: a
+RUN of one-liners in service of ONE question IS a sweep — dispatch it, or the
+row's evidence (coordinator Bash call-share) is satisfied away one breath at a
+time. Otherwise delegate — the output then lives in the subagent's context,
+not yours.
 
 Inside an open campaign the default is that an edit belongs to the plan —
 "standalone" is a claim you support by pointing at the plan section, not the
@@ -185,6 +197,11 @@ autonomous loop always gets a termination condition and an iteration cap.
 - **Idle ≠ dead.** A quiet worker is usually working. Require positive
   confirmation (git activity, a received message) before declaring an agent
   dead or killing its work.
+- **An owner correction to the session's PROCESS is a trigger failure.** When
+  the owner corrects HOW the session works (not what it concluded), a trigger
+  that should have fired didn't — file a backlog entry naming that missing
+  trigger in the project's `docs/backlog.md` in the same pass (campaign-land
+  Phase 6's discipline); the metric is corrections-per-week, read per project.
 - **The coordinator seat does not solve inline.** A long-lived anchor
   session's job is orchestration; minutes-long inline reasoning there is a
   solver's job in the wrong seat — write the brief and hand it to a fresh
