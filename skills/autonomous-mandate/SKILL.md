@@ -28,11 +28,26 @@ loop for it. This skill is for session-scope, user-absent mandates.
         ~/.claude/plugins/installed_plugins.json 2>/dev/null)"
    [ -d "$RL" ] || RL="$(ls -d ~/.claude/plugins/cache/claude-plugins-official/ralph-loop/*/ 2>/dev/null | sort -V | tail -1)"
    bash "$RL/scripts/setup-ralph-loop.sh" \
-     "<the mandate, restated as the loop prompt>" \
+     "<the mandate, restated as the loop prompt>
+      Your lane is dispatch, review, merge. Implementation goes to a fresh
+      agent per task; only micro-edits stay inline — a STANDALONE fix
+      outside any plan or dispatched task, and NOT a micro-edit if it
+      writes a new test, needs a mutation or negative control, or needs a
+      gate run to judge it.
+      End every iteration having ADVANCED the mandate — a fresh dispatch or
+      a backgrounded watch; work you did inline does not count as advancing.
+      Every deliverable you call done NAMES the review pass that cleared it." \
      --max-iterations <cap> --completion-promise '<exact phrase>'
    ```
    (installed_plugins.json is the authoritative path source; the cache glob
-   is the fallback.)
+   is the fallback.) The lane, advance and review-naming lines ride the
+   PROMPT, not this skill's body, deliberately: the stop hook re-injects the
+   prompt verbatim on every iteration, so it survives compaction and context
+   rollover — which a skill read once at minute zero does not. The flip side:
+   the prompt is written ONCE at setup and re-injected AS STORED, so upgrading
+   the plugin mid-mandate does not refresh a running loop's prompt — adopting
+   new prompt text means cancelling the loop and setting it up again, which is
+   the user's call (step 5).
 
    The state file lands at `.claude/ralph-loop.local.md` in the cwd — run
    this at the project anchor. If the plugin is absent: SAY SO and offer the
@@ -50,6 +65,12 @@ loop for it. This skill is for session-scope, user-absent mandates.
    (the stop hook matches the tag, not bare prose). Emitting
    the phrase without a verdict is self-grading — the known premature-COMPLETE
    failure of this loop pattern.
+   The evaluator's brief carries two MANDATORY questions on top of the goal:
+   **which work units were delegated versus done by the coordinator**, and
+   **does every deliverable claimed done name the review pass that cleared
+   it**. Both are answerable from git and the agent log. The verdict is quoted
+   verbatim into the state doc anyway, so an evaluator that answered neither is
+   visible after the fact.
 4. **Persist the mandate**: record scope, cap, and completion phrase in the
    project's state doc or notes — an unattended session's chat record
    evaporates, and the loop may outlive this context window.
@@ -80,12 +101,20 @@ loop for it. This skill is for session-scope, user-absent mandates.
 
    What to do instead, in order:
    - **End each iteration having ADVANCED the mandate** — a fresh dispatch,
-     work you did directly this turn, or a backgrounded watch on the
-     blocking condition (Monitor / run_in_background — these are
-     non-blocking; only sleeping is banned). An empty iteration is almost
-     always a MISSING DISPATCH — the same failure the mandate exists to
-     prevent, wearing a different hat. (Step 3's completion exit is its own
-     ending and needs none of these.)
+     or a backgrounded watch on the blocking condition (Monitor /
+     run_in_background — these are non-blocking; only sleeping is banned).
+     Work you did INLINE does not count as advancing: a micro-edit is still
+     legitimate (way-of-working's delegation boundary owns that line), but an
+     iteration whose only content was the coordinator implementing IS the
+     failure this mandate exists to prevent — a coordinator that did
+     everything itself used to satisfy this list as written. An empty
+     iteration is almost always a MISSING DISPATCH — the same failure the
+     mandate exists to prevent, wearing a different hat. If a legitimate
+     micro-edit really was the only actionable item and nothing is
+     dispatchable or watchable, that iteration is the LAST RESORT case
+     below — name it as such; do not manufacture a dispatch to dodge the
+     label (manufacturing work is banned there for the same reason).
+     (Step 3's completion exit is its own ending and needs none of these.)
    - **Read deliverables from git or the agent log, never from the
      notification** (step 5: idle != done). "Agent notified" is not "agent
      committed"; check, then tell it to finish.
@@ -95,9 +124,12 @@ loop for it. This skill is for session-scope, user-absent mandates.
      state doc, staleness listing, and cleanup ownership). Two agents in one
      worktree contaminate each other's gate runs.
    - LAST RESORT — not a "works": genuinely gated on wall-clock with
-     nothing dispatchable and no backgroundable watch, keep the turn short
-     and SAY that. This IS the no-op-turn failure named above, unsolved —
-     merely the smallest evil (smaller than manufactured work or a sleep).
+     nothing dispatchable and no backgroundable watch — or the only
+     actionable item was a legitimate micro-edit and it is already done —
+     keep the turn short and NAME which of the two the iteration was. This
+     IS the un-advanced iteration named above (an empty turn, or one whose
+     only content was your own edit), unsolved — merely the smallest evil
+     (smaller than manufactured work or a sleep).
      **Do not manufacture work to fill an iteration** — an artifact written
      to justify a turn costs more to review than the empty turn it
      replaced. If iterations keep landing here, record in the state doc

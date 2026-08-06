@@ -65,8 +65,9 @@ chosen during Phase 1:
    - Fix findings → re-dispatch → repeat until a pass with ZERO findings.
    - Keep a per-round convergence log and print it with the gate banner —
      review-to-convergence's log format (`round N: <reviewers>× <lens> → X
-     findings → fixed/dropped`), ending in the clean pass; the brief's review
-     history is part of what the user approves.
+     findings → fixed/rebutted-upheld/minor-logged`; the `@<sha>` slot is
+     dropped here — the deliverable is a brief, not a tree), ending in the
+     clean pass; the brief's review history is part of what the user approves.
    - If not converged after 4 review iterations, stop and escalate to the user
      instead of looping further.
    - If a read-only reviewer idles without reporting, grep its transcript JSONL

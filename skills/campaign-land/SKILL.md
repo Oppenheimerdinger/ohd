@@ -82,9 +82,12 @@ Three routes, in preference order:
   deferral is the pre-v0.4.19 fossil this route list exists to kill; if the
   review has not happened, that case IS route 1: invoke the plugin yourself.
 - **A review subagent** — fallback when the plugin is absent or there is no
-  PR. Dispatch one scoped to the final diff: give it the diff range, the
-  files, and the *claims the campaign doc makes*, and ask it to check the
-  claims against the diff. Findings that came back this way in the field:
+  PR, and the normal instrument for round 2+ of the log below: the code-review
+  plugin runs once per PR (way-of-working owns that constraint), so the second
+  look at the fixed SHA is a subagent, not a re-run. Dispatch one scoped to the
+  final diff: give it the diff range, the files, and the *claims the campaign
+  doc makes*, and ask it to check the claims against the diff. Findings that
+  came back this way in the field:
   tests that could not fail, a "fix" that was a provable no-op, and a `[x]`
   on a phase that delivered one of its three required parts.
 
@@ -93,6 +96,32 @@ Whichever route, the report row names it (`code-review:code-review PR#n` /
 evidence — findings count and disposition, or the review output ref. The
 route name alone is a label, not evidence.
 
+**The evidence cell carries the CONVERGENCE LOG, not just the last verdict.**
+The log lines follow review-to-convergence's format — reviewer and reviewed
+SHA per round, findings and their disposition — flattened into the cell; that
+skill owns the format, this one only says the cell carries it. It ends either
+in a round that came back CLEAN or with every residual finding carrying an
+explicit ruling recorded in this doc (r2c supplies that rule — a ruling is its
+recorded disposition, and a finding closed by the author's own fiat is not
+one). Shape:
+
+```
+| 3 quality gate | yes | round 1: 1× code-review:code-review PR#16 @a1b2c3d → 2 findings → fixed; round 2: 1× review subagent (bugs lens) @e4f5a6b → clean. simplifier: not needed — diff is one guard clause |
+```
+
+- A first round that finds nothing IS a complete log — one line. Rounds exist
+  because findings do.
+- Round N+1 reviews a DIFFERENT tree than round N: re-reviewing the same SHA is
+  not a round, it is the same round reported twice. Its scope is the FIX diff,
+  not a fresh full pass.
+- **No scaling by diff size.** "Small diff, one finding, obviously fixed" is
+  exactly the shape of the regression this rule exists for. A one-line fix gets
+  a second look at the fixed SHA like everything else.
+
+This standardizes a practice that already exists — 25 of 68 filled Phase-3 rows
+recorded a second look in a dozen ad-hoc phrasings. Writing it one way is what
+makes it countable.
+
 **Simplification is part of this gate, not a later nicety.** When review
 findings (or your own read) flag over-complexity — duplicated logic, dead
 branches, a naive structure the diff itself introduced — dispatch the
@@ -100,7 +129,9 @@ branches, a naive structure the diff itself introduced — dispatch the
 scoped to the diff, then RE-RUN validation on its output like any other fix:
 a simplifier mutates code, so its changes re-enter the fix→re-check loop,
 never merge unreviewed. Record it in the report row's evidence
-(`simplifier: run, N changes re-validated` or `not needed`).
+(`simplifier: run, N changes re-validated`, or `simplifier: not needed —
+<one clause saying why>`). A bare `not needed` is a self-attestation with no
+content in it; the clause is what a reader can disagree with.
 
 **Ask the reviewer to run mutations, not just read.** A passing test suite
 says nothing about whether the tests *can* fail. The highest-value reviews in
@@ -157,6 +188,22 @@ accepts it.
   not gated: the row's evidence cell must carry the derivable artifact
   (`git diff --name-only <base>..HEAD` showing no doc/memory paths), not
   just the quoted condition.
+  **The Phase 6 evidence cell must contain `sanity:` BY NAME** — either the
+  findings and their disposition (`sanity: 2 findings, 1 fixed here, 1 →
+  docs/backlog.md`) or the skip with its artifact (`sanity: skip — diff
+  touches no docs/memory: git diff --name-only <base>..HEAD → src/x.py,
+  tests/x_test.py`). An evidence cell that does not demand the item by name
+  loses it silently: a field check over the three most recent lands, all the
+  MAINTAINER'S OWN, found three of three failing this contract — the sanity run
+  skipped in all three while their diffs touched docs and memory, the skip
+  condition applicable to none; two wrote no `sanity:` row at all, one of those
+  substituting a validator's lock-step check for it (which this skill forbids by
+  name), and the third named the gap honestly but still did not run the audit.
+  Another naming failure with the same root cause: `simplifier: not needed`
+  with no reason (Phase 3).
+  **Forward-only**: this contract and Phase 3's convergence log bind lands from
+  here on. Historical land reports are not retroactively audited — no script
+  reads these cells — and are expected to fail the new wording.
 
 ## Land report — MANDATORY gate before Phase 7
 
@@ -202,6 +249,14 @@ memory is a soft layer, the script gate is the backstop).
 - `evidence` must reference something that actually happened this land — a
   command you ran, an output you saw, a diff/commit hash. An empty or vague
   evidence cell means the phase DID NOT HAPPEN — go run it.
+- **Two cells have NAMED contents, not free-form evidence** (both are Phase
+  rules above, repeated here because this table is what actually gets filled):
+  row 3 carries the convergence log — per round, the reviewer and the SHA it
+  reviewed, ending clean or with every residual ruled on — plus `simplifier:`
+  with a reason when it says `not needed`; row 6 carries `sanity:` with either
+  findings and their disposition or the skip and its `git diff --name-only`
+  artifact. An item an evidence cell does not name by name is the item that
+  goes missing.
 - **Substitution rationales are invalid.** A review that happened during
   implementation does not satisfy Phase 3 (it saw a different, earlier tree).
   "Low risk" is not an exemption. (A review **subagent** on the final diff is
