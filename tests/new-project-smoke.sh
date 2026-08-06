@@ -24,6 +24,47 @@ grep -q 'CAMPAIGN_TRUNK:-work' tools/install-hooks.sh || fail "p1 install-hooks 
 [ -f README.md ] && [ -f docs/campaigns/.gitkeep ] && [ -f .claude/skills/.gitkeep ] || fail "p1 structure"
 grep -q '^/data$' .gitignore                          || fail "p1 gitignore anchor"
 [ -x tools/campaign.sh ] && [ -x tools/install-hooks.sh ] || fail "p1 exec bits"
+
+# ---------- the home-set: reference tier + archive (v0.6.0) ----------
+# The scaffold is the ONLY carrier that reaches a project at birth, so every
+# rule the tier depends on has to be IN the scaffolded text, not in a skill.
+for f in capabilities conventions state; do
+  [ -f "docs/reference/$f.md" ] || fail "p1 docs/reference/$f.md not scaffolded"
+done
+[ "$(ls docs/reference/*.md | wc -l)" -le 4 ] || fail "p1 reference tier over the 3-4 file cap"
+[ -f docs/archive/README.md ] || fail "p1 docs/archive/README.md not scaffolded"
+# format law, stated where the writer will read it
+grep -q 'executable truth' docs/reference/capabilities.md || fail "p1 capabilities.md does not state the executable-truth format law"
+grep -q 'executable truth' docs/reference/conventions.md  || fail "p1 conventions.md does not state the executable-truth format law"
+# ...and DEMONSTRATED by every scaffold entry: `<claim> — <file:line>`
+for f in capabilities conventions; do
+  n_ex="$(grep -c '^- (example)' "docs/reference/$f.md" || true)"
+  [ "$n_ex" -ge 2 ] || fail "p1 $f.md carries fewer than 2 placeholder entries"
+  n_ptr="$(grep -c '^- (example).* — `[^`]*`$' "docs/reference/$f.md" || true)"
+  [ "$n_ex" = "$n_ptr" ] || fail "p1 $f.md has placeholder entries that do not demonstrate '<claim> — <pointer>' ($n_ptr/$n_ex)"
+done
+# conventions.md carries BOTH named tables
+grep -qi '^## Route map' docs/reference/conventions.md      || fail "p1 conventions.md missing the ROUTE MAP section"
+grep -q 'assertion' docs/reference/conventions.md            || fail "p1 route map does not name the engagement assertion"
+grep -qi '^## The writing router' docs/reference/conventions.md || fail "p1 conventions.md missing the writing router"
+for home in 'docs/reference/' 'docs/superpowers/' 'state doc'; do
+  grep -q "$home" docs/reference/conventions.md || fail "p1 writing router missing a home row for '$home'"
+done
+grep -qi 'new root-level document' docs/reference/conventions.md || fail "p1 writing router missing the new-root-doc attested-skip rule"
+# state registry: the exemption and the two gates that replace it
+grep -qi 'exempt' docs/reference/state.md   || fail "p1 state.md does not claim the executable-truth exemption"
+grep -q '14' docs/reference/state.md        || fail "p1 state.md header carries no 14-day dated-claim expiry notice"
+grep -q 'as of' docs/reference/state.md     || fail "p1 state.md does not demonstrate the dated-claim form"
+# archive: the search-key preservation rule travels with the directory
+grep -qi 'search key' docs/archive/README.md || fail "p1 archive README missing the search-key preservation rule"
+grep -q 'checkup' docs/archive/README.md     || fail "p1 archive README does not name WHEN solidation runs"
+# hot kernel gains exactly two pointer lines (S1b)
+grep -q 'docs/reference/ first' CLAUDE.md            || fail "p1 CLAUDE.md hot kernel missing the orientation line"
+grep -q 'router before creating' CLAUDE.md           || fail "p1 CLAUDE.md hot kernel missing the writing-router pointer"
+[ "$(grep -c 'docs/reference/ first' CLAUDE.md)" = 1 ] || fail "p1 orientation line is not one line"
+# a FRESH scaffold must be green: placeholders may not fabricate drift on day one
+out="$(bash "$HERE/assets/checkup.sh" .)"
+grep -q "reference | OK" <<<"$out" || fail "p1 fresh scaffold does not report reference | OK: $(grep '^reference' <<<"$out")"
 # scaffold commit passed BEFORE hook activation
 [ "$(git rev-list --count HEAD)" = 1 ]                || fail "p1 scaffold commit count"
 # hook rejects a NEW non-docs file on trunk

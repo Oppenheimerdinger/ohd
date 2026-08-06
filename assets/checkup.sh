@@ -174,6 +174,120 @@ else
   report "CLAUDE.md" "MISSING" "no project CLAUDE.md — /ohd-checkup drafts one from the plugin's template"
 fi
 
+# ---- always-loaded byte budget (the mass EVERY actor-wake pays, before its
+#      first useful token) --------------------------------------------------
+# SCOPE IS STATED IN THE ROW, deliberately: CLAUDE.md alone, PLUS any path
+# named by an explicit `<!-- ohd:always-loaded <path>... -->` marker inside it.
+# The marker is a MECHANICAL convention because the file that actually breaks a
+# CLAUDE.md-only budget is the all-workers-must-read plan/ledger (measured at
+# 168KB in one project), and detecting it by matching prose like "every worker
+# must read X" is the heuristic class this harness does not ship. No marker =
+# the row says so rather than implying it audited more than it did.
+HOT_TARGET=20480
+if [ -f CLAUDE.md ]; then
+  AL_MARK="$(grep -o '<!-- *ohd:always-loaded[^>]*-->' CLAUDE.md 2>/dev/null | head -1 || true)"
+  AL_B="$(wc -c < CLAUDE.md)"; AL_N=1; AL_MISS=""
+  if [ -n "$AL_MARK" ]; then
+    for p in $(printf '%s' "$AL_MARK" | sed 's/<!-- *ohd:always-loaded//; s/-->//'); do
+      if [ -f "$p" ]; then
+        AL_B=$((AL_B + $(wc -c < "$p"))); AL_N=$((AL_N + 1))
+      else
+        AL_MISS="$AL_MISS$p "
+      fi
+    done
+    AL_SCOPE="across $AL_N file(s) (CLAUDE.md + the always-loaded marker list)"
+  else
+    AL_SCOPE="CLAUDE.md only — no \`<!-- ohd:always-loaded <path>... -->\` marker, so a plan/ledger file every worker must read is NOT in this count; add one to budget it"
+  fi
+  [ -z "$AL_MISS" ] || AL_SCOPE="$AL_SCOPE; marker names path(s) that do not exist: $AL_MISS"
+  if [ "$AL_B" -gt "$HOT_TARGET" ]; then
+    report "always-loaded" "OVER" "${AL_B}B $AL_SCOPE vs ~20KB hot target"
+  else
+    report "always-loaded" "OK" "${AL_B}B $AL_SCOPE vs ~20KB hot target"
+  fi
+else
+  report "always-loaded" "NONE" "no CLAUDE.md — nothing is always-loaded, so there is no wake mass to budget (see the CLAUDE.md row)"
+fi
+
+# ---- reference tier: existence + pointer resolution + dated-claim expiry ----
+# A rotted catalog MISDIRECTS, which is worse than no catalog — these two gates
+# are what make the tier safe to trust, so they are constitutive, not advisory.
+# Only backticked pointers in the format law's position (after the LAST ' — ')
+# are resolved; a prose bullet with no pointer is left alone rather than
+# guessed at, and `(example)` scaffold lines are counted, never gated.
+REFD="docs/reference"
+if [ ! -d "$REFD" ]; then
+  report "reference" "MISSING" "no $REFD/ — the orientation tier (capabilities+gotchas / conventions+invariants+routes / state registry) is where settled facts live so sessions look them up instead of re-deriving; \`/ohd-checkup structure\` offers the scaffold"
+else
+  REF_CUT="$(date -d '14 days ago' +%F 2>/dev/null || date -v-14d +%F 2>/dev/null || true)"
+  REF_N=0; REF_PH=0; REF_DEAD=""; REF_OLD=""
+  for f in "$REFD"/*.md; do
+    [ -f "$f" ] || continue
+    REF_N=$((REF_N + 1))
+    IS_STATE=0; [ "$(basename "$f")" = state.md ] && IS_STATE=1
+    while IFS= read -r line; do
+      case "$line" in
+        [-*]" "*|"  "[-*]" "*) : ;;
+        *) continue ;;
+      esac
+      case "$line" in *'(example)'*) REF_PH=$((REF_PH + 1)); continue ;; esac
+      case "$line" in
+        *' — '*)
+          ptr="${line##* — }"
+          case "$ptr" in
+            *'`'*)
+              p="${ptr#*\`}"; p="${p%%\`*}"; p="${p%%:[0-9]*}"
+              [ -z "$p" ] || [ -e "$p" ] || REF_DEAD="$REF_DEAD$p "
+              ;;
+          esac ;;
+      esac
+      if [ "$IS_STATE" = 1 ] && [ -n "$REF_CUT" ]; then
+        for d in $(printf '%s' "$line" | grep -o 'as of [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' | sed 's/as of //' || true); do
+          [ "$d" \< "$REF_CUT" ] && REF_OLD="$REF_OLD$d "
+        done
+      fi
+    done < "$f"
+  done
+  REF_PH_TXT="$REF_PH placeholder line(s) still to replace"
+  if [ -n "$REF_DEAD$REF_OLD" ]; then
+    D=""
+    [ -z "$REF_DEAD" ] || D="dead pointer(s): $REF_DEAD"
+    [ -z "$REF_OLD" ] || D="${D}${D:+; }state.md dated claim(s) older than 14 days: $REF_OLD"
+    report "reference" "STALE" "$D — refresh the line or delete it; a reference line nobody can re-run is the misdirection this tier exists to prevent ($REF_N file(s), $REF_PH_TXT)"
+  else
+    NOTE=""; [ -n "$REF_CUT" ] || NOTE=" (date arithmetic unavailable — dated-claim expiry NOT checked)"
+    report "reference" "OK" "$REF_N file(s), pointers resolve, no state.md claim older than 14 days, $REF_PH_TXT$NOTE"
+  fi
+fi
+
+# ---- campaign census: OPEN status vs filled verdict (the false-OPEN term) ---
+if [ -d "$SD" ]; then
+  C_TOT=0; C_OPEN=0; C_FALSE=0
+  for d in "$SD"/*.md; do
+    [ -f "$d" ] || continue
+    C_TOT=$((C_TOT + 1))
+    grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*status[*_`]*:[[:space:]]*[*_`]*OPEN' "$d" 2>/dev/null || continue
+    C_OPEN=$((C_OPEN + 1))
+    grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*result / verdict[*_`]*:[[:space:]]*[^[:space:]]' "$d" 2>/dev/null \
+      && C_FALSE=$((C_FALSE + 1))
+  done
+  report "campaigns" "$C_OPEN open/$C_TOT total, $C_FALSE false-OPEN" "false-OPEN = the doc still says \`status: OPEN\` while its \`- result / verdict:\` row is filled; grep archaeology reads those as in-flight work"
+fi
+
+# ---- structure: ONE summary line. A count is a POINTER, not an audit — the
+#      default run never nags a project into structural work. -----------------
+ST_CAND=0
+if [ -d "$SD" ]; then
+  for d in "$SD"/*.md; do
+    [ -f "$d" ] || continue
+    case "$d" in docs/archive/*) continue ;; esac
+    grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*result / verdict[*_`]*:[[:space:]]*[^[:space:]]' "$d" 2>/dev/null \
+      && ST_CAND=$((ST_CAND + 1))
+  done
+fi
+[ -d "$REFD" ] || ST_CAND=$((ST_CAND + 1))
+report "structure" "$ST_CAND candidates" "last full audit: no record (the structure report is output-only, so nothing here is stamped) — run /ohd-checkup structure for the work-list"
+
 # ---- land-report audit (behavioral fossils: landed without the ritual?) ----
 if [ -d "$SD" ]; then
   GAPS=""
