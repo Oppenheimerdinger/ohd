@@ -1,3 +1,22 @@
+## v0.6.1 (2026-08-06)
+
+BEHAVIOR-CHANGE: provenance_block no longer fabricates a dirty flag outside a git tree (git=n/a stays n/a).
+
+- `provenance_block.sh`: `git diff --quiet` exits 129 where there is no
+  repository, and the bare `||` chain read that as "dirty". probes-smoke gains
+  the non-git case and its in-a-dirty-repo counterpart.
+- `checkup.sh`: the always-loaded row computed its status word instead of
+  printing two arms with identical detail; the solidation-candidate rule, which
+  was written once for the summary row and again for `--structure`, is now one
+  `sol_candidates` helper feeding both; the template's config-inner slice is cut
+  once per sync instead of once per project config line; the sync gate is nested
+  rather than spelled twice as if/elif conditions. Output-identical, verified
+  row-by-row over a 26-scenario fixture sweep.
+- `/ohd-checkup`: the paragraph claiming the default rows enforce the
+  exit-code-shaped-failure rule is a pointer now — no row checks probe
+  behavior, and the rule is canonical in `assets/probes/` and the reference
+  tier's route map.
+
 ## v0.6.0 (2026-08-06)
 
 BEHAVIOR-CHANGE: new projects are scaffolded with a reference tier — `docs/reference/{capabilities,conventions,state}.md` plus a `docs/archive/` stub — and every line in `capabilities.md` and `conventions.md` must point at executable truth (`<claim> — <file:line of a test, gate, or config>`), so orientation is a lookup a consumer can RE-RUN instead of an agent-scan of the tree.

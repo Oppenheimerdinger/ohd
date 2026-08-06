@@ -24,11 +24,10 @@ given, else the current directory; it must be a git repo root.
   The baselines live in the OUTPUT: offer to paste them into the cleanup
   campaign's state doc, since nothing is stamped on disk.
 
-The project-side rule those rows enforce, in one sentence: **agent-facing
-failure is exit-code-shaped, not log-shaped** — an agent reads logs through
-tails and summarizers, so a warning line is structurally unseen, which is why
-the plugin's `assets/probes/` (`engage_grep`, `mutation_run`,
-`provenance_block`) DIE on a mismatch and never warn-and-continue.
+The probes' rule — agent-facing failure is exit-code-shaped, not log-shaped —
+is canonical in `assets/probes/engage_grep.sh` and
+`assets/home-set/reference/conventions.md` §Route map, and routed by
+`ohd:campaign-land` Phase 6. No row below checks it.
 
 **DRY invariant — this command carries NO canonical content.** What the
 harness *should* look like lives in exactly one place each:
