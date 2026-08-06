@@ -67,6 +67,10 @@ loop for it. This skill is for session-scope, user-absent mandates.
    failure of this loop pattern. Completion is judged by the evaluator's verdict
    and never by whether the stop hook fired or stopped firing — a hook can miss
    a correct promise (field-recorded race), and hook silence is not a verdict.
+   In that exact race — verdict banked verbatim, hook still re-firing — re-emit
+   the `<promise>` in the loop's exit format each iteration and do NO further
+   mandate work; if it persists, the user-owned cancel (step 5) is the
+   legitimate manual exit, and the banked verdict is what makes it legitimate.
    The evaluator's brief carries two MANDATORY questions on top of the goal:
    **which work units were delegated versus done by the coordinator**, and
    **does every deliverable claimed done name the review pass that cleared

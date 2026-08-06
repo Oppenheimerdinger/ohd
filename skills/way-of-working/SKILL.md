@@ -51,7 +51,9 @@ explicit ruling — r2c's recorded disposition, never the author's own fiat.
    payloads — point at durable docs first (the project's reference docs where
    they exist, the campaign state doc, `file:line`), inlining only what has no
    home; and a fan-out wider than the situational default needs ONE stated
-   reason line in the dispatch message.
+   reason line in the dispatch message. A sweep that becomes root-cause
+   REASONING is two dispatches: the sweep, then a reasoning agent briefed on
+   its findings — one agent when the sweep is trivial.
 2. **Review to convergence before banking.** Any substantive deliverable gets
    an independent fresh-context reviewer until a clean pass. Your confidence is
    not evidence; a fresh solver's isn't either — gate load-bearing answers on
@@ -80,8 +82,10 @@ Row 1's disqualifiers are a FLOOR, not a factor to be weighed: work that writes
 a new test, needs a mutation or negative control, or needs a gate run to judge
 it is not a micro-edit at any cost ratio. Once they pass, weigh the actual
 costs: if writing the brief plus reading and verifying the reply costs more
-than just doing the work, do it directly (row 1's case); otherwise delegate —
-the output then lives in the subagent's context, not yours.
+than just doing the work, do it directly — row 1's case, and the investigation
+row's too: one command answered in one breath stays inline, since that row is
+for SWEEPS, not one-liners. Otherwise delegate — the output then lives in the
+subagent's context, not yours.
 
 Inside an open campaign the default is that an edit belongs to the plan —
 "standalone" is a claim you support by pointing at the plan section, not the
@@ -193,7 +197,8 @@ autonomous loop always gets a termination condition and an iteration cap.
 - **An owner correction to the session's PROCESS is a trigger failure.** When
   the owner corrects HOW the session works (not what it concluded), a trigger
   that should have fired didn't — file a backlog entry naming that missing
-  trigger; the fleet metric is corrections-per-week.
+  trigger in the project's `docs/backlog.md` in the same pass (campaign-land
+  Phase 6's discipline); the metric is corrections-per-week, read per project.
 - **The coordinator seat does not solve inline.** A long-lived anchor
   session's job is orchestration; minutes-long inline reasoning there is a
   solver's job in the wrong seat — write the brief and hand it to a fresh

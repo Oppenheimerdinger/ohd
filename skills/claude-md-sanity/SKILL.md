@@ -54,7 +54,10 @@ enumerate nested docs and audit each (umbrella repos may carry nested docs, e.g.
 find . -name CLAUDE.md -not -path '*/.git/*'; ls MEMORY.md memory/ 2>/dev/null
 ```
 If the user names a specific file, audit that. Don't wander outside the repo —
-references that point *out* of it are their own finding type (Check 4).
+references that point *out* of it are their own finding type (Check 4). **One
+exception**: Check 8 is the single check that READS the named cross-homes (the
+user's global config, the memory index) — read-only and comparison-only; it
+never rewrites them and never audits them in their own right.
 
 **No git history?** (not a repo, or a shallow clone with no tags) — the dated-anchor
 and tag-based lock-step checks can't run; degrade those to MANUAL-CHECK and say so,
@@ -221,6 +224,15 @@ which). Recommend the fix as "state it in one home, point at it from the
 others" — this skill AUDITS; which home is the fleet's is the user's call, and
 the global file is never rewritten from here.
 
+**A contradiction is a VALUE conflict** — a different address, count, path, or
+state — and nothing else. The SAME values at different detail, format, or
+verbosity is **ELABORATION** (a fuller home and a summary home saying the same
+thing), and is NEVER flagged: a field probe across six real homes found zero
+value conflicts and universal format variance, so the false-positive path is
+the live risk on this check. When you can't tell a conflict from an
+elaboration, prefer MANUAL-CHECK over BROKEN — Check 1's noise rule, for the
+same reason.
+
 ## Report format
 
 One report, most-actionable first. Audit each CLAUDE.md found (root + nested)
@@ -231,6 +243,7 @@ under its own heading.
 
 BROKEN (N)        ← fix before trusting the file
 - CLAUDE.md:LL — <promise> → <what's actually true> → <fix>
+- CLAUDE.md:LL vs <other home>:LL — <fact> stated as X here, Y there → point one at the other  (check 8)
 STALE (N)         ← refresh when convenient
 - <file:LL> — <stamp/note> → <why aging> → <fix>
 WATCH (N)         ← correct only while a paired qualifier holds

@@ -98,12 +98,13 @@ route name alone is a label, not evidence.
 
 **The evidence cell carries the CONVERGENCE LOG, not just the last verdict.**
 The log lines follow review-to-convergence's format — reviewer and reviewed
-SHA per round, findings and their disposition — flattened into the cell; that
-skill owns the format, this one only says the cell carries it. It ends either
-in a round that came back CLEAN or with every residual finding carrying an
-explicit ruling recorded in this doc (r2c supplies that rule — a ruling is its
-recorded disposition, and a finding closed by the author's own fiat is not
-one). Shape:
+SHA per round, findings and their disposition — flattened into the cell while
+it fits, terminal round line plus a pointer to the named log section when it
+does not; that skill owns the format, this one only says the cell carries it.
+It ends either in a round that came back CLEAN or with every residual finding
+carrying an explicit ruling recorded in this doc (r2c supplies that rule — a
+ruling is its recorded disposition, and a finding closed by the author's own
+fiat is not one). Shape:
 
 ```
 | 3 quality gate | yes | round 1: 1× code-review:code-review PR#16 @a1b2c3d → 2 findings → fixed; round 2: 1× review subagent (bugs lens) @e4f5a6b → clean. simplifier: not needed — diff is one guard clause |
@@ -259,9 +260,14 @@ memory is a soft layer, the script gate is the backstop).
   goes missing.
 - **A cell carries the VERDICT plus a pointer** (aim ≤~200 chars; baseline: 155
   cells measured >400 chars, max 2,935) — the supporting ARGUMENT lives in a
-  named section of the same state doc that the cell points at. The two named
-  cells above keep their names and their required contents (the convergence log,
-  `simplifier:`, `sanity:`); only argument mass moves out of the cell.
+  named section of the same state doc that the cell points at. The ~200-char
+  aim governs ARGUMENT mass only: the named cells' MANDATED lines (convergence
+  log rounds, `simplifier:`, `sanity:`) do not count against it. When the
+  convergence log runs past ~2 rounds, the cell carries the TERMINAL round line
+  plus a pointer to a named section holding the full round log — the cell still
+  carries the log's verdict, the argument mass still moves out. **Forward-only**
+  like Phase 6's contract: this binds lands from here on; historical reports are
+  expected to fail it.
 - **Substitution rationales are invalid.** A review that happened during
   implementation does not satisfy Phase 3 (it saw a different, earlier tree).
   "Low risk" is not an exemption. (A review **subagent** on the final diff is
