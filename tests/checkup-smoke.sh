@@ -481,16 +481,51 @@ census_says() {   # <expected false-OPEN count> <verdict row>
   grep -qE "campaigns \| 1 open/1 total, $1 false-OPEN" <<<"$o" \
     || fail "false-OPEN census wants $1 for [$2] — got: $(grep '^campaigns' <<<"$o")"
 }
+
+# MATCH — every shape a real verdict row is written in. The emphasis family is
+# the one that shipped broken: a closing `**` sits BETWEEN the colon and the
+# verdict word, and a rule that only skips spaces there stops dead. These forms
+# are accepted by the land-report audit, so a shared rule that missed them was
+# stricter than the rule it claims to mirror.
+census_says 1 '- verdict: LANDS'
+census_says 1 '- [x] **verdict:** LANDS — merged as PR #7'
 census_says 1 '- **verdict**: LANDS'
+census_says 1 '- _verdict:_ ABANDONED'
+census_says 1 '- **result / verdict:** LANDS'
+census_says 1 '- `verdict:` LANDS'
 census_says 1 '- 결론: LANDS'
 census_says 1 '- status: LANDED (PR #12 merged)'
+census_says 1 '- [x] LANDED as PR #7'
 census_says 1 '- result/verdict: LANDS — merged'
 census_says 1 '- result / verdict: LANDS — merged as PR #4'
 census_says 1 '- result / verdict: ABANDONED — superseded'
-census_says 0 '- result / verdict: *(fill in after the gate)*'
+
+# NO MATCH — the not-yet forms, and the PROSE class. A verdict word is an
+# ordinary English word: it appears in plan bullets, risk notes and running
+# text. Counting those drives two destructive suggestions (batch-close the
+# campaign, archive the doc) against a doc that is still live.
+census_says 0 '- status: OPEN'
+census_says 0 '- result / verdict: PENDING'
 census_says 0 '- result / verdict: PENDING the GPU gate'
+census_says 0 '- result / verdict: *(fill in after the gate)*'
 census_says 0 '- result / verdict:'
+census_says 0 '- landed: no'
+census_says 0 '- lands: not yet'
+census_says 0 '- plan: LANDS eventually if the gate goes green'
+census_says 0 '- Aborted runs are retried by the scheduler'
+census_says 0 '- note: LANDS?'
 rm -f docs/campaigns/x.md
+
+# the SAME rule drives the SOLIDATION list, so the prose class must not propose
+# archiving a live campaign either (scoped to the solidation block: the
+# land-report audit keeps its own tolerant rule and legitimately names the doc)
+printf '# campaign: live\n- status: OPEN (2026-08-01)\n- result / verdict:\n\n## plan\n- plan: LANDS eventually if the gate goes green\n' > docs/campaigns/live.md
+out="$("$CK" . --structure)"
+sol="$(sed -n '/## solidation/,/Move at CHECKUP/p' <<<"$out")"
+grep -q "live.md" <<<"$sol" && fail "a plan bullet made a LIVE campaign a solidation candidate"
+grep -qE "campaigns \| 1 open/1 total, 0 false-OPEN" <<<"$out" \
+  || fail "a plan bullet counted as a false-OPEN: $(grep '^campaigns' <<<"$out")"
+rm -f docs/campaigns/live.md
 
 # --- structure: ONE summary line, never action-proposing in default mode ---
 out="$("$CK" .)"

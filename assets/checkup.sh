@@ -294,8 +294,30 @@ fi
 # `PENDING the GPU gate` match it, verified. The audit keeps that tolerance on
 # purpose (it over-reports, and its output is a prompt to go look); these three
 # rows drive batch-closing and archiving, where a false positive costs more.
-VERDICT_RE='^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*|[^[:space:]:]+:[[:space:]]*)?[*_`]*\b(LANDS|LANDED|ABANDONED|ABORTED)\b'
-has_verdict() { grep -qiE "$VERDICT_RE" "$1" 2>/dev/null; }
+#
+# TWO branches, because the label case and the bare case need OPPOSITE case
+# rules — one regex could not do both:
+#
+# LABELLED, case-insensitive. The label is a WHITELIST, not "any word ending in
+# a colon": a verdict word is also an ordinary English word, so a generic label
+# admitted `- plan: LANDS eventually if the gate goes green` and archived a live
+# campaign (reproduced). `[^:]*` after the whitelist word is what carries the
+# scaffold's own `result / verdict:` compound. After the colon the class is
+# `[*_\`[:space:]]*`, NOT `[[:space:]]*`: in `- **verdict:** LANDS` the closing
+# `**` sits between the colon and the verdict word, and skipping only spaces
+# stopped dead on the whole colon-inside-emphasis family — which the audit rule
+# below accepts, so the shared rule was stricter than the rule it mirrors.
+#
+# BARE, case-SENSITIVE and deliberately so. With no label to key on, the only
+# thing separating a verdict from prose is that a verdict row SHOUTS it:
+# `- LANDED as PR #7` is a verdict, `- Aborted runs are retried by the
+# scheduler` is a sentence, and case is the whole difference. The trailing
+# `([^:]|$)` drops `- landed: no`, where the word is its own label.
+VERDICT_LABEL_RE='^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?[*_`]*(status|verdict|result|outcome|결론|결과)[^:]*:[*_`[:space:]]*(LANDS|LANDED|ABANDONED|ABORTED)\b'
+VERDICT_BARE_RE='^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?[*_`]*(LANDS|LANDED|ABANDONED|ABORTED)\b([^:]|$)'
+has_verdict() {
+  grep -qiE "$VERDICT_LABEL_RE" "$1" 2>/dev/null || grep -qE "$VERDICT_BARE_RE" "$1" 2>/dev/null
+}
 
 # ---- campaign census: OPEN status vs filled verdict (the false-OPEN term) ---
 if [ -d "$SD" ]; then
