@@ -439,4 +439,67 @@ grep -q "run /ohd-checkup structure" <<<"$out"       || fail "structure row does
 grep -qi "orphan" <<<"$out"        && fail "default mode leaked the structure work-list (orphan census)"
 grep -qi "candidates:" <<<"$out"   && fail "default mode enumerated solidation candidates (action-proposing)"
 
+# 15) STRUCTURE mode — the opt-in work-list generator. It GENERATES; execution
+#     is ordinary project campaigns. R22 binds it: counts and byte sizes only.
+S="$TMP/struct"; mkdir -p "$S" && cd "$S" && git init -q
+mkdir -p docs/campaigns docs/archive docs/superpowers/plans docs/superpowers/specs bench tools scripts
+cat > docs/campaigns/done1.md <<'EOF'
+# campaign: done1
+- result / verdict: LANDS — merged as PR #4
+EOF
+cat > docs/campaigns/open1.md <<'EOF'
+# campaign: open1
+- status: OPEN (2026-07-20)
+- result / verdict:
+- the nightly job runs bench/check_beta.sh
+EOF
+cat > docs/archive/old.md <<'EOF'
+# campaign: old
+- result / verdict: LANDS — merged long ago
+EOF
+printf '#!/bin/sh\necho a\n' > bench/verify_alpha.sh
+printf '#!/bin/sh\necho b\n' > bench/check_beta.sh
+printf '#!/bin/sh\necho h\n' > tools/helper.sh
+printf '#!/bin/sh\necho s\n' > scripts/smoke_gamma.sh
+echo p > docs/superpowers/plans/p1.md
+echo s > docs/superpowers/specs/s1.md
+git add -A && git commit -qm fixture
+
+out="$("$CK" . --structure)"
+# it is still a checkup: the drift rows come with it
+grep -q "campaign.sh | " <<<"$out"          || fail "structure mode dropped the default drift rows"
+# solidation candidates: verdict-filled and not already archived
+grep -q "done1.md" <<<"$out"                || fail "verdict-filled doc not listed as a solidation candidate"
+grep -q "open1.md" <<<"$out"                && fail "OPEN campaign listed as a solidation candidate"
+grep -q "archive/old.md" <<<"$out"          && fail "already-archived doc listed as a solidation candidate"
+# orphan-verification census: naming family + no inbound reference
+grep -q "bench/verify_alpha.sh" <<<"$out"   || fail "orphan verifier not censused"
+grep -q "scripts/smoke_gamma.sh" <<<"$out"  || fail "orphan verifier in scripts/ not censused"
+grep -q "bench/check_beta.sh" <<<"$out"     && fail "verifier WITH an inbound reference censused as an orphan"
+grep -q "tools/helper.sh" <<<"$out"         && fail "non-verification script censused (naming family ignored)"
+# allowlist: a deliberate orphan stops being work, and stays counted
+printf 'bench/verify_alpha.sh\n' > .ohd-orphan-allowlist
+out="$("$CK" . --structure)"
+grep -q "bench/verify_alpha.sh" <<<"$out"   && fail "allowlisted orphan still listed as work"
+grep -q "1 allowlisted" <<<"$out"           || fail "allowlisted orphan not counted"
+grep -q "scripts/smoke_gamma.sh" <<<"$out"  || fail "allowlist swallowed a non-allowlisted orphan"
+rm .ohd-orphan-allowlist
+# corpus + histogram + adoption offer + self-application
+out="$("$CK" . --structure)"
+grep -qi "plans/specs corpus" <<<"$out"     || fail "no plans/specs corpus size"
+grep -qi "doc-size histogram" <<<"$out"     || fail "no doc-size histogram"
+grep -q "docs/reference/" <<<"$out"         || fail "no adoption offer when the reference tier is absent"
+grep -qi "harness repo itself" <<<"$out"    || fail "census does not state it applies to the harness repo itself"
+grep -qi "baseline" <<<"$out"               || fail "structure run banks no baselines for the re-count"
+# R22: counts and byte sizes ONLY — no token estimates anywhere
+grep -qiE "[0-9][^|]*tok(en)?s?\b" <<<"$out" && fail "structure output estimates tokens (R22-blocked)"
+# and the DEFAULT run never carries the work-list
+#     (done1.md legitimately appears in the pre-existing land-report row; what
+#     must NOT appear is any part of the work-list itself)
+out="$("$CK" .)"
+grep -q "verify_alpha.sh" <<<"$out"         && fail "default mode leaked the orphan census"
+grep -q "## solidation" <<<"$out"           && fail "default mode enumerated solidation candidates"
+grep -q "structure work-list" <<<"$out"     && fail "default mode ran the work-list generator"
+grep -q "^structure | " <<<"$out"           || fail "default mode lost its one-line structure pointer"
+
 echo "CHECKUP-SMOKE PASS"

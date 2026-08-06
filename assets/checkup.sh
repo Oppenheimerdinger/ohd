@@ -20,10 +20,11 @@ TPL="$HERE/campaign.sh"
 PLUGVER="$(grep -o '"version": *"[^"]*"' "$HERE/../.claude-plugin/plugin.json" 2>/dev/null | head -1 | sed 's/.*"\([0-9][^"]*\)"$/\1/' || true)"
 [ -n "$PLUGVER" ] || PLUGVER=unknown
 
-ROOT="."; SYNC=0
+ROOT="."; SYNC=0; STRUCT=0
 for a in "$@"; do
   case "$a" in
     --sync) SYNC=1 ;;
+    --structure) STRUCT=1 ;;
     *) ROOT="$a" ;;
   esac
 done
@@ -381,6 +382,128 @@ elif [ -n "$STAMP_VER" ] && [ "$STAMP_VER" != "$PLUGVER" ]; then
       report "harness-changes" "INFO" "v$STAMP_VER -> v$PLUGVER since last sync — no flagged behavior changes (full detail: the plugin's CHANGELOG.md)"
     fi
   fi
+fi
+
+# ---- STRUCTURE MODE — the opt-in work-list generator -----------------------
+# GENERATES only. Execution is ordinary project campaigns driven by this list;
+# the harness never bulk-moves a project's documents itself. R22 binds every
+# number here: counts and byte sizes, never estimated cost.
+if [ "$STRUCT" = 1 ]; then
+  echo ""
+  echo "=== structure work-list (generated — the harness executes none of it) ==="
+  echo "Execution is ordinary project campaigns driven by this list. Cleanup runs"
+  echo "under the new rules, so the verification it touches takes the disposition"
+  echo "row and the facts it excavates take the graduation row — the retrofit IS"
+  echo "the reference tier's first fill."
+  echo "These rules apply to the ohd HARNESS REPO ITSELF: run this mode there too."
+  echo ""
+
+  # 1. solidation candidates -------------------------------------------------
+  SOL=""; SOL_N=0
+  if [ -d "$SD" ]; then
+    for d in "$SD"/*.md; do
+      [ -f "$d" ] || continue
+      case "$d" in docs/archive/*) continue ;; esac
+      grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*result / verdict[*_`]*:[[:space:]]*[^[:space:]]' "$d" 2>/dev/null || continue
+      SOL_N=$((SOL_N + 1)); SOL="$SOL  $d ($(wc -c < "$d" | tr -d ' ')B)
+"
+    done
+  fi
+  echo "## solidation — $SOL_N candidate(s): verdict filled, not yet under docs/archive/"
+  [ -z "$SOL" ] || printf '%s' "$SOL"
+  echo "   Move at CHECKUP or MILESTONE time, NEVER per land (the fixed-tax rule)."
+  echo "   Leave the literal search key behind: \`~~old claim~~ → archive/<file>.md\`."
+  echo ""
+
+  # 2. orphan-verification census -------------------------------------------
+  TF="$(mktemp)"; git ls-files -z > "$TF" 2>/dev/null || : > "$TF"
+  ALLOWF=".ohd-orphan-allowlist"
+  VER_RE='(^|/)((test|check|verify|probe|bench|assert|validate|sanity|smoke|measure|audit)[-_.][^/]*|[^/]*[-_](test|check|verify|probe|bench|assert|validate|sanity|smoke))\.(sh|bash|py|mjs|js)$'
+  ORPH=""; ORPH_N=0; ALLOW_N=0; CAND_N=0
+  while IFS= read -r -d '' f; do
+    case "$f" in bench/*|tools/*|scripts/*) : ;; *) continue ;; esac
+    printf '%s' "$f" | grep -qE "$VER_RE" || continue
+    CAND_N=$((CAND_N + 1))
+    if [ -f "$ALLOWF" ] && grep -qxF "$f" "$ALLOWF" 2>/dev/null; then
+      ALLOW_N=$((ALLOW_N + 1)); continue
+    fi
+    base="${f##*/}"
+    hit="$(xargs -0 grep -lF -- "$base" < "$TF" 2>/dev/null | grep -vxF "$f" | head -1 || true)"
+    [ -n "$hit" ] && continue
+    ORPH_N=$((ORPH_N + 1)); ORPH="$ORPH  $f ($(wc -c < "$f" | tr -d ' ')B)
+"
+  done < "$TF"
+  rm -f "$TF"
+  echo "## orphan verification — $ORPH_N orphan(s) of $CAND_N candidate(s), $ALLOW_N allowlisted"
+  [ -z "$ORPH" ] || printf '%s' "$ORPH"
+  echo "   Scope: TRACKED files under bench/ tools/ scripts/ whose NAME is in a"
+  echo "   verification family (test/check/verify/probe/bench/assert/validate/"
+  echo "   sanity/smoke/measure/audit). Orphan = no OTHER tracked file names it,"
+  echo "   which subsumes \"no test exercises it\" — verification with no failure"
+  echo "   path is where a FIXED bug stays alive in an untested duplicate."
+  echo "   Disposition per file: promote to tests/, or delete. Deliberate keeps go"
+  echo "   in $ALLOWF (one path per line) so the count stays honest."
+  echo "   A test DIRECTORY a runner discovers by convention is out of scope: every"
+  echo "   file in it has an implicit inbound reference, so scanning it would report"
+  echo "   false orphans. A suite the CI config must NAME is in scope only if it"
+  echo "   lives in the three directories above."
+  echo ""
+
+  # 3. plans/specs corpus + doc-size histogram ------------------------------
+  TRACKED_DOCS="$(git ls-files 2>/dev/null | grep -E '^docs/.*\.md$' || true)"
+  echo "## plans/specs corpus (the fastest-growing doc class measured in the field)"
+  for p in docs/superpowers/plans docs/superpowers/specs docs/plans docs/specs; do
+    [ -d "$p" ] || continue
+    n="$(printf '%s\n' "$TRACKED_DOCS" | grep -c "^$p/" || true)"
+    b=0
+    for g in "$p"/*.md; do [ -f "$g" ] && b=$((b + $(wc -c < "$g"))); done
+    echo "  $p: $n file(s), ${b}B"
+  done
+  echo "   An executed plan archives WITH its campaign."
+  echo ""
+  H1=0; H2=0; H3=0; H4=0; BIG=""
+  if [ -n "$TRACKED_DOCS" ]; then
+    while IFS= read -r g; do
+      [ -f "$g" ] || continue
+      s="$(wc -c < "$g" | tr -d ' ')"
+      if   [ "$s" -lt 4096 ];  then H1=$((H1 + 1))
+      elif [ "$s" -lt 16384 ]; then H2=$((H2 + 1))
+      elif [ "$s" -lt 65536 ]; then H3=$((H3 + 1))
+      else H4=$((H4 + 1)); BIG="$BIG  $g (${s}B)
+"
+      fi
+    done <<< "$TRACKED_DOCS"
+  fi
+  echo "## doc-size histogram (tracked docs/**/*.md, count buckets)"
+  echo "  <4KB: $H1 | 4-16KB: $H2 | 16-64KB: $H3 | >=64KB: $H4"
+  [ -z "$BIG" ] || { echo "  at/over 64KB:"; printf '%s' "$BIG"; }
+  echo ""
+
+  # 4. reference tier: adoption offer ---------------------------------------
+  echo "## reference tier"
+  if [ -d "$REFD" ]; then
+    echo "  present — $REF_N file(s). Keep the cap at 3-4 files; a fifth file is a"
+    echo "  sign a fact belongs in one of the existing three."
+  else
+    echo "  ABSENT — adoption offer: scaffold docs/reference/ (capabilities+gotchas,"
+    echo "  conventions+invariants+route map+writing router, state registry) and"
+    echo "  docs/archive/ from the plugin's assets/home-set/. This is the first fill"
+    echo "  target for everything listed above; without it graduated facts overflow"
+    echo "  into CLAUDE.md, which every actor-wake pays for."
+  fi
+  echo ""
+
+  # 5. baselines for the re-count -------------------------------------------
+  echo "## baselines (this run) — paste into the cleanup campaign's state doc"
+  echo "  | item | count / bytes |"
+  echo "  |---|---|"
+  echo "  | always-loaded set | ${AL_B:-n/a}B |"
+  echo "  | solidation candidates | $SOL_N |"
+  echo "  | orphan verifiers | $ORPH_N of $CAND_N candidate(s) |"
+  echo "  | docs corpus (tracked .md) | $((H1 + H2 + H3 + H4)) file(s) |"
+  echo "  | docs at/over 64KB | $H4 |"
+  echo "  Counts and byte sizes only, by construction — re-run this mode to compare."
+  echo ""
 fi
 
 printf -- '— scope: state alignment + land-report presence only (this script). Plugin presence is /ohd-checkup'"'"'s dependency pass (list owned by /ohd-setup §1); per-land ritual compliance is enforced per-land by the land gates (campaign-land). A green table attests none of: code correctness, discipline compliance.\n'
