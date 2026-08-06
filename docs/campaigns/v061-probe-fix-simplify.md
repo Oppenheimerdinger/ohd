@@ -1,5 +1,5 @@
 # campaign: v061-probe-fix-simplify
-- goal: v0.6.1 — backlog #15: provenance_block fabricated `git=n/a-dirty` outside a git tree (real defect) + the six simplifier worth-doing items from the v0.6.0 land pass
+- goal: v0.6.1 — backlog #15: provenance_block fabricated `git=n/a-dirty` outside a git tree (real defect) + the five simplifier worth-doing items (P2-P6) from the v0.6.0 land pass
 - status: OPEN (2026-08-06)
 - validation gate: defect gets fixture RED first (non-git dir → block must read `git=n/a`, never `n/a-dirty`); pure simplifications prove OUTPUT-IDENTICAL behavior (suites green + before/after output diff where a consumer greps it); validator PASS + independent review (2b — script logic); r2c ends clean or fully disposed; campaign.sh untouched; marginal/rejected simplifier items NOT in scope (backlog #15 records them — do not re-litigate)
 - result / verdict:
