@@ -8,6 +8,7 @@ HOOK_DIR="$(git rev-parse --git-common-dir)/hooks"
 mkdir -p "$HOOK_DIR"
 cat > "$HOOK_DIR/pre-commit" <<HOOK
 #!/usr/bin/env bash
+# ohd-hook v2
 br="\$(git branch --show-current)"
 [ "\$br" = "$TRUNK" ] || exit 0
 bad="\$(git diff --cached --name-only | grep -Ev '$ALLOW_RE' || true)"

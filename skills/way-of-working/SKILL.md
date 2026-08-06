@@ -24,7 +24,8 @@ router — which tool, when.
 | The ohd plugin may have updated since session start | `/reload-plugins` (or restart) → `/ohd-checkup` per project — the session stays pinned to its start-time version otherwise (checkup reports `plugin-cache | STALE` when it can see this) |
 | Starting a new research project | `/ohd-new-project` (interview-driven scaffolder) |
 | Existing project: harness drift check / adoption ("하네스 점검") | `/ohd-checkup` (mechanical drift + CLAUDE.md wiring, repairs on approval) |
-| A campaign-scale ask (multi-day, several tasks) | draft the plan — plan mode or directly — and SAVE it into the campaign state doc's `## plan` section before starting; an approved plan left in chat evaporates at the next compaction |
+| A campaign-scale ask (multi-day, several tasks) | draft the plan — plan mode or directly — and SAVE it into the campaign state doc's `## plan` section before starting; an approved plan left in chat evaporates at the next compaction. **Converge the plan (`review-to-convergence`) BEFORE execution begins** — a plan is the stage with the highest error-replication factor, and reviewing it before the approval gate means the user approves an already-reviewed plan. Then MATERIALIZE its items into the session task list (TaskCreate / todos) and track execution there, writing results back to the plan section as units complete: the plan section is the durable artifact, the task list the in-session tracker |
+| Already implementing when you reach for SDD/TDD (late entry) | enter the discipline at the NEXT unit. Work already verified gets REVIEWED, never reverted to RED — destroying bitwise-verified work to restore discipline is TDD's iron law applied at the wrong moment (one field occurrence, the only observed failure here with a negative payoff) |
 
 **Workflow-review trigger (default, user-adjustable):** work where judgment
 (not a single right answer) shaped the result — a new design, a new module, an
@@ -33,7 +34,9 @@ files or ~100+ lines of new logic, or (b) later work will build on top of it.
 Below that, a single independent reviewer (review-to-convergence) suffices.
 Run it as 2–3 independent fresh-context reviewers with distinct lenses (design
 soundness, correctness, simplicity), each given the goal + the diff; reconcile
-findings before banking.
+findings before banking, and close on review-to-convergence's rule rather than
+by adjudication: a final pass comes back clean, or every residual carries an
+explicit ruling — r2c's recorded disposition, never the author's own fiat.
 
 ## Two force-multipliers (defaults, not ad-hoc)
 
@@ -61,24 +64,28 @@ edit; the boundary:
 
 | Work | Who | Vehicle |
 |---|---|---|
-| Micro-edit — a STANDALONE fix outside any plan or dispatched task (one file, tens of lines, instantly verifiable) | main session directly | — (delegation would cost more) |
+| Micro-edit — a STANDALONE fix outside any plan or dispatched task, sized by the WORK not the diff: it is NOT a micro-edit if it writes a new test, needs a mutation or negative control, or needs a gate run to judge it | main session directly | — (delegation would cost more) |
 | Any step of a written plan's implementation task, regardless of size | fresh implementer per task | superpowers:subagent-driven-development |
 | Bulk writing (docs, reports, large generated text) | a writer/executor subagent | Agent tool (oh-my-claudecode's tiered `writer`/`executor` roster, when installed) |
 | Separable hard reasoning | fresh agent with a verified brief | force-multiplier 1, escalating to `deep-solve` |
 | Must-complete long-running work | a persistence loop (independent evaluator judges termination — below) | `/loop` / schedule / ralph |
 | Independent parallelizable tasks | a subagent fleet, dispatched in one message | superpowers:dispatching-parallel-agents |
 
-When in doubt, weigh the actual costs: if writing the brief plus reading and
-verifying the reply costs more than just doing the work, do it directly
-(row 1's case); otherwise delegate — the output then lives in the subagent's
-context, not yours.
+Row 1's disqualifiers are a FLOOR, not a factor to be weighed: work that writes
+a new test, needs a mutation or negative control, or needs a gate run to judge
+it is not a micro-edit at any cost ratio. Once they pass, weigh the actual
+costs: if writing the brief plus reading and verifying the reply costs more
+than just doing the work, do it directly (row 1's case); otherwise delegate —
+the output then lives in the subagent's context, not yours.
 
 Inside an open campaign the default is that an edit belongs to the plan —
 "standalone" is a claim you support by pointing at the plan section, not the
 fallback when no plan exists (no plan line yet = the signal to write one, not
 a license to edit). An exploratory campaign whose plan is a one-line
-next-probe has dispatched nothing: row 1 still applies there, and the probe's
-result gets written back into the plan line.
+next-probe has dispatched nothing: the probe belongs to that plan, so what
+decides is row 1's DISQUALIFIERS rather than the standalone test — and the
+probe's result gets written back into the plan line (writing that result is
+analysis, not a code edit).
 
 ## Campaign sizing — a campaign is ONE coherent increment
 
@@ -216,8 +223,19 @@ whole-branch review follows the same risk scaling as every other review —
 reserve the top model for risky or complex branches instead of defaulting to
 it (a routine branch's final review on a mid-tier model is not a corner cut). **Completed implementation is itself
 a deliverable**: subagent-driven execution's final whole-branch review covers
-it; anything built outside that flow gets an explicit review-to-convergence
-pass before it is trusted. A completion claim NAMES its review pass (what
+it, and work built outside that flow gets its own explicit
+review-to-convergence pass. But being INSIDE the flow is not an exemption, on
+two counts. **(i) The spec and the plan are reviewed by their AUTHOR only** —
+writing-plans says so verbatim ("a checklist you run yourself — not a subagent
+dispatch") and brainstorming's spec self-review is likewise author-run ("look
+at it with fresh eyes… Fix any issues inline. No need to re-review") — so each
+gets an independent r2c pass before execution begins. **(ii) SDD's own review loop terminates on ADJUDICATION, not on a clean
+pass** ("there is no second fix wave — residual load-bearing findings surface to
+your human partner"), so r2c supplies the stopping rule it lacks: the last round
+comes back clean, or every residual carries an explicit ruling — r2c's recorded
+disposition — in the state doc. The instrument stays SDD's own reviewer — this
+adds no tool, only a termination condition — and it binds hardest under an unattended mandate, where
+the "surface to your human partner" exit does not exist. A completion claim NAMES its review pass (what
 reviewed it, verdict) — a claim that names none is unreviewed work, whatever
 its confidence. This is why superpowers is
 required for the full workflow from v0.2 (see `/ohd-setup`).

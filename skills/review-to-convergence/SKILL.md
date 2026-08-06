@@ -1,6 +1,6 @@
 ---
 name: review-to-convergence
-description: Use when about to finalize or hand off ANY substantive deliverable — a math problem statement, a handoff/session summary, a design or plan doc, an experiment analysis, a research-informed decision, or non-trivial code — especially when it feels "simple enough", "ready as-is", or you are under time pressure to just ship it. For creative/structural work spanning 3+ files or ~100+ lines of new logic, escalate to a multi-reviewer workflow pass instead of a single reviewer.
+description: Use when about to dispatch a reviewer, hand off or finalize a deliverable, or call something done — right after fixing review findings, or once a plan/spec/handoff is written ("plan 다 썼다", "이제 리뷰 돌리자"). Wraps code-review; never replaces it. NOT for merely discussing, reading, or summarizing reviews.
 ---
 
 # Review to Convergence
@@ -10,7 +10,13 @@ A substantive deliverable is **not done when you think it is done**. It is done 
 Independent review repeatedly catches the *author's own* wrong assumptions — mistakes invisible to the person who made them. The more novel the work, the more this holds. **Your confidence is not evidence.**
 
 ## When to use
-Before finalizing / handing off: a math problem statement, a handoff, a design/plan/ADR, an experiment analysis, a research-informed decision, or non-trivial code.
+At the ACT, not the topic — you are about to dispatch a reviewer, about to
+finalize or hand off (a math problem statement, a handoff, a design/plan/ADR, an
+experiment analysis, a research-informed decision, non-trivial code), or you
+have just FIXED review findings: the fixed artifact still needs the next pass,
+and that is where this loop is abandoned most often. Creative/structural work
+spanning 3+ files or ~100+ lines of new logic escalates to a multi-reviewer
+workflow pass (way-of-working) instead of a single reviewer.
 
 Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial requires the loop.**
 
@@ -21,22 +27,39 @@ Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial 
 4. Re-review → step 2.
 5. A pass with **zero findings** ⟹ done. Not before.
 
-**Violating the letter of this rule violates the spirit.** Do not stop at one pass; the last pass must be clean.
+**Violating the letter of this rule violates the spirit.** Do not stop at one pass; the last pass must be clean or fully disposed.
 
 **Finding closure — the author never closes a finding by fiat.** A finding
 closes exactly two ways: (a) fix it, and the NEXT review pass sees the fixed
 artifact; or (b) you believe the finding is wrong — write the rebuttal INTO
-the next reviewer's input and let that reviewer close or uphold it. Severity
+the next reviewer's input and let that reviewer close the finding or uphold it against your rebuttal. Severity
 (Critical/Important/Minor) is the reviewer's classification; downgrading a
 finding yourself to avoid a fix is closure by fiat. "The reviewer
 misunderstood" is itself a finding — against your artifact's clarity.
 
+**Every finding ends in a DISPOSITION, and those dispositions ARE the
+"rulings" other skills cite.** "Zero findings" in step 5 means zero NEW
+findings: a residual survives the terminal round only as a logged disposition
+carrying its reason — `rebutted-upheld` (a reviewer, not you, upheld the
+rebuttal) or `minor-logged` (triaged, naming what was deferred) — recorded in
+that round's log line and, when working inside a campaign, in the state doc. A
+residual with no recorded disposition means NOT converged: that is closure by
+fiat with a log line drawn around it.
+
 **Convergence log (artifact, hand-off blocker):** when declaring done, print
-one line per round — `round N: <reviewers>× <lens> → X findings →
-fixed/rebutted-upheld/minor-logged` — ending in the clean pass. The lens and
-reviewer count are part of the log: "clean" from one design-lens pass must
-not relay as the multi-reviewer rigor it wasn't. No log line for a clean
-final pass = not converged; go run it. **When the deliverable is a committed
+one line per round — `round N: <reviewers>× <lens> @<sha> → X findings →
+fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ clean`, or `→ X findings → <disposition each>` with no finding left undisposed.
+**This is the one format**; other skills point here rather than restate it.
+The lens and reviewer count are part of the log: "clean" from one design-lens
+pass must not relay as the multi-reviewer rigor it wasn't. A fixed-pipeline
+INSTRUMENT counts as one under its own name, and that name stands as the lens
+(`1× code-review:code-review` — the plugin's set of review lenses is fixed and
+documented); an ad-hoc reviewer names its lens itself (`1× review subagent
+(bugs lens)`). `@<sha>` is the tree that round reviewed — re-reviewing the
+same SHA is not a new round —
+and is dropped only when the deliverable is not a tree (a plan, a problem
+statement). No log line for a terminal pass that is clean or fully disposed = not converged; go run it.
+**When the deliverable is a committed
 file** (design doc, ADR, analysis), the log goes INTO it (a short `## Review
 log` footer) or its commit message — the file outlives the chat that
 reviewed it.
