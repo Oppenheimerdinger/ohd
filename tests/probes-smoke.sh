@@ -128,9 +128,12 @@ bash "$M" --check "$CHK" --arm "$ARM" | grep -qi 'not a git work tree' \
   || fail "outside a git tree, mutation_run does not state that contamination is unverified"
 # ...and inside one, the leak is caught: this arm undoes the mutation the check
 # looks at and still leaves a new file behind, so every gate above stays green
+# identity at INIT time, not inline per commit: a CI runner has no global one,
+# and a later assertion that adds a commit must not have to remember the flags
 mkdir -p "$TMP/gitmut" && cd "$TMP/gitmut" && git init -q
+git config user.email smoke@test && git config user.name smoke
 echo GOOD > impl.txt
-git add -A && git -c user.email=t@t -c user.name=t commit -qm base >/dev/null
+git add -A && git commit -qm base >/dev/null
 LEAKY='leak|sed -i s/GOOD/BAD/ impl.txt && touch stray.txt|sed -i s/BAD/GOOD/ impl.txt'
 out="$(bash "$M" --check 'grep -q GOOD impl.txt' --arm "$LEAKY" 2>&1)" \
   && fail "mutation_run passed an arm whose restore leaked a file into the tree"
