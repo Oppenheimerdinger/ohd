@@ -1,10 +1,34 @@
 ---
-description: Harness doctor for an existing project — 하네스 점검/정비/채택. Detects drift between the project and the ohd harness (campaign.sh template, trunk hook, state dir, CLAUDE.md wiring, plugin dependencies, landed docs missing their land-report, stale plugin cache), reports a fix table, and repairs per-item on approval. Also the adoption path for projects that never had the harness.
-argument-hint: [project-root]
+description: Harness doctor for an existing project — 하네스 점검/정비/채택. Detects drift between the project and the ohd harness (campaign.sh template, trunk hook, state dir, CLAUDE.md wiring, plugin dependencies, landed docs missing their land-report, stale plugin cache), reports a fix table, and repairs per-item on approval. Also the adoption path for projects that never had the harness, and `structure` generates the corpus cleanup work-list.
+argument-hint: [project-root] [structure]
 ---
 
 Check (and on approval repair) a project's ohd harness. Target = $ARGUMENTS if
 given, else the current directory; it must be a git repo root.
+
+## Two modes, one command
+
+- **Default** — the fast drift doctor, run as often as you like. Its rows are
+  COUNTS AND GATES only (template drift, hook stamp, byte budget, pointer
+  resolution, false-OPEN count), all cheap and none action-proposing. A count
+  is a POINTER, not an audit: a default run must never nag a project into
+  structural work. It ends with ONE summary line naming the other mode.
+- **`structure`** — `/ohd-checkup structure` (or `/ohd-checkup <root> structure`)
+  passes `--structure` to the script. This is the opt-in WORK-LIST GENERATOR:
+  solidation candidates, the orphan-verification census with its allowlist,
+  plans/specs corpus size, a doc-size histogram, the reference-tier adoption
+  offer, and a paste-ready baselines table. Its FIRST run on a project IS the
+  adoption audit. It GENERATES only — **execution is ordinary project
+  campaigns driven by the list; never bulk-move a project's documents
+  yourself**, and never run it as part of a routine checkup the user asked for.
+  The baselines live in the OUTPUT: offer to paste them into the cleanup
+  campaign's state doc, since nothing is stamped on disk.
+
+The project-side rule those rows enforce, in one sentence: **agent-facing
+failure is exit-code-shaped, not log-shaped** — an agent reads logs through
+tails and summarizers, so a warning line is structurally unseen, which is why
+the plugin's `assets/probes/` (`engage_grep`, `mutation_run`,
+`provenance_block`) DIE on a mismatch and never warn-and-continue.
 
 **DRY invariant — this command carries NO canonical content.** What the
 harness *should* look like lives in exactly one place each:
@@ -22,6 +46,7 @@ plugin updates, this command's standard updates with it.
    `bash "${CLAUDE_PLUGIN_ROOT}/assets/checkup.sh" <root>` — it prints one
    `item | status | detail` line per harness check plus a scope footer (the
    check list lives in the script; do not restate or re-derive it by hand).
+   Add `--structure` ONLY when the user asked for the structure mode.
 2. **Dependency pass**: evaluate the plugin checklist that
    `${CLAUDE_PLUGIN_ROOT}/commands/ohd-setup.md` §1 defines (read it at
    runtime — the list lives ONLY there). Report each missing plugin as a
@@ -96,6 +121,21 @@ plugin updates, this command's standard updates with it.
      gate is not the thing that expired. A project may legitimately decline
      (a fork carrying its own route on purpose); record that and move on.
    - state dir → mkdir + .gitkeep.
+   - `reference | MISSING` → offer to copy the plugin's
+     `assets/home-set/` into `docs/` (reference tier + archive stub). Copy the
+     scaffold ONLY; filling it is the project's work, and the structure mode's
+     work-list is what supplies the first fill.
+   - `reference | STALE` → a rotted catalog MISDIRECTS, which is worse than
+     absence: fix the dead pointer or refresh the dated line, per hit. If this
+     row goes red twice with no action, recommend DELETING the offending
+     entries rather than letting them lie.
+   - `always-loaded | OVER` → this is mass every actor-wake pays before its
+     first useful token. Recommend moving narrative and incident history out of
+     CLAUDE.md into `docs/campaigns/` or `docs/archive/` (leaving the search
+     key), keeping the hot kernel to rules and pointers. Never auto-edit.
+   - `campaigns | ... false-OPEN` → close the contradicting `status:` lines;
+     a doc that says OPEN with a filled verdict reads as in-flight to every
+     grep. Cheap and safe to batch, still gated.
 6. **Content hygiene**: after repairs, if CLAUDE.md **or the memory store** was
    touched (or the user asks), invoke the `ohd:claude-md-sanity` skill — do NOT
    re-implement its audit here.

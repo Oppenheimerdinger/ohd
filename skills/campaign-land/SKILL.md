@@ -148,6 +148,28 @@ Living documents drift silently unless updated in the same PR/merge: update
 the campaign state doc (final RESULT / VERDICT / follow-on) and any living map
 the change touches, now — not "later".
 
+**Present-tense facts GRADUATE in this same land.** A campaign that settled a
+fact, an interface, a gotcha, or an execution route writes it into
+`docs/reference/` now — one line carrying the `file:line` of the test, gate, or
+config that proves it (the tier's format law; the state registry is the one
+exempt file). The Phase 4 evidence cell carries `reference:` BY NAME, either
+the file it updated or the attested skip:
+
+```
+reference: updated docs/reference/capabilities.md
+reference: nothing to graduate — <reason>
+```
+
+A campaign whose knowledge stays in its own state doc is a campaign the next
+session re-derives from the tree: the state doc is HISTORY, and the reference
+tier is what actually gets read at orientation. Archiving or retracting a line
+keeps its literal search key behind (`~~old claim~~ → archive/X`) — a search
+that comes back empty reads as "never investigated", which is how settled work
+gets redone. Solidation of settled docs into `docs/archive/` runs at CHECKUP or
+MILESTONE time, never per land: a per-land cleanup makes the ritual's fixed
+overhead grow with corpus size, which is the cost the tier exists to remove
+(`/ohd-checkup structure` generates the candidate list).
+
 Put the verdict on the scaffold's own `- result / verdict:` row. Phase 7's
 `clean` matches THAT row and nothing else: a substitute written elsewhere
 (`- **verdict**: LANDS`, `- 결론: LANDS`, `- [x] LANDED as PR #7`) reads fine to
@@ -175,6 +197,20 @@ accepts it.
 
 - Record NON-obvious lessons (the gotcha, the why, the measurement) in
   memory/docs — not what git already says.
+- **Verification code this campaign WROTE gets a disposition, in this land.**
+  The evidence cell carries `verification:` BY NAME, with exactly one of three
+  verdicts: `verification: promoted to tests/ — <path>` /
+  `verification: one-shot — <reason> (recorded in the state doc)` /
+  `verification: deleted`. **Session-scratchpad verification is not a
+  deliverable** — a probe living only in a scratchpad has no failure path, so
+  it protects nothing and is `deleted` unless it is promoted. Two measured
+  costs sit behind this row: verification with no failure path is where a FIXED
+  bug stayed alive eight days in an untested duplicate, and where the next
+  campaign re-implements the same probe from scratch. Before writing a new one,
+  check the plugin's `assets/probes/` — `engage_grep`, `mutation_run` and
+  `provenance_block` ship with ohd precisely because they were being re-built
+  per campaign. `/ohd-checkup structure` censuses the orphans that accumulate
+  when this row is skipped.
 - **Never write merge-status as a bare fact**: phrase as verify-on-read ("as
   of <date> pushed NOT merged — re-derive, don't trust this line") and flip it
   to MERGED in the same pass as the merge. Stale status notes fabricate
@@ -250,20 +286,29 @@ memory is a soft layer, the script gate is the backstop).
 - `evidence` must reference something that actually happened this land — a
   command you ran, an output you saw, a diff/commit hash. An empty or vague
   evidence cell means the phase DID NOT HAPPEN — go run it.
-- **Two cells have NAMED contents, not free-form evidence** (both are Phase
+- **Three rows have NAMED contents, not free-form evidence** (all are Phase
   rules above, repeated here because this table is what actually gets filled):
   row 3 carries the convergence log — per round, the reviewer and the SHA it
   reviewed, ending clean or with every residual ruled on, or, past ~2 rounds,
   the terminal round line plus the pointer to the named log section (the
   overflow rule below) — plus `simplifier:` with a reason when it says
-  `not needed`; row 6 carries `sanity:` with either findings and their
-  disposition or the skip and its `git diff --name-only` artifact. An item an evidence cell does not name by name is the item that
+  `not needed`; row 4 carries `reference:` with the graduated file or the
+  attested `nothing to graduate — <reason>`; row 6 carries `sanity:` with
+  either findings and their disposition or the skip and its
+  `git diff --name-only` artifact, AND `verification:` with one of its three
+  verdicts. An item an evidence cell does not name by name is the item that
   goes missing.
+- **The blank table `campaign.sh land --report` scaffolds does not yet carry
+  `reference:` or `verification:`** — that heredoc lives in the lifecycle
+  script, which this release deliberately does not touch. Until it does, these
+  two are skill-carried: write them into the row-4 and row-6 evidence cells by
+  hand. A land report that omits them is not attested, it is silent.
 - **A cell carries the VERDICT plus a pointer** (aim ≤~200 chars; baseline: 155
   cells measured >400 chars, max 2,935) — the supporting ARGUMENT lives in a
   named section of the same state doc that the cell points at. The ~200-char
   aim governs ARGUMENT mass only: the named cells' MANDATED lines (convergence
-  log rounds, `simplifier:`, `sanity:`) do not count against it. When the
+  log rounds, `simplifier:`, `reference:`, `sanity:`, `verification:`) do not
+  count against it. When the
   convergence log runs past ~2 rounds, the cell carries the TERMINAL round line
   plus a pointer to a named section holding the full round log — not because of
   the char aim (mandated lines are exempt from it) but because a table cell
