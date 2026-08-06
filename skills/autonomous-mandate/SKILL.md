@@ -64,7 +64,9 @@ loop for it. This skill is for session-scope, user-absent mandates.
    emit it in the loop's exit format, `<promise>exact phrase</promise>`
    (the stop hook matches the tag, not bare prose). Emitting
    the phrase without a verdict is self-grading — the known premature-COMPLETE
-   failure of this loop pattern.
+   failure of this loop pattern. Completion is judged by the evaluator's verdict
+   and never by whether the stop hook fired or stopped firing — a hook can miss
+   a correct promise (field-recorded race), and hook silence is not a verdict.
    The evaluator's brief carries two MANDATORY questions on top of the goal:
    **which work units were delegated versus done by the coordinator**, and
    **does every deliverable claimed done name the review pass that cleared

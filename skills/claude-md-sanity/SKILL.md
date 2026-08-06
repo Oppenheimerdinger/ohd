@@ -211,6 +211,16 @@ Audit only if they exist — don't invent docs: a `capability-matrix.md` (spot-c
 `docs/campaigns/` (open campaign with no status update in its own stated cadence →
 STALE), `docs/INVARIANTS.md`. Skip entirely for lightweight repos.
 
+### 8. Cross-home contradiction (shared-infrastructure facts)
+
+A fact about SHARED infrastructure (a machine, a common service, a fleet-wide
+path) stated in more than one home — this project's CLAUDE.md, the user's global
+config, memory — gets compared across those homes: two homes stating the same
+fact differently = `BROKEN` (one is already wrong and a reader cannot tell
+which). Recommend the fix as "state it in one home, point at it from the
+others" — this skill AUDITS; which home is the fleet's is the user's call, and
+the global file is never rewritten from here.
+
 ## Report format
 
 One report, most-actionable first. Audit each CLAUDE.md found (root + nested)

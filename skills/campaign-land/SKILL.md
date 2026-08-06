@@ -257,6 +257,11 @@ memory is a soft layer, the script gate is the backstop).
   findings and their disposition or the skip and its `git diff --name-only`
   artifact. An item an evidence cell does not name by name is the item that
   goes missing.
+- **A cell carries the VERDICT plus a pointer** (aim ≤~200 chars; baseline: 155
+  cells measured >400 chars, max 2,935) — the supporting ARGUMENT lives in a
+  named section of the same state doc that the cell points at. The two named
+  cells above keep their names and their required contents (the convergence log,
+  `simplifier:`, `sanity:`); only argument mass moves out of the cell.
 - **Substitution rationales are invalid.** A review that happened during
   implementation does not satisfy Phase 3 (it saw a different, earlier tree).
   "Low risk" is not an exemption. (A review **subagent** on the final diff is

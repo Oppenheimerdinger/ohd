@@ -1,3 +1,43 @@
+## v0.5.24 (2026-08-06)
+
+BEHAVIOR-CHANGE: way-of-working's delegation table gains the row it was missing — shell/filesystem INVESTIGATION (enumerating, measuring, censusing, grepping across a tree) goes to a read-only sweep subagent with `Explore` as the named vehicle, and the model tier is an explicit lever rather than a default.
+
+BEHAVIOR-CHANGE: a land-report evidence cell now carries the VERDICT plus a pointer (aim ≤~200 chars) with the supporting argument moved into a named section of the same state doc, while v0.5.23's named cells (the Phase-3 convergence log with `simplifier:`, the Phase-6 `sanity:`) keep their names and their required contents unchanged.
+
+BEHAVIOR-CHANGE: an autonomous loop's completion is judged by the independent evaluator's verdict and never by whether the stop hook fired or stopped firing, since a hook can miss a correct promise and hook silence is not a verdict.
+
+- This release is the VANGUARD of the "O(1) harness" design
+  (`docs/superpowers/specs/2026-08-06-o1-harness-design.md`) — its S4 and S5
+  riders only, which are pure skill text needing no action inside an adopted
+  project. The body of that design (the reference tier, the mass budget, the
+  verification-code lifecycle, and a new checkup mode) follows as v0.6.0, where
+  the minor bump is the signal that adoption action exists.
+- Brief hygiene, riding the same delegation guidance: briefs carry POINTERS,
+  not payloads — point at the project's durable docs first (its reference docs
+  where they exist, the campaign state doc, `file:line`) and inline only what
+  has no home; and a fan-out wider than the situational default needs ONE
+  stated reason line in the dispatch message.
+- Measured baselines for the delegation row, banked now for the re-count:
+  coordinator Bash call-share **66% (1,436 of 2,170 tool calls)** and `Explore`
+  usage **4 of 218 dispatches** in one measured session. Re-count method is a
+  transcript tool-name census — COUNTS, not tokens. The escalation is
+  pre-committed and NON-NEGOTIABLE: **if coordinator Bash call-share has not
+  HALVED at the ~1-month re-count, the next release ships the PreToolUse
+  counter-nudge hook.** It is worded with no adjective to renegotiate later,
+  deliberately — the table row is the cheap carrier being tested, and the hook
+  is what ships if the test fails.
+- Owner corrections are TRIGGER FAILURES by definition: when the owner corrects
+  how the session works rather than what it concluded, a trigger that should
+  have fired didn't, so it gets a backlog entry naming that missing trigger
+  (riding the existing backlog discipline; the fleet metric is
+  corrections-per-week).
+- `claude-md-sanity` gains one check: a shared-infrastructure fact (a machine, a
+  common service, a fleet-wide path) stated in MORE than one home — project
+  CLAUDE.md, global config, memory — is compared across homes, and divergent
+  statements of the same fact are BROKEN. The recommendation is "state it in one
+  home, point at it from the others"; the skill audits only, and which home is
+  the fleet's stays the user's call.
+
 ## v0.5.23 (2026-07-31)
 
 BEHAVIOR-CHANGE: the land report's Phase 3 evidence cell now carries a CONVERGENCE LOG rather than just a final verdict — one line per round naming the reviewer and the SHA that round reviewed, ending in a round that came back clean or with every residual finding carrying an explicit ruling (r2c's recorded disposition — `rebutted-upheld` / `minor-logged`) in the state doc.
