@@ -30,6 +30,9 @@ result meaningless) and a NO-OP control (the same check, unmutated, must still
 pass — a check that is not repeatable cannot attribute a failure to an arm).
 Inside a git work tree the porcelain status is also compared before and after:
 a restore that undoes the mutation but LEAKS a file is invisible to the check.
+PRECONDITION: the --check must not create per-run-unique files (timestamped
+logs, pid-named temp dirs) — they look identical to a leak. STABLE-named
+artifacts are fine: the baseline runs first, so the snapshot absorbs them.
 
 exit: 0 every arm caught | 1 assertion/control failed | 2 usage/setup
 EOF
@@ -104,10 +107,11 @@ if [ "$GITWT" = 1 ]; then
     [ -n "$l" ] || continue
     printf '%s\n' "$TREE0" | grep -qxF -- "$l" || printf '%s ' "${l#???}"
   done)"
-  [ -z "$LEFT" ] || die 1 "the tree is DIRTIER than before the arms ran — a restore leaked OUTSIDE the --check scope, which every gate above is blind to: $LEFT(fix it by hand)"
+  # Two causes produce this signal and the probe cannot tell them apart.
+  [ -z "$LEFT" ] || die 1 "the tree is DIRTIER than before the arms ran: $LEFT— either a restore leaked OUTSIDE the --check scope (every gate above is blind to that), or the --check itself writes per-run-unique files. Inspect the paths above: undo a leak by hand; give a per-run-unique artifact a stable name or a git-ignored path"
 fi
 
 printf 'mutation_run: %d tried / %d caught / no-op control ok' "${#ARMS[@]}" "$CAUGHT"
 [ -z "$UNTOUCHED" ] && printf ' / untouched control not given' || printf ' / untouched control ok'
-[ "$GITWT" = 1 ] && printf ' / tree unchanged\n' || printf '\n'
+[ "$GITWT" = 1 ] && printf ' / tree unchanged (tracked+untracked; ignored paths not checked)\n' || printf '\n'
 [ "$GITWT" = 1 ] || echo "mutation_run: NOTE — not a git work tree, so a restore that leaks files OUTSIDE the --check scope is UNVERIFIED"
