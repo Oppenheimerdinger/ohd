@@ -2,8 +2,8 @@
 # engage_grep.sh — assert which execution route ACTUALLY ran, from a run's log.
 #
 # Agents read logs through tails and summarizers, so a warning line is
-# structurally unseen. This probe DIES; it never warns. The exit code is the
-# only channel that survives an agent consumer.
+# structurally unseen — agent-facing failure must be exit-code-shaped. This
+# probe DIES; it never warns, because only the exit code survives that reader.
 set -uo pipefail
 SELF="$(basename "$0")"
 

@@ -82,52 +82,58 @@ else
 fi
 report "campaign.sh" "$CS_STATUS" "$CS_DETAIL"
 
-if [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ] \
-   && [ -f "$DST" ] && [ -z "$(cfg_range "$DST")" ]; then
-  # markerless project copy: a blind splice would silently revert its config
-  # values and drop custom vars — refuse instead of corrupting
-  report "campaign.sh" "SYNC-REFUSED" "$DST has no '# ── config' markers — merge manually against the template ($TPL), then re-run"
-elif [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
-  mkdir -p "$(dirname "$DST")"
-  TR="$(cfg_range "$TPL")"; TS="${TR%% *}"; TE="${TR##* }"
-  NEW="$(mktemp)"
-  {
-    head -n "$((TS - 1))" "$TPL"
-    [ -f "$DST" ] && grep '^# instantiated' "$DST" || true
-    echo "# synced-from ohd v$PLUGVER ($(date +%F))"
-    sed -n "${TS}p" "$TPL"
-    # key-based merge of config inner lines
-    PROJ_INNER="$(mktemp)"
-    if [ -f "$DST" ]; then
-      PR="$(cfg_range "$DST")"
-      [ -n "$PR" ] && sed -n "$((${PR%% *} + 1)),$((${PR##* } - 1))p" "$DST" > "$PROJ_INNER"
-    fi
-    sed -n "$((TS + 1)),$((TE - 1))p" "$TPL" | while IFS= read -r tline; do
-      if [[ "$tline" =~ ^([A-Z_][A-Z_0-9]*)= ]]; then
-        pline="$(grep -m1 "^${BASH_REMATCH[1]}=" "$PROJ_INNER" || true)"
-        printf '%s\n' "${pline:-$tline}"
-      else
-        printf '%s\n' "$tline"
-      fi
-    done
-    # project-only custom variables survive the sync
-    while IFS= read -r pline; do
-      if [[ "$pline" =~ ^([A-Z_][A-Z_0-9]*)= ]] && ! grep -q "^${BASH_REMATCH[1]}=" <(sed -n "$((TS + 1)),$((TE - 1))p" "$TPL"); then
-        printf '%s\n' "$pline"
-      fi
-    done < "$PROJ_INNER"
-    rm -f "$PROJ_INNER"
-    sed -n "${TE}p" "$TPL"
-    tail -n +"$((TE + 1))" "$TPL"
-  } > "$NEW"
-  if [ -f "$DST" ]; then
-    BAK="$DST.pre-sync.$(date +%F-%H%M%S)"
-    cp -p "$DST" "$BAK"
+if [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
+  if [ -f "$DST" ] && [ -z "$(cfg_range "$DST")" ]; then
+    # markerless project copy: a blind splice would silently revert its config
+    # values and drop custom vars — refuse instead of corrupting
+    report "campaign.sh" "SYNC-REFUSED" "$DST has no '# ── config' markers — merge manually against the template ($TPL), then re-run"
   else
-    BAK=""
+    mkdir -p "$(dirname "$DST")"
+    TR="$(cfg_range "$TPL")"; TS="${TR%% *}"; TE="${TR##* }"
+    # the template's config INNER lines, cut once: both the merge loop below and
+    # its per-project-line "is this key ours?" test read the same slice
+    TPL_INNER="$(mktemp)"
+    sed -n "$((TS + 1)),$((TE - 1))p" "$TPL" > "$TPL_INNER"
+    NEW="$(mktemp)"
+    {
+      head -n "$((TS - 1))" "$TPL"
+      [ -f "$DST" ] && grep '^# instantiated' "$DST" || true
+      echo "# synced-from ohd v$PLUGVER ($(date +%F))"
+      sed -n "${TS}p" "$TPL"
+      # key-based merge of config inner lines
+      PROJ_INNER="$(mktemp)"
+      if [ -f "$DST" ]; then
+        PR="$(cfg_range "$DST")"
+        [ -n "$PR" ] && sed -n "$((${PR%% *} + 1)),$((${PR##* } - 1))p" "$DST" > "$PROJ_INNER"
+      fi
+      while IFS= read -r tline; do
+        if [[ "$tline" =~ ^([A-Z_][A-Z_0-9]*)= ]]; then
+          pline="$(grep -m1 "^${BASH_REMATCH[1]}=" "$PROJ_INNER" || true)"
+          printf '%s\n' "${pline:-$tline}"
+        else
+          printf '%s\n' "$tline"
+        fi
+      done < "$TPL_INNER"
+      # project-only custom variables survive the sync
+      while IFS= read -r pline; do
+        if [[ "$pline" =~ ^([A-Z_][A-Z_0-9]*)= ]] && ! grep -q "^${BASH_REMATCH[1]}=" "$TPL_INNER"; then
+          printf '%s\n' "$pline"
+        fi
+      done < "$PROJ_INNER"
+      rm -f "$PROJ_INNER"
+      sed -n "${TE}p" "$TPL"
+      tail -n +"$((TE + 1))" "$TPL"
+    } > "$NEW"
+    rm -f "$TPL_INNER"
+    if [ -f "$DST" ]; then
+      BAK="$DST.pre-sync.$(date +%F-%H%M%S)"
+      cp -p "$DST" "$BAK"
+    else
+      BAK=""
+    fi
+    mv "$NEW" "$DST"; chmod +x "$DST"
+    report "campaign.sh" "SYNCED" "body reset to template v$PLUGVER — body-level customizations do NOT survive sync (config keys did)${BAK:+; pre-sync copy: $BAK}; review with 'git diff $DST'"
   fi
-  mv "$NEW" "$DST"; chmod +x "$DST"
-  report "campaign.sh" "SYNCED" "body reset to template v$PLUGVER — body-level customizations do NOT survive sync (config keys did)${BAK:+; pre-sync copy: $BAK}; review with 'git diff $DST'"
 fi
 
 # ---- trunk hook ----
@@ -214,11 +220,8 @@ if [ -f CLAUDE.md ]; then
     AL_SCOPE="CLAUDE.md only — no \`<!-- ohd:always-loaded <path>... -->\` marker, so a plan/ledger file every worker must read is NOT in this count; add one to budget it"
   fi
   [ -z "$AL_MISS" ] || AL_SCOPE="$AL_SCOPE; marker names path(s) that do not exist: $AL_MISS"
-  if [ "$AL_B" -gt "$HOT_TARGET" ]; then
-    report "always-loaded" "OVER" "${AL_B}B $AL_SCOPE vs ~20KB hot target"
-  else
-    report "always-loaded" "OK" "${AL_B}B $AL_SCOPE vs ~20KB hot target"
-  fi
+  AL_ST=OK; [ "$AL_B" -le "$HOT_TARGET" ] || AL_ST=OVER
+  report "always-loaded" "$AL_ST" "${AL_B}B $AL_SCOPE vs ~20KB hot target"
 else
   report "always-loaded" "NONE" "no CLAUDE.md — nothing is always-loaded, so there is no wake mass to budget (see the CLAUDE.md row)"
 fi
@@ -319,6 +322,28 @@ has_verdict() {
   grep -qiE "$VERDICT_LABEL_RE" "$1" 2>/dev/null || grep -qE "$VERDICT_BARE_RE" "$1" 2>/dev/null
 }
 
+# Solidation candidates — one path per line: a state doc whose verdict is filled
+# and which is not yet under docs/archive/. ONE rule for its two consumers (the
+# default row counts them, --structure lists them with sizes), so the SOLIDATION
+# TERM of the count and the list cannot disagree. The row is not that term
+# alone — it adds a reference-tier candidate when docs/reference/ is absent, so
+# the number a project sees may legitimately exceed the list by one.
+# NOT the census above, which counts archived docs too. The archive skip below
+# is DEFENSIVE and normally dead: "$SD"/*.md does not recurse, so it can only
+# fire when STATE_DIR is itself docs/archive or a directory under it.
+sol_candidates() {
+  local d
+  [ -d "$SD" ] || return 0
+  for d in "$SD"/*.md; do
+    [ -f "$d" ] || continue
+    case "$d" in docs/archive/*) continue ;; esac
+    has_verdict "$d" && printf '%s\n' "$d"
+  done
+  # explicit: under `set -e` a last file WITHOUT a verdict would otherwise make
+  # this function's status non-zero and abort every caller that pipes it
+  return 0
+}
+
 # ---- campaign census: OPEN status vs filled verdict (the false-OPEN term) ---
 if [ -d "$SD" ]; then
   C_TOT=0; C_OPEN=0; C_FALSE=0
@@ -334,14 +359,7 @@ fi
 
 # ---- structure: ONE summary line. A count is a POINTER, not an audit — the
 #      default run never nags a project into structural work. -----------------
-ST_CAND=0
-if [ -d "$SD" ]; then
-  for d in "$SD"/*.md; do
-    [ -f "$d" ] || continue
-    case "$d" in docs/archive/*) continue ;; esac
-    has_verdict "$d" && ST_CAND=$((ST_CAND + 1))
-  done
-fi
+ST_CAND="$(sol_candidates | wc -l | tr -d ' ')"
 [ -d "$REFD" ] || ST_CAND=$((ST_CAND + 1))
 report "structure" "$ST_CAND candidates" "last full audit: no record (the structure report is output-only, so nothing here is stamped) — run /ohd-checkup structure for the work-list"
 
@@ -456,15 +474,10 @@ if [ "$STRUCT" = 1 ]; then
 
   # 1. solidation candidates -------------------------------------------------
   SOL=""; SOL_N=0
-  if [ -d "$SD" ]; then
-    for d in "$SD"/*.md; do
-      [ -f "$d" ] || continue
-      case "$d" in docs/archive/*) continue ;; esac
-      has_verdict "$d" || continue
-      SOL_N=$((SOL_N + 1)); SOL="$SOL  $d ($(wc -c < "$d" | tr -d ' ')B)
+  while IFS= read -r d; do
+    SOL_N=$((SOL_N + 1)); SOL="$SOL  $d ($(wc -c < "$d" | tr -d ' ')B)
 "
-    done
-  fi
+  done < <(sol_candidates)
   echo "## solidation — $SOL_N candidate(s): verdict filled, not yet under docs/archive/"
   [ -z "$SOL" ] || printf '%s' "$SOL"
   echo "   Move at CHECKUP or MILESTONE time, NEVER per land (the fixed-tax rule)."

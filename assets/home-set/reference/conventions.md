@@ -24,8 +24,8 @@ Replace the `(example)` lines as real entries arrive.
 The same computation usually has SEVERAL execution routes, and a silent
 wrong-route run is near-invisible: agents read logs through tails and
 summarizers, so a warning line is structurally unseen. One row per multi-route
-computation. The assertion is what PROVES engagement, and it must **die
-non-zero** on a mismatch — never warn and continue.
+computation. The assertion is what PROVES engagement, and must be
+exit-code-shaped: **die non-zero** on a mismatch, never warn and continue.
 
 | computation | routes | canonical | assertion that proves engagement |
 |---|---|---|---|

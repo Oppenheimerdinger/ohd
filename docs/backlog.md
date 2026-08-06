@@ -188,7 +188,7 @@ with its own staleness policy), which is a design pass in its own right, not a
 line of code. Until then the row says "no record" rather than implying it
 knows. (implementer finding, v0.6.0)
 
-## 15. provenance_block fabricates `git=n/a-dirty` outside a git tree + simplifier worth-doing batch — OPEN (opened v0.6.0 land)
+## 15. provenance_block fabricates `git=n/a-dirty` outside a git tree + simplifier worth-doing batch — RESOLVED (v0.6.1, 33284ea)
 
 The land-time simplifier pass (report-only, over the merged v0.6.0 diff) found
 one real defect and five worthwhile simplifications; none block v0.6.0
@@ -206,6 +206,13 @@ correctness in its intended (in-repo) use, so they ship as a follow-up batch:
 Eleven marginal items and four considered-and-rejected (incl. probe `die`/`need`
 sharing — breaks standalone-copyability) are in the land records; do not
 re-litigate the rejected set without new evidence.
+
+RESOLVED in v0.6.1: the defect is fixed (the probe no longer fabricates a dirty
+flag outside a git tree — `git=n/a` stays `n/a`, pinned by a probes-smoke case
+that was RED first), and all five checkup/command simplifications shipped
+output-identical, verified row-by-row over a 26-scenario fixture sweep. The
+worth-doing set shipped in v0.6.1; the marginal and rejected sets remain the
+record of what was considered.
 
 ## 16. Project-relay lines from two field incidents — OPEN (opened v0.6.0 land, v0.6.1 candidates)
 
