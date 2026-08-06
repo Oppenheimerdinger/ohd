@@ -14,3 +14,11 @@
 - [x] P6 ohd-checkup.md:27-31 — cut the restated exit-code-shaped paragraph to a pointer (canonical text lives in engage_grep.sh header + home-set conventions.md)
 - [x] version 0.6.1 + CHANGELOG (one BEHAVIOR-CHANGE line: the probe no longer fabricates a dirty flag outside git)
 - [ ] campaign.sh body untouched (verify at land)
+
+## convergence log (r2c on PR #20)
+- round 1: plugin-validator PASS + independent review (code-reviewer) @9642c71 → APPROVE, 0 Critical/Important, 6 Minor (2 newly-added comments overstating code behavior, missing `local`, fixture env fragility, unanchored assertion, coinage absent from canonical home); reviewer ran its OWN 33-scenario output-identity harness incl. both named landmine cases → fixed 08f4c80.
+- round 2: scoped @08f4c80 → 0 Crit/High/Med, 3 LOW (guard preempted by earlier unguarded fixture — reproduced; backlog SHA omission; coinage missing from second home) → fixed 57a52cf.
+- round 3 (terminal): scoped @57a52cf → APPROVE, clean. All three L-fixes verified by execution incl. TMPDIR-inside-repo counterfactual at 08f4c80 vs HEAD. 3 residual LOWs disposed:
+  - GIT_DIR-exported env fires the guard with a misleading message — PRE-EXISTING (reproduced at 9642c71 before the guard existed); suite is GIT_DIR-hostile end-to-end, fail-closed either way. Logged, no wave.
+  - #15 heading credits 33284ea (defect commit) for a multi-commit resolution — precedent-consistent (singular "fixing commit"), body text disambiguates. Accepted.
+  - Guard hoist trades point-of-use locality for coverage of both fixtures — accepted tradeoff, currently unreachable failure shape, noted by reviewer as net positive.
