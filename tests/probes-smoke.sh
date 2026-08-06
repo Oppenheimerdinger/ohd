@@ -122,6 +122,25 @@ for bad in "--check" "--arm" "--untouched"; do
     || fail "mutation_run did not exit 2 on a trailing valueless $bad (124 = it hung)"
 done
 [ "$(rc timeout 5 bash "$M" --check)" = 2 ] || fail "mutation_run did not exit 2 on a lone valueless --check (124 = it hung)"
+# restore verification is CHECK-SCOPED, so outside a git work tree a restore that
+# leaks a file cannot be seen at all — the probe must SAY so, not imply it looked
+bash "$M" --check "$CHK" --arm "$ARM" | grep -qi 'not a git work tree' \
+  || fail "outside a git tree, mutation_run does not state that contamination is unverified"
+# ...and inside one, the leak is caught: this arm undoes the mutation the check
+# looks at and still leaves a new file behind, so every gate above stays green
+mkdir -p "$TMP/gitmut" && cd "$TMP/gitmut" && git init -q
+echo GOOD > impl.txt
+git add -A && git -c user.email=t@t -c user.name=t commit -qm base >/dev/null
+LEAKY='leak|sed -i s/GOOD/BAD/ impl.txt && touch stray.txt|sed -i s/BAD/GOOD/ impl.txt'
+out="$(bash "$M" --check 'grep -q GOOD impl.txt' --arm "$LEAKY" 2>&1)" \
+  && fail "mutation_run passed an arm whose restore leaked a file into the tree"
+grep -q 'stray.txt' <<<"$out" || fail "the tree-contamination failure does not name the leftover path"
+rm -f stray.txt
+# the same arm without the leak still passes — the check is contamination, not
+# "any git tree makes this fail"
+[ "$(rc bash "$M" --check 'grep -q GOOD impl.txt' --arm 'clean|sed -i s/GOOD/BAD/ impl.txt|sed -i s/BAD/GOOD/ impl.txt')" = 0 ] \
+  || fail "a properly restoring arm failed the tree-contamination check"
+cd "$TMP/mut"
 
 # ---------- provenance_block: which route ACTUALLY ran ----------
 cd "$TMP"
