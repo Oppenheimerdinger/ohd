@@ -64,7 +64,13 @@ loop for it. This skill is for session-scope, user-absent mandates.
    emit it in the loop's exit format, `<promise>exact phrase</promise>`
    (the stop hook matches the tag, not bare prose). Emitting
    the phrase without a verdict is self-grading — the known premature-COMPLETE
-   failure of this loop pattern.
+   failure of this loop pattern. Completion is judged by the evaluator's verdict
+   and never by whether the stop hook fired or stopped firing — a hook can miss
+   a correct promise (field-recorded race), and hook silence is not a verdict.
+   In that exact race — verdict banked verbatim, hook still re-firing — re-emit
+   the `<promise>` in the loop's exit format each iteration and do NO further
+   mandate work; if it persists, the user-owned cancel (step 5) is the
+   legitimate manual exit, and the banked verdict is what makes it legitimate.
    The evaluator's brief carries two MANDATORY questions on top of the goal:
    **which work units were delegated versus done by the coordinator**, and
    **does every deliverable claimed done name the review pass that cleared
@@ -114,7 +120,8 @@ loop for it. This skill is for session-scope, user-absent mandates.
      dispatchable or watchable, that iteration is the LAST RESORT case
      below — name it as such; do not manufacture a dispatch to dodge the
      label (manufacturing work is banned there for the same reason).
-     (Step 3's completion exit is its own ending and needs none of these.)
+     (Step 3's completion exit is its own ending and needs none of these —
+     including its re-emission while the hook re-fires.)
    - **Read deliverables from git or the agent log, never from the
      notification** (step 5: idle != done). "Agent notified" is not "agent
      committed"; check, then tell it to finish.
