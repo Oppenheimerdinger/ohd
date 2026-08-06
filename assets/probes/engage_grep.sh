@@ -23,6 +23,10 @@ $SELF — route-engagement assertion over run logs (dies on mismatch, never warn
                 can never match is the measured failure this default prevents.
   --self-test   run this probe's own failure path; non-zero if it is dead.
 
+Matching has NO line context: a marker in a comment, in a usage string or in an
+echoed config counts exactly like the state line you meant. Choose markers only
+an actual state line can carry.
+
 exit: 0 route proven engaged | 1 assertion failed | 2 usage/setup
 EOF
 }
