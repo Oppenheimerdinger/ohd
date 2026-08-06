@@ -139,7 +139,7 @@ Two documented edge cases in `clean`'s gate, each with 0 witnesses in the
   routine friction, the fix is one optional token in the anchor plus an
   accept-matrix row. (2026-07-31)
 
-## 12. v0.6.0 must narrow the brief-hygiene pointer — RESOLVED (v0.6.0)
+## 12. v0.6.0 must narrow the brief-hygiene pointer — RESOLVED (v0.6.0, dd9887b)
 
 v0.5.24's way-of-working brief-hygiene sentence is deliberately home-agnostic
 ("the project's reference docs where they exist") because `docs/reference/`
@@ -154,7 +154,7 @@ sentence now names `docs/reference/` FIRST, ahead of the campaign state doc and
 `file:line`, and the routing table gains an orientation row pointing at the
 tier instead of at a subagent scan.
 
-## 13. The land-report scaffold heredoc still lacks the two new rows — OPEN (v0.6.0)
+## 13. The land-report scaffold heredoc still lacks the two new rows — OPEN (opened v0.6.0, dd9887b)
 
 v0.6.0 adds `reference:` (Phase 4) and `verification:` (Phase 6) as NAMED
 evidence-cell contents, but the blank land-report table is a heredoc inside
