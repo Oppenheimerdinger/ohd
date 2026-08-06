@@ -188,7 +188,7 @@ with its own staleness policy), which is a design pass in its own right, not a
 line of code. Until then the row says "no record" rather than implying it
 knows. (implementer finding, v0.6.0)
 
-## 15. provenance_block fabricates `git=n/a-dirty` outside a git tree + simplifier worth-doing batch — RESOLVED (v0.6.1)
+## 15. provenance_block fabricates `git=n/a-dirty` outside a git tree + simplifier worth-doing batch — RESOLVED (v0.6.1, 33284ea)
 
 The land-time simplifier pass (report-only, over the merged v0.6.0 diff) found
 one real defect and five worthwhile simplifications; none block v0.6.0

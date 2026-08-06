@@ -14,6 +14,13 @@ fail() { echo "PROBES-SMOKE FAIL: $*" >&2; exit 1; }
 # run a probe, capture its exit code without tripping set -e
 rc() { local c=0; "$@" >/dev/null 2>&1 || c=$?; echo "$c"; }
 
+# EVERY non-git assertion below — mutation_run's "contamination unverified"
+# scoping and provenance_block's git=n/a case — reads as a PASS if TMPDIR
+# happens to sit inside a repository. Refuse once, here, ahead of all of them:
+# a vacuous green is exactly what lets the regression walk back in.
+git -C "$TMP" rev-parse --git-dir >/dev/null 2>&1 \
+  && fail "fixture invalid: TMPDIR is inside a git repo — non-git assertions would misreport"
+
 for probe in engage_grep.sh mutation_run.sh provenance_block.sh; do
   [ -f "$P/$probe" ] || fail "$probe not shipped in assets/probes/"
   [ -x "$P/$probe" ] || fail "$probe is not executable"
@@ -186,10 +193,6 @@ grep -q 'backend=fused' prov.txt         || fail "--out did not write the proven
 # exits 129 there (not a repository), and a bare `||` chain reads that as "dirty"
 # — a FABRICATED flag, in the one artifact whose whole job is recording facts
 mkdir -p "$TMP/nogit" && cd "$TMP/nogit"
-# the fixture only means anything OUTSIDE a repository: with TMPDIR inside one,
-# every assertion below passes vacuously and the regression walks back in
-git -C "$TMP/nogit" rev-parse --git-dir >/dev/null 2>&1 \
-  && fail "fixture invalid: TMPDIR is inside a git repo, so the non-git case is untestable here"
 out="$(bash "$V" --field backend=fused)"
 grep -q '^git=n/a$' <<<"$out" || fail "outside a git tree the git field is not plain n/a"
 grep -q 'n/a-dirty' <<<"$out" && fail "outside a git tree provenance_block fabricated a dirty flag"
