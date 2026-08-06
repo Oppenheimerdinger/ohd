@@ -195,6 +195,31 @@ NAMED item for the next campaign.sh-touching release.
   cross-home contradiction check. (Recommendation + audit only — the global
   file is the user's.)
 
+## Usage model and versioning (owner decision, 2026-08-06)
+
+Three entry paths, one skill:
+- **New project**: ohd-new-project scaffolds the full home-set at birth
+  (reference tier, archive dir, hot-kernel CLAUDE.md shape) — no retrofit.
+- **Daily**: default /ohd-checkup stays the fast drift doctor. New rows are
+  COUNTS AND GATES only (byte budget, false-OPEN count, pointer-resolve, hook
+  stamp — all cheap, none action-proposing), plus ONE summary line pointing at
+  the structure mode ("structure | N candidates | last full audit: <age> —
+  run /ohd-checkup structure"). A count is a pointer, not an audit; default
+  runs must never nag a project into structural work.
+- **Adoption / periodic**: `/ohd-checkup structure` (explicit argument, same
+  skill — the two share walkers and a report format, so a second command
+  would be a second home for one behavior). This mode is the WORK-LIST
+  GENERATOR: solidation candidates, orphan-verification lists with allowlist
+  proposals, archive moves, memory-layer trims, reference-tier scaffolding
+  for an existing project. Its FIRST run on a project IS the adoption audit,
+  and it banks that project's baselines. Opt-in by construction.
+
+Versioning: S4+S5 riders ship as v0.5.24 (pure skill text, immediate, no
+adoption action). S1+S2+S3 + the structure mode ship as **v0.6.0** — the
+largest coherent change of the 0.5 line (a new artifact class, the first
+measurement assets, a new checkup mode, the home-set doctrine); the minor
+bump is the signal that adoption action exists.
+
 ## Deliberately NOT shipped (named, with reasons)
 
 - Fact/probe store as an artifact (its payoff is unmeasured; S1's
