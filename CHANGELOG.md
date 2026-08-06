@@ -1,3 +1,105 @@
+## v0.6.0 (2026-08-06)
+
+BEHAVIOR-CHANGE: new projects are scaffolded with a reference tier — `docs/reference/{capabilities,conventions,state}.md` plus a `docs/archive/` stub — and every line in `capabilities.md` and `conventions.md` must point at executable truth (`<claim> — <file:line of a test, gate, or config>`), so orientation is a lookup a consumer can RE-RUN instead of an agent-scan of the tree.
+
+BEHAVIOR-CHANGE: the scaffolded CLAUDE.md hot kernel carries two new always-loaded lines, "orientation: docs/reference/ first; tree archaeology only when it has no answer" and "writing: consult the router before creating any new doc", because the light-task session class that pays the largest marginal cost never loads a skill.
+
+BEHAVIOR-CHANGE: `docs/reference/state.md` is the ONE state registry and the one file exempt from the executable-truth law; in exchange its pointer targets must exist and any `as of <date>` claim older than 14 days is flagged by checkup.
+
+BEHAVIOR-CHANGE: a new root-level document now requires naming its home and why no existing home fits — the writing router in the scaffolded conventions file is consulted BEFORE any document is created, and a one-off analysis becomes a section of the requesting campaign's doc rather than a new root doc.
+
+BEHAVIOR-CHANGE: solidation of settled docs into `docs/archive/` runs at checkup or milestone time and NEVER per land, and an archived or retracted claim keeps its literal search key in the live tier (`~~old claim~~ → archive/X`) because a search that comes back empty reads as "never investigated".
+
+BEHAVIOR-CHANGE: the land report's Phase-4 evidence cell must now carry `reference:` by name — either the reference file this land updated or the attested `nothing to graduate — <reason>`.
+
+BEHAVIOR-CHANGE: the land report's Phase-6 evidence cell must now carry `verification:` by name with one of three verdicts (`promoted to tests/ — <path>`, `one-shot — <reason>`, `deleted`), and verification living only in a session scratchpad is not a deliverable.
+
+BEHAVIOR-CHANGE: the plugin now SHIPS the probe assets campaign-land has mandated by name — `assets/probes/engage_grep.sh`, `mutation_run.sh` and `provenance_block.sh` — so a campaign copies them instead of re-implementing them.
+
+BEHAVIOR-CHANGE: a brief now points at `docs/reference/` FIRST, ahead of the campaign state doc and `file:line`, completing the pointer-narrowing v0.5.24 deliberately left home-agnostic (backlog #12).
+
+- This release is the BODY of the "O(1) harness" design
+  (`docs/superpowers/specs/2026-08-06-o1-harness-design.md`) — S1 (reference
+  tier), S2 (mass budget and tier discipline), S3 (verification-code
+  lifecycle) and the structure mode. v0.5.24 shipped its S4/S5 riders. The
+  minor bump is the signal that ADOPTION ACTION exists: an existing project
+  gets the tier by running `/ohd-checkup structure`, a new one is born with it.
+- **Delivery classes**: everything here is skill-, checkup-, or asset-carried,
+  so it reaches every project on plugin update. `assets/campaign.sh` and
+  `tools/campaign.sh` bodies are UNTOUCHED (verified by diff), which is why a
+  non-syncing fork of the lifecycle script is unaffected. The one cost of that
+  constraint is named in backlog #13: the blank land-report table is a heredoc
+  inside campaign.sh, so the two new rows are skill-carried prose until a
+  release that touches that script.
+- `/ohd-checkup`'s default run gains four rows: an always-loaded byte budget
+  against a ~20KB hot target, reference-tier existence plus pointer resolution
+  and dated-claim expiry, a campaign census reporting false-OPEN docs, and one
+  non-action-proposing structure summary line.
+- The always-loaded budget counts CLAUDE.md alone unless the file carries an
+  explicit `<!-- ohd:always-loaded <path> -->` marker (repeat the marker for
+  more paths), which is the only way a plan or ledger file every worker must
+  read enters the count; without the marker the row says so rather than
+  implying it audited more.
+- `/ohd-checkup structure` is a new opt-in mode that GENERATES a corpus
+  work-list (solidation candidates, orphan-verification census with a
+  `.ohd-orphan-allowlist`, plans/specs corpus size, doc-size histogram,
+  reference-tier adoption offer, baselines table) — the harness never
+  bulk-moves a project's documents itself, so executing the list is ordinary
+  project campaigns.
+- Agent-facing failure is exit-code-shaped, not log-shaped: every shipped probe
+  DIES on a mismatch and never warns-and-continues, because an agent consumer
+  reads logs through tails and summarizers and a warning line is structurally
+  unseen.
+- **Why those four are bullets and not `BEHAVIOR-CHANGE:` lines.** The marker
+  is a RELAY channel: a lagging project receives every line it has not yet been
+  relayed AT ONCE (measured: 23 lines for a project last synced at v0.5.22),
+  and volume trains dismissal — the failure that costs the marker its meaning
+  for the lines that do matter. So §2c's bar is enforced strictly. Checkup's
+  own output rows, its opt-in modes, and the design principle behind a shipped
+  asset describe what THIS tool does; none of them is a gate, route, or
+  requirement a project session must change its work to satisfy.
+- New test suite `tests/probes-smoke.sh`, wired into CI. Every probe also
+  carries `--self-test`, which runs its own failure path and exits non-zero if
+  the probe is dead.
+- Baselines banked for the ~1-month re-count (copied from the design of
+  record; the S4 row's re-count is due **2026-09-06**):
+
+  | item | baseline | command shape |
+  |---|---|---|
+  | S1/S2 wake mass | 139,144B CLAUDE.md (worst); ~340KB pre-first-token | `wc -c` on the always-loaded set |
+  | S1 marginal question | 11 tool calls (band-plot trace) | replay the same request |
+  | S2 false-OPEN | 71/331 | `grep -c 'status: OPEN'` |
+  | S2 memory outlier | 33,926B (one file; 20-30× median) | `wc -c memory/*` |
+  | S2 plans/specs corpus | 78 / 79 / 9 files per repo | `ls \| wc -l` |
+  | S3 orphan verifiers | 29/62 | no-test AND no-inbound-ref census |
+  | S3 probe re-implementation | 4 re-builds / 1 session; trap re-hit ×3 | grep campaign docs |
+  | S4 coordinator shell share | 66% Bash call-share (1,436/2,170); Explore 4/218 | transcript tool-name census |
+  | S5 cell overflow | 155 cells >400 chars, max 2,935 | awk length census |
+  | S4 fan-out deaths | 20 session-limit deaths, burst of 6 | transcript census |
+  | S4 brief mass | 216k tok / 218 dispatches | transcript census |
+  | S5 owner corrections | 3 recorded classes | corrections-per-week |
+  | S3 silent wrong-route runs | owner-reported; no pre-ship count possible (the failures are silent) | post-ship: provenance-block greps + assertion die-count |
+
+  Success = the RECURRING terms move: marginal question ~3-4 calls, wake mass
+  toward hot-kernel size, orphan inflow ~0, Bash call-share halved. Every
+  number above is a COUNT or a byte size; nothing here estimates cost.
+- **Deliberately NOT shipped, with reasons** (from the design of record):
+  a fact/probe store as an artifact (its payoff is unmeasured; the
+  executable-truth format law captures the defensible core); any
+  production/rework instrumentation — **the single largest measured cost,
+  document rework at 2.4M tokens on one task, ships with NO mechanism**, since
+  the measurement scripts are hard-blocked and a prose passes-counter is a
+  0%-survival class, so the re-count must be read as moving structural terms
+  only; the symbol+pin citation standard; notification/mailbox overhead
+  instrumentation (no honest measure exists yet); a deep memory-layer
+  restructure (measure before rebuilding); per-doc size gates on campaign docs
+  (census only); and disposal-residue and dormant-symbol enforcement (real
+  accumulation terms, cheap census rows are the candidate next step).
+  A CONFOUND is named now rather than after the fact: "orphan inflow ~0"
+  presumes the upstream driver is fixed project-side — a structurally red test
+  suite makes re-authoring RATIONAL, so a flat orphan count under a still-red
+  suite is not S3 failing.
+
 ## v0.5.24 (2026-08-06)
 
 BEHAVIOR-CHANGE: way-of-working's delegation table gains the row it was missing — shell/filesystem INVESTIGATION (enumerating, measuring, censusing, grepping across a tree) goes to a read-only sweep subagent with `Explore` as the named vehicle, and the model tier is an explicit lever rather than a default.

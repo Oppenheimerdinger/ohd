@@ -120,6 +120,9 @@ __pycache__/
 GITIGNORE
 
 mkdir -p tools docs/campaigns .claude/skills
+# the home-set: reference tier (present-tense truth + state registry) and the
+# archive, scaffolded at birth so no project ever needs the retrofit
+cp -R "$TPL/home-set/." docs/
 cp "$TPL/campaign.sh" tools/campaign.sh
 cp "$TPL/install-hooks.sh" tools/install-hooks.sh
 set_default tools/campaign.sh TRUNK "$TRUNK"

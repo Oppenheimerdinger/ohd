@@ -9,6 +9,8 @@ goal: (한 줄로 — 첫 세션에서 채우세요)
 - trunk: `{{TRUNK}}` · campaign naming: {{NAMING}} · merge model: {{MERGE_MODEL}}
 - worktrees: `$HOME/wt/<campaign>` via `tools/campaign.sh` (new|land|status|list|clean|abort)
 - deploy: {{DEPLOY}}
+- orientation: docs/reference/ first; tree archaeology only when it has no answer
+- writing: consult the router before creating any new doc — `docs/reference/conventions.md`
 
 ## Machines & environments
 
