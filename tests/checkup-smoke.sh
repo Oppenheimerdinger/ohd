@@ -7,8 +7,14 @@ TPL="$HERE/assets/campaign.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 fail() { echo "CHECKUP-SMOKE FAIL: $*" >&2; exit 1; }
+# Every fixture repo gets a LOCAL identity at INIT time, not before its first
+# commit: a CI runner has no global identity, so a commit without one dies
+# rc=128 ("empty ident name") — a fixture defect wearing the costume of a test
+# failure. Doing it at init keeps a later assertion that adds a commit safe.
+newrepo() { mkdir -p "$1" && cd "$1" && git init -q \
+  && git config user.email smoke@test && git config user.name smoke; }
 
-mkdir -p "$TMP/proj" && cd "$TMP/proj" && git init -q
+newrepo "$TMP/proj"
 mkdir -p tools
 
 # fake an OLD instantiated copy: custom config value + custom var + drifted body line
@@ -104,7 +110,7 @@ grep -q "campaign.sh | SYNC-REFUSED" <<<"$out" || fail "markerless copy not refu
 grep -q 'CAMPAIGN_TRUNK:-master' tools/campaign.sh || fail "refusal still mutated the file"
 
 # 8) decoy '# ──' banner in the body must not truncate the config range
-mkdir -p "$TMP/decoy" && cd "$TMP/decoy" && git init -q && mkdir tools
+newrepo "$TMP/decoy" && mkdir tools
 sed 's/^wt_path() .*/# ── section banner (decoy)\nwt_path() { echo x; }/' "$TPL" > tools/campaign.sh
 out="$("$HERE/assets/checkup.sh" .)"; grep -q "campaign.sh | DRIFT" <<<"$out" || fail "decoy banner test setup wrong"
 "$HERE/assets/checkup.sh" . --sync >/dev/null
@@ -306,7 +312,7 @@ out="$("$CACHE2/latest/assets/checkup.sh" .)"
 grep -q "plugin-cache | STALE" <<<"$out" || fail "symlinked cache path defeated staleness detection"
 
 # 11) adoption: empty repo bootstraps a fresh copy
-mkdir -p "$TMP/fresh" && cd "$TMP/fresh" && git init -q
+newrepo "$TMP/fresh"
 out="$("$CK" .)"; grep -q "campaign.sh | MISSING" <<<"$out" || fail "expected MISSING in fresh repo"
 "$CK" . --sync >/dev/null
 [ -x tools/campaign.sh ]                    || fail "bootstrap did not create executable copy"
@@ -356,7 +362,7 @@ grep -E '^## v' "$HERE/CHANGELOG.md" | grep -vE '^## v[0-9]+\.[0-9]+\.[0-9]+ \([
 #     cheap (no tree walks beyond the doc dirs) and none may propose work: the
 #     default run is a drift doctor, not a nag. A fresh, honest project must
 #     come out green, or the rows manufacture drift on day one.
-R="$TMP/rows"; mkdir -p "$R" && cd "$R" && git init -q
+R="$TMP/rows"; newrepo "$R"
 mkdir -p docs/campaigns
 today() { date +%F; }
 days_ago() { date -d "$1 days ago" +%F 2>/dev/null || date -v-"$1"d +%F; }
@@ -496,7 +502,7 @@ grep -qi "candidates:" <<<"$out"   && fail "default mode enumerated solidation c
 
 # 15) STRUCTURE mode — the opt-in work-list generator. It GENERATES; execution
 #     is ordinary project campaigns. R22 binds it: counts and byte sizes only.
-S="$TMP/struct"; mkdir -p "$S" && cd "$S" && git init -q
+S="$TMP/struct"; newrepo "$S"
 mkdir -p docs/campaigns docs/archive docs/superpowers/plans docs/superpowers/specs bench tools scripts
 cat > docs/campaigns/done1.md <<'EOF'
 # campaign: done1
