@@ -324,10 +324,15 @@ has_verdict() {
 
 # Solidation candidates — one path per line: a state doc whose verdict is filled
 # and which is not yet under docs/archive/. ONE rule for its two consumers (the
-# default row counts them, --structure lists them with sizes), so the count a
-# project sees can never disagree with the list it is told to work through.
-# NOT the census above: that one deliberately counts archived docs too.
+# default row counts them, --structure lists them with sizes), so the SOLIDATION
+# TERM of the count and the list cannot disagree. The row is not that term
+# alone — it adds a reference-tier candidate when docs/reference/ is absent, so
+# the number a project sees may legitimately exceed the list by one.
+# NOT the census above, which counts archived docs too. The archive skip below
+# is DEFENSIVE and normally dead: "$SD"/*.md does not recurse, so it can only
+# fire when STATE_DIR is itself docs/archive or a directory under it.
 sol_candidates() {
+  local d
   [ -d "$SD" ] || return 0
   for d in "$SD"/*.md; do
     [ -f "$d" ] || continue

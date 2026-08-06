@@ -186,6 +186,10 @@ grep -q 'backend=fused' prov.txt         || fail "--out did not write the proven
 # exits 129 there (not a repository), and a bare `||` chain reads that as "dirty"
 # — a FABRICATED flag, in the one artifact whose whole job is recording facts
 mkdir -p "$TMP/nogit" && cd "$TMP/nogit"
+# the fixture only means anything OUTSIDE a repository: with TMPDIR inside one,
+# every assertion below passes vacuously and the regression walks back in
+git -C "$TMP/nogit" rev-parse --git-dir >/dev/null 2>&1 \
+  && fail "fixture invalid: TMPDIR is inside a git repo, so the non-git case is untestable here"
 out="$(bash "$V" --field backend=fused)"
 grep -q '^git=n/a$' <<<"$out" || fail "outside a git tree the git field is not plain n/a"
 grep -q 'n/a-dirty' <<<"$out" && fail "outside a git tree provenance_block fabricated a dirty flag"
@@ -194,7 +198,7 @@ mkdir -p "$TMP/gitprov" && cd "$TMP/gitprov" && git init -q
 git config user.email smoke@test && git config user.name smoke
 echo one > f.txt && git add -A && git commit -qm base >/dev/null
 echo two > f.txt
-bash "$V" --field backend=fused | grep -q -- '-dirty' \
+bash "$V" --field backend=fused | grep -qE '^git=[0-9a-f]+-dirty$' \
   || fail "inside a git tree, a dirty work tree is no longer flagged"
 cd "$TMP"
 # valueless flag -> exit 2, under a timeout (see the engage_grep block)
