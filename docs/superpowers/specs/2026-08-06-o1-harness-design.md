@@ -298,6 +298,8 @@ campaign.sh-carried fixes remains that project's own backlog item.
 | S5 owner corrections | 3 recorded classes | corrections-per-week (observational) |
 | S3 silent wrong-route runs | owner-reported; no pre-ship count possible (failures are silent) | post-ship: provenance-block greps + assertion die-count (observational) |
 
-Success = the RECURRING terms move (marginal question ≤3 calls; wake mass
+Success = the RECURRING terms move (marginal question ~3-4 calls — the floor is
+structural: state policy, live resolution and the run itself are already ≥4 on
+their own; wake mass
 toward hot-kernel size; orphan inflow ~0; Bash call-share halved).
 The one-off production term is explicitly out of scope this release.

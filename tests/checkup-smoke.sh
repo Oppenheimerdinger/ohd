@@ -7,8 +7,14 @@ TPL="$HERE/assets/campaign.sh"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 fail() { echo "CHECKUP-SMOKE FAIL: $*" >&2; exit 1; }
+# Every fixture repo gets a LOCAL identity at INIT time, not before its first
+# commit: a CI runner has no global identity, so a commit without one dies
+# rc=128 ("empty ident name") — a fixture defect wearing the costume of a test
+# failure. Doing it at init keeps a later assertion that adds a commit safe.
+newrepo() { mkdir -p "$1" && cd "$1" && git init -q \
+  && git config user.email smoke@test && git config user.name smoke; }
 
-mkdir -p "$TMP/proj" && cd "$TMP/proj" && git init -q
+newrepo "$TMP/proj"
 mkdir -p tools
 
 # fake an OLD instantiated copy: custom config value + custom var + drifted body line
@@ -104,7 +110,7 @@ grep -q "campaign.sh | SYNC-REFUSED" <<<"$out" || fail "markerless copy not refu
 grep -q 'CAMPAIGN_TRUNK:-master' tools/campaign.sh || fail "refusal still mutated the file"
 
 # 8) decoy '# ──' banner in the body must not truncate the config range
-mkdir -p "$TMP/decoy" && cd "$TMP/decoy" && git init -q && mkdir tools
+newrepo "$TMP/decoy" && mkdir tools
 sed 's/^wt_path() .*/# ── section banner (decoy)\nwt_path() { echo x; }/' "$TPL" > tools/campaign.sh
 out="$("$HERE/assets/checkup.sh" .)"; grep -q "campaign.sh | DRIFT" <<<"$out" || fail "decoy banner test setup wrong"
 "$HERE/assets/checkup.sh" . --sync >/dev/null
@@ -306,7 +312,7 @@ out="$("$CACHE2/latest/assets/checkup.sh" .)"
 grep -q "plugin-cache | STALE" <<<"$out" || fail "symlinked cache path defeated staleness detection"
 
 # 11) adoption: empty repo bootstraps a fresh copy
-mkdir -p "$TMP/fresh" && cd "$TMP/fresh" && git init -q
+newrepo "$TMP/fresh"
 out="$("$CK" .)"; grep -q "campaign.sh | MISSING" <<<"$out" || fail "expected MISSING in fresh repo"
 "$CK" . --sync >/dev/null
 [ -x tools/campaign.sh ]                    || fail "bootstrap did not create executable copy"
@@ -351,5 +357,262 @@ grep -q "harness-changes | NO-BASELINE" <<<"$out" || fail "missing stamp not rep
 # 13) CHANGELOG header-format pin (the relay's parsing contract)
 grep -E '^## v' "$HERE/CHANGELOG.md" | grep -vE '^## v[0-9]+\.[0-9]+\.[0-9]+ \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$' \
   && fail "CHANGELOG header format drifted — harness-changes relay parsing depends on '## vX.Y.Z (date)'"
+
+# 14) v0.6.0 DEFAULT rows — counts and gates only. Every one of these must be
+#     cheap (no tree walks beyond the doc dirs) and none may propose work: the
+#     default run is a drift doctor, not a nag. A fresh, honest project must
+#     come out green, or the rows manufacture drift on day one.
+R="$TMP/rows"; newrepo "$R"
+mkdir -p docs/campaigns
+today() { date +%F; }
+days_ago() { date -d "$1 days ago" +%F 2>/dev/null || date -v-"$1"d +%F; }
+
+# --- always-loaded: the byte budget over what EVERY actor-wake pays for ---
+out="$("$CK" .)"
+grep -q "always-loaded | NONE" <<<"$out" || fail "no CLAUDE.md: expected always-loaded NONE"
+printf '# tiny\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "always-loaded | OK" <<<"$out"    || fail "small CLAUDE.md not OK"
+grep -q "20KB" <<<"$out"                  || fail "always-loaded row does not name the ~20KB hot target"
+grep -q "CLAUDE.md only" <<<"$out"        || fail "always-loaded row does not SAY its scope is CLAUDE.md only"
+head -c 30000 /dev/zero | tr '\0' 'x' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "always-loaded | OVER" <<<"$out"  || fail "30KB CLAUDE.md not reported OVER"
+# the 168KB-plan class escapes a CLAUDE.md-only budget: an explicit, mechanical
+# marker (not prose matching) opts extra always-read files into the count
+printf '# tiny\n<!-- ohd:always-loaded docs/plan.md -->\n' > CLAUDE.md
+head -c 30000 /dev/zero | tr '\0' 'x' > docs/plan.md
+out="$("$CK" .)"
+grep -q "always-loaded | OVER" <<<"$out"  || fail "marker-listed plan file not counted into the budget"
+grep -q "2 file(s)" <<<"$out"             || fail "always-loaded row does not name the file count"
+printf '# tiny\n<!-- ohd:always-loaded docs/gone.md -->\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "always-loaded | " <<<"$out"      || fail "marker naming a missing file crashed the row"
+grep -q "docs/gone.md" <<<"$out"          || fail "unresolvable always-loaded marker entry not named"
+# a path with a SPACE: the marker used to be word-split, so the one file became
+# two nonexistent ones and its bytes left the budget entirely
+head -c 30000 /dev/zero | tr '\0' 'x' > "docs/my plan.md"
+printf '# tiny\n<!-- ohd:always-loaded docs/my plan.md -->\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "always-loaded | OVER" <<<"$out"  || fail "marker path containing a space not counted (word-split?)"
+grep -q "2 file(s)" <<<"$out"             || fail "spaced marker path not counted as one file"
+# the space-separated multi-path form still works when no path contains a space,
+# and a SECOND marker line is read too (only the first ever was)
+printf 'a\n' > docs/a.md; printf 'b\n' > docs/b.md
+printf '# tiny\n<!-- ohd:always-loaded docs/a.md docs/b.md -->\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "3 file(s)" <<<"$out"             || fail "space-separated multi-path marker stopped resolving"
+printf '# tiny\n<!-- ohd:always-loaded docs/a.md -->\n<!-- ohd:always-loaded docs/my plan.md -->\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "3 file(s)" <<<"$out"             || fail "a second always-loaded marker is ignored"
+printf '# tiny\n' > CLAUDE.md; rm -f docs/plan.md "docs/my plan.md" docs/a.md docs/b.md
+
+# --- reference: existence + pointer resolution + dated-claim expiry ---
+out="$("$CK" .)"
+grep -q "reference | MISSING" <<<"$out"   || fail "absent docs/reference/ not reported MISSING"
+mkdir -p docs/reference
+# an EMPTY tier is not a healthy one: 'OK' there reads identically to a filled
+# tier, so the count is what makes 0 visible
+out="$("$CK" .)"
+grep -q "reference | STALE" <<<"$out"     || fail "empty docs/reference/ reported as a healthy tier"
+grep -q "0 file(s)" <<<"$out"             || fail "reference row does not report the file count"
+cp "$HERE/assets/home-set/reference/"*.md docs/reference/
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "scaffold placeholders must not fabricate drift"
+grep -q "placeholder" <<<"$out"           || fail "reference row does not count the unreplaced placeholders"
+# a REAL line whose pointer does not resolve is the rotted-catalog failure
+echo '- the writer sorts rows by key — `src/nowhere.py:57`' >> docs/reference/conventions.md
+out="$("$CK" .)"
+grep -q "reference | STALE" <<<"$out"     || fail "dead pointer not reported STALE"
+grep -q "src/nowhere.py" <<<"$out"        || fail "STALE detail does not name the dead pointer"
+mkdir -p src && echo x > src/nowhere.py
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "resolvable pointer still reported STALE"
+# dated-claim expiry is state.md ONLY (the exempt file's substitute gate)
+echo "- \"best\" = lowest loss, as of $(days_ago 30) — \`src/nowhere.py\`" >> docs/reference/state.md
+out="$("$CK" .)"
+grep -q "reference | STALE" <<<"$out"     || fail "30-day-old dated claim in state.md not flagged"
+sed -i "s/as of $(days_ago 30)/as of $(days_ago 3)/" docs/reference/state.md
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "3-day-old dated claim wrongly flagged (14-day gate)"
+echo "- some capability, as of $(days_ago 90) — \`src/nowhere.py\`" >> docs/reference/capabilities.md
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "dated-claim expiry wrongly applied outside state.md"
+# the LAST line of a file with no trailing newline: `read` returns non-zero on it
+# and the loop body never ran, so the final pointer of such a file went ungated
+cp docs/reference/conventions.md "$TMP/conv.bak"
+printf -- '- the last fact, unterminated — `src/gone_last.py`' >> docs/reference/conventions.md
+out="$("$CK" .)"
+grep -q "reference | STALE" <<<"$out"     || fail "dead pointer on an unterminated last line not gated"
+grep -q "src/gone_last.py" <<<"$out"      || fail "STALE detail does not name the unterminated line's pointer"
+cp "$TMP/conv.bak" docs/reference/conventions.md
+
+# --- campaigns: OPEN count vs verdict-filled count (the false-OPEN census) ---
+cat > docs/campaigns/c1.md <<'EOF'
+# campaign: c1
+- status: OPEN (2026-07-20)
+- result / verdict:
+EOF
+cat > docs/campaigns/c2.md <<'EOF'
+# campaign: c2
+- status: OPEN (2026-07-20)
+- result / verdict: LANDS — merged as PR #4
+EOF
+cat > docs/campaigns/c3.md <<'EOF'
+# campaign: c3
+- status: LANDED
+- result / verdict: LANDS — merged as PR #5
+EOF
+out="$("$CK" .)"
+grep -qE "campaigns \| 2 open/3 total, 1 false-OPEN" <<<"$out" || fail "campaign census wrong: $(grep '^campaigns' <<<"$out")"
+# every other row that proposes work names its remedy; this one closes the set
+grep '^campaigns | ' <<<"$out" | grep -q 'campaign-land' \
+  || fail "campaigns row detail carries no remedy pointer (its siblings all do)"
+
+# what counts as a FILLED verdict, both directions. The strict `result / verdict`
+# literal was wrong BOTH ways, field-verified: it missed decorated, translated
+# and `status:`-labelled verdicts (undercount to 0), and it counted placeholder
+# and PENDING text as filled — false positives the repair table then invites you
+# to batch-close. Same rule feeds the solidation list and the structure summary.
+rm -f docs/campaigns/*.md
+census_says() {   # <expected false-OPEN count> <verdict row>
+  printf '# campaign: x\n- status: OPEN (2026-07-20)\n%s\n' "$2" > docs/campaigns/x.md
+  local o; o="$(LC_ALL=C "$CK" .)"
+  grep -qE "campaigns \| 1 open/1 total, $1 false-OPEN" <<<"$o" \
+    || fail "false-OPEN census wants $1 for [$2] — got: $(grep '^campaigns' <<<"$o")"
+}
+
+# MATCH — every shape a real verdict row is written in. The emphasis family is
+# the one that shipped broken: a closing `**` sits BETWEEN the colon and the
+# verdict word, and a rule that only skips spaces there stops dead. These forms
+# are accepted by the land-report audit, so a shared rule that missed them was
+# stricter than the rule it claims to mirror.
+census_says 1 '- verdict: LANDS'
+census_says 1 '- [x] **verdict:** LANDS — merged as PR #7'
+census_says 1 '- **verdict**: LANDS'
+census_says 1 '- _verdict:_ ABANDONED'
+census_says 1 '- **result / verdict:** LANDS'
+census_says 1 '- `verdict:` LANDS'
+census_says 1 '- 결론: LANDS'
+census_says 1 '- status: LANDED (PR #12 merged)'
+census_says 1 '- [x] LANDED as PR #7'
+census_says 1 '- result/verdict: LANDS — merged'
+census_says 1 '- result / verdict: LANDS — merged as PR #4'
+census_says 1 '- result / verdict: ABANDONED — superseded'
+
+# NO MATCH — the not-yet forms, and the PROSE class. A verdict word is an
+# ordinary English word: it appears in plan bullets, risk notes and running
+# text. Counting those drives two destructive suggestions (batch-close the
+# campaign, archive the doc) against a doc that is still live.
+census_says 0 '- status: OPEN'
+census_says 0 '- result / verdict: PENDING'
+census_says 0 '- result / verdict: PENDING the GPU gate'
+census_says 0 '- result / verdict: *(fill in after the gate)*'
+census_says 0 '- result / verdict:'
+census_says 0 '- landed: no'
+census_says 0 '- lands: not yet'
+census_says 0 '- plan: LANDS eventually if the gate goes green'
+census_says 0 '- Aborted runs are retried by the scheduler'
+census_says 0 '- note: LANDS?'
+rm -f docs/campaigns/x.md
+
+# the SAME rule drives the SOLIDATION list, so the prose class must not propose
+# archiving a live campaign either (scoped to the solidation block: the
+# land-report audit keeps its own tolerant rule and legitimately names the doc)
+printf '# campaign: live\n- status: OPEN (2026-08-01)\n- result / verdict:\n\n## plan\n- plan: LANDS eventually if the gate goes green\n' > docs/campaigns/live.md
+out="$("$CK" . --structure)"
+sol="$(sed -n '/## solidation/,/Move at CHECKUP/p' <<<"$out")"
+grep -q "live.md" <<<"$sol" && fail "a plan bullet made a LIVE campaign a solidation candidate"
+grep -qE "campaigns \| 1 open/1 total, 0 false-OPEN" <<<"$out" \
+  || fail "a plan bullet counted as a false-OPEN: $(grep '^campaigns' <<<"$out")"
+rm -f docs/campaigns/live.md
+
+# --- structure: ONE summary line, never action-proposing in default mode ---
+out="$("$CK" .)"
+grep -q "^structure | " <<<"$out"                    || fail "no structure summary row"
+grep -q "run /ohd-checkup structure" <<<"$out"       || fail "structure row does not point at the mode"
+[ "$(grep -c '^structure | ' <<<"$out")" = 1 ]       || fail "structure row is not exactly one line"
+grep -qi "orphan" <<<"$out"        && fail "default mode leaked the structure work-list (orphan census)"
+grep -qi "candidates:" <<<"$out"   && fail "default mode enumerated solidation candidates (action-proposing)"
+
+# 15) STRUCTURE mode — the opt-in work-list generator. It GENERATES; execution
+#     is ordinary project campaigns. R22 binds it: counts and byte sizes only.
+S="$TMP/struct"; newrepo "$S"
+mkdir -p docs/campaigns docs/archive docs/superpowers/plans docs/superpowers/specs bench tools scripts
+cat > docs/campaigns/done1.md <<'EOF'
+# campaign: done1
+- result / verdict: LANDS — merged as PR #4
+EOF
+cat > docs/campaigns/open1.md <<'EOF'
+# campaign: open1
+- status: OPEN (2026-07-20)
+- result / verdict:
+- the nightly job runs bench/check_beta.sh
+EOF
+cat > docs/archive/old.md <<'EOF'
+# campaign: old
+- result / verdict: LANDS — merged long ago
+EOF
+printf '#!/bin/sh\necho a\n' > bench/verify_alpha.sh
+printf '#!/bin/sh\necho b\n' > bench/check_beta.sh
+printf '#!/bin/sh\necho h\n' > tools/helper.sh
+printf '#!/bin/sh\necho s\n' > scripts/smoke_gamma.sh
+echo p > docs/superpowers/plans/p1.md
+echo s > docs/superpowers/specs/s1.md
+git add -A && git commit -qm fixture
+
+out="$("$CK" . --structure)"
+# it is still a checkup: the drift rows come with it
+grep -q "campaign.sh | " <<<"$out"          || fail "structure mode dropped the default drift rows"
+# solidation candidates: verdict-filled and not already archived
+grep -q "done1.md" <<<"$out"                || fail "verdict-filled doc not listed as a solidation candidate"
+grep -q "open1.md" <<<"$out"                && fail "OPEN campaign listed as a solidation candidate"
+grep -q "archive/old.md" <<<"$out"          && fail "already-archived doc listed as a solidation candidate"
+# orphan-verification census: naming family + no inbound reference
+grep -q "bench/verify_alpha.sh" <<<"$out"   || fail "orphan verifier not censused"
+grep -q "scripts/smoke_gamma.sh" <<<"$out"  || fail "orphan verifier in scripts/ not censused"
+grep -q "bench/check_beta.sh" <<<"$out"     && fail "verifier WITH an inbound reference censused as an orphan"
+grep -q "tools/helper.sh" <<<"$out"         && fail "non-verification script censused (naming family ignored)"
+# allowlist: a deliberate orphan stops being work, and stays counted
+printf 'bench/verify_alpha.sh\n' > .ohd-orphan-allowlist
+out="$("$CK" . --structure)"
+grep -q "bench/verify_alpha.sh" <<<"$out"   && fail "allowlisted orphan still listed as work"
+grep -q "1 allowlisted" <<<"$out"           || fail "allowlisted orphan not counted"
+grep -q "scripts/smoke_gamma.sh" <<<"$out"  || fail "allowlist swallowed a non-allowlisted orphan"
+rm .ohd-orphan-allowlist
+# a BARE family name is the commonest real form and matched nothing: the pattern
+# required a separator (check_x.sh), so `check.sh` and `verify.py` were invisible
+printf '#!/bin/sh\necho c\n' > tools/check.sh
+printf 'print("v")\n' > bench/verify.py
+# ...and the inbound-reference test was a raw fixed string, so an unrelated file
+# merely NAMING recheck_gate.py made the genuine orphan check_gate.py look
+# referenced
+printf 'print("g")\n' > tools/check_gate.py
+printf '#!/bin/sh\n# nightly: python tools/recheck_gate.py --all\n' > scripts/runner.sh
+git add -A && git commit -qm fixture-collisions
+out="$("$CK" . --structure)"
+grep -q "tools/check.sh" <<<"$out"          || fail "bare family name check.sh not censused"
+grep -q "bench/verify.py" <<<"$out"         || fail "bare family name verify.py not censused"
+grep -q "tools/check_gate.py" <<<"$out"     || fail "substring collision (recheck_gate.py) hid a genuine orphan"
+grep -q "scripts/runner.sh" <<<"$out"       && fail "non-verification script censused (naming family ignored)"
+git rm -q tools/check.sh bench/verify.py tools/check_gate.py scripts/runner.sh
+git commit -qm fixture-collisions-undo
+# corpus + histogram + adoption offer + self-application
+out="$("$CK" . --structure)"
+grep -qi "plans/specs corpus" <<<"$out"     || fail "no plans/specs corpus size"
+grep -qi "doc-size histogram" <<<"$out"     || fail "no doc-size histogram"
+grep -q "docs/reference/" <<<"$out"         || fail "no adoption offer when the reference tier is absent"
+grep -qi "harness repo itself" <<<"$out"    || fail "census does not state it applies to the harness repo itself"
+grep -qi "baseline" <<<"$out"               || fail "structure run banks no baselines for the re-count"
+# R22: counts and byte sizes ONLY — no token estimates anywhere
+grep -qiE "[0-9][^|]*tok(en)?s?\b" <<<"$out" && fail "structure output estimates tokens (R22-blocked)"
+# and the DEFAULT run never carries the work-list
+#     (done1.md legitimately appears in the pre-existing land-report row; what
+#     must NOT appear is any part of the work-list itself)
+out="$("$CK" .)"
+grep -q "verify_alpha.sh" <<<"$out"         && fail "default mode leaked the orphan census"
+grep -q "## solidation" <<<"$out"           && fail "default mode enumerated solidation candidates"
+grep -q "structure work-list" <<<"$out"     && fail "default mode ran the work-list generator"
+grep -q "^structure | " <<<"$out"           || fail "default mode lost its one-line structure pointer"
 
 echo "CHECKUP-SMOKE PASS"

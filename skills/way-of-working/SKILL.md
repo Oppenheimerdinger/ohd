@@ -24,6 +24,8 @@ router — which tool, when.
 | The ohd plugin may have updated since session start | `/reload-plugins` (or restart) → `/ohd-checkup` per project — the session stays pinned to its start-time version otherwise (checkup reports `plugin-cache | STALE` when it can see this) |
 | Starting a new research project | `/ohd-new-project` (interview-driven scaffolder) |
 | Existing project: harness drift check / adoption ("하네스 점검") | `/ohd-checkup` (mechanical drift + CLAUDE.md wiring, repairs on approval) |
+| Orientation: what exists, where, which interface, which route | read `docs/reference/` — NOT a subagent scan. Independence adds nothing to "does this pipeline exist"; tree archaeology only when the tier has no answer, and what you then learn graduates back into it at land (campaign-land Phase 4) |
+| The corpus itself feels heavy (docs to archive, orphan probes, no reference tier) | `/ohd-checkup structure` — it GENERATES the work-list; executing it is ordinary project campaigns, and that cleanup is the reference tier's first fill |
 | A campaign-scale ask (multi-day, several tasks) | draft the plan — plan mode or directly — and SAVE it into the campaign state doc's `## plan` section before starting; an approved plan left in chat evaporates at the next compaction. **Converge the plan (`review-to-convergence`) BEFORE execution begins** — a plan is the stage with the highest error-replication factor, and reviewing it before the approval gate means the user approves an already-reviewed plan. Then MATERIALIZE its items into the session task list (TaskCreate / todos) and track execution there, writing results back to the plan section as units complete: the plan section is the durable artifact, the task list the in-session tracker |
 | Already implementing when you reach for SDD/TDD (late entry) | enter the discipline at the NEXT unit. Work already verified gets REVIEWED, never reverted to RED — destroying bitwise-verified work to restore discipline is TDD's iron law applied at the wrong moment (one field occurrence, the only observed failure here with a negative payoff) |
 
@@ -48,9 +50,14 @@ explicit ruling — r2c's recorded disposition, never the author's own fiat.
    unverified is explicitly marked "unverified:" — never stated as fact. Invite
    the agent to challenge the premise. Withhold your tentative answer. (For the
    full unattended loop, escalate to `deep-solve`.) Briefs carry POINTERS, not
-   payloads — point at durable docs first (the project's reference docs where
-   they exist, the campaign state doc, `file:line`), inlining only what has no
-   home; and a fan-out wider than the situational default needs ONE stated
+   payloads — point at **`docs/reference/` FIRST** (capabilities and gotchas,
+   conventions and invariants and the route map, the state registry: the
+   project's present-tense truth, every line anchored to a test, gate or config
+   the agent can RE-RUN), then the campaign state doc, then `file:line`,
+   inlining only what has no home. Orientation is a LOOKUP: a brief that
+   inlines what the tier already holds pays for the same knowledge in every
+   dispatch, and one that omits the pointer sends a fresh agent to re-derive it
+   from the tree. And a fan-out wider than the situational default needs ONE stated
    reason line in the dispatch message. A sweep that becomes root-cause
    REASONING is two dispatches: the sweep, then a reasoning agent briefed on
    its findings — one agent when the sweep is trivial.

@@ -139,7 +139,7 @@ Two documented edge cases in `clean`'s gate, each with 0 witnesses in the
   routine friction, the fix is one optional token in the anchor plus an
   accept-matrix row. (2026-07-31)
 
-## 12. v0.6.0 must narrow the brief-hygiene pointer — OPEN (carried from v0.5.24)
+## 12. v0.6.0 must narrow the brief-hygiene pointer — RESOLVED (v0.6.0, dd9887b)
 
 v0.5.24's way-of-working brief-hygiene sentence is deliberately home-agnostic
 ("the project's reference docs where they exist") because `docs/reference/`
@@ -148,3 +148,42 @@ dead-pointer class claude-md-sanity flags. When v0.6.0 lands the tier, narrow
 that sentence to name `docs/reference/` directly, or the read side never
 points at the new home. One-sentence edit; recorded here so it is not lost
 between releases (implementer finding, v0.5.24).
+
+RESOLVED in v0.6.0, which ships the tier: force-multiplier 1's brief-hygiene
+sentence now names `docs/reference/` FIRST, ahead of the campaign state doc and
+`file:line`, and the routing table gains an orientation row pointing at the
+tier instead of at a subagent scan.
+
+## 13. The land-report scaffold heredoc still lacks the two new rows — OPEN (opened v0.6.0, dd9887b)
+
+v0.6.0 adds `reference:` (Phase 4) and `verification:` (Phase 6) as NAMED
+evidence-cell contents, but the blank land-report table is a heredoc inside
+`assets/campaign.sh`, whose body this release deliberately does not touch (the
+parity pair with `tools/campaign.sh`). So both rows are skill-carried prose —
+the carrier class this harness's own record says decays. The spec's proposed
+backstop was to have checkup's land-report audit flag post-adoption reports
+missing the two rows; that is NOT shipped, because nothing on disk marks a
+report as post-adoption, so the audit cannot separate a pre-v0.6.0 report from
+a non-compliant one, and flagging every historical report contradicts
+campaign-land's forward-only contract. Fix belongs to the next release that
+touches campaign.sh: add both lines to the scaffold heredoc, and only then a
+version- or date-scoped audit row becomes derivable. (implementer finding,
+v0.6.0)
+
+## 14. The structure row cannot say when the last full audit ran — OPEN (opened v0.6.0)
+
+v0.6.0's default structure row ships the honest string `last full audit: no
+record`: the structure report is output-only, so nothing on disk marks that a
+run happened. The obvious quick fix — have `--structure` stamp a dated line
+into `docs/reference/state.md` — was tried and REJECTED on measurement, not on
+taste. state.md is exactly the file the default reference row gates for
+`as of <date>` claims older than 14 days, so the stamp turns every structure
+run into a guaranteed `reference | STALE` row 14 days later (reproduced: a
+15-day-old stamp yields `state.md dated claim(s) older than 14 days`). That
+breaks the rule the default run is built on — a default run is a drift doctor
+and must never nag a project into structural work — and it does so on a project
+whose only sin was running the opt-in mode once. Unblocking condition: an age
+signal scoped AWAY from the default reference row (its own stamp file or row,
+with its own staleness policy), which is a design pass in its own right, not a
+line of code. Until then the row says "no record" rather than implying it
+knows. (implementer finding, v0.6.0)
