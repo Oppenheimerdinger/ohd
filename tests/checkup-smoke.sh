@@ -352,4 +352,91 @@ grep -q "harness-changes | NO-BASELINE" <<<"$out" || fail "missing stamp not rep
 grep -E '^## v' "$HERE/CHANGELOG.md" | grep -vE '^## v[0-9]+\.[0-9]+\.[0-9]+ \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$' \
   && fail "CHANGELOG header format drifted — harness-changes relay parsing depends on '## vX.Y.Z (date)'"
 
+# 14) v0.6.0 DEFAULT rows — counts and gates only. Every one of these must be
+#     cheap (no tree walks beyond the doc dirs) and none may propose work: the
+#     default run is a drift doctor, not a nag. A fresh, honest project must
+#     come out green, or the rows manufacture drift on day one.
+R="$TMP/rows"; mkdir -p "$R" && cd "$R" && git init -q
+mkdir -p docs/campaigns
+today() { date +%F; }
+days_ago() { date -d "$1 days ago" +%F 2>/dev/null || date -v-"$1"d +%F; }
+
+# --- always-loaded: the byte budget over what EVERY actor-wake pays for ---
+out="$("$CK" .)"
+grep -q "always-loaded | NONE" <<<"$out" || fail "no CLAUDE.md: expected always-loaded NONE"
+printf '# tiny\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "always-loaded | OK" <<<"$out"    || fail "small CLAUDE.md not OK"
+grep -q "20KB" <<<"$out"                  || fail "always-loaded row does not name the ~20KB hot target"
+grep -q "CLAUDE.md only" <<<"$out"        || fail "always-loaded row does not SAY its scope is CLAUDE.md only"
+head -c 30000 /dev/zero | tr '\0' 'x' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "always-loaded | OVER" <<<"$out"  || fail "30KB CLAUDE.md not reported OVER"
+# the 168KB-plan class escapes a CLAUDE.md-only budget: an explicit, mechanical
+# marker (not prose matching) opts extra always-read files into the count
+printf '# tiny\n<!-- ohd:always-loaded docs/plan.md -->\n' > CLAUDE.md
+head -c 30000 /dev/zero | tr '\0' 'x' > docs/plan.md
+out="$("$CK" .)"
+grep -q "always-loaded | OVER" <<<"$out"  || fail "marker-listed plan file not counted into the budget"
+grep -q "2 file(s)" <<<"$out"             || fail "always-loaded row does not name the file count"
+printf '# tiny\n<!-- ohd:always-loaded docs/gone.md -->\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "always-loaded | " <<<"$out"      || fail "marker naming a missing file crashed the row"
+grep -q "docs/gone.md" <<<"$out"          || fail "unresolvable always-loaded marker entry not named"
+printf '# tiny\n' > CLAUDE.md; rm -f docs/plan.md
+
+# --- reference: existence + pointer resolution + dated-claim expiry ---
+out="$("$CK" .)"
+grep -q "reference | MISSING" <<<"$out"   || fail "absent docs/reference/ not reported MISSING"
+mkdir -p docs/reference
+cp "$HERE/assets/home-set/reference/"*.md docs/reference/
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "scaffold placeholders must not fabricate drift"
+grep -q "placeholder" <<<"$out"           || fail "reference row does not count the unreplaced placeholders"
+# a REAL line whose pointer does not resolve is the rotted-catalog failure
+echo '- the writer sorts rows by key — `src/nowhere.py:57`' >> docs/reference/conventions.md
+out="$("$CK" .)"
+grep -q "reference | STALE" <<<"$out"     || fail "dead pointer not reported STALE"
+grep -q "src/nowhere.py" <<<"$out"        || fail "STALE detail does not name the dead pointer"
+mkdir -p src && echo x > src/nowhere.py
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "resolvable pointer still reported STALE"
+# dated-claim expiry is state.md ONLY (the exempt file's substitute gate)
+echo "- \"best\" = lowest loss, as of $(days_ago 30) — \`src/nowhere.py\`" >> docs/reference/state.md
+out="$("$CK" .)"
+grep -q "reference | STALE" <<<"$out"     || fail "30-day-old dated claim in state.md not flagged"
+sed -i "s/as of $(days_ago 30)/as of $(days_ago 3)/" docs/reference/state.md
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "3-day-old dated claim wrongly flagged (14-day gate)"
+echo "- some capability, as of $(days_ago 90) — \`src/nowhere.py\`" >> docs/reference/capabilities.md
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "dated-claim expiry wrongly applied outside state.md"
+
+# --- campaigns: OPEN count vs verdict-filled count (the false-OPEN census) ---
+cat > docs/campaigns/c1.md <<'EOF'
+# campaign: c1
+- status: OPEN (2026-07-20)
+- result / verdict:
+EOF
+cat > docs/campaigns/c2.md <<'EOF'
+# campaign: c2
+- status: OPEN (2026-07-20)
+- result / verdict: LANDS — merged as PR #4
+EOF
+cat > docs/campaigns/c3.md <<'EOF'
+# campaign: c3
+- status: LANDED
+- result / verdict: LANDS — merged as PR #5
+EOF
+out="$("$CK" .)"
+grep -qE "campaigns \| 2 open/3 total, 1 false-OPEN" <<<"$out" || fail "campaign census wrong: $(grep '^campaigns' <<<"$out")"
+
+# --- structure: ONE summary line, never action-proposing in default mode ---
+out="$("$CK" .)"
+grep -q "^structure | " <<<"$out"                    || fail "no structure summary row"
+grep -q "run /ohd-checkup structure" <<<"$out"       || fail "structure row does not point at the mode"
+[ "$(grep -c '^structure | ' <<<"$out")" = 1 ]       || fail "structure row is not exactly one line"
+grep -qi "orphan" <<<"$out"        && fail "default mode leaked the structure work-list (orphan census)"
+grep -qi "candidates:" <<<"$out"   && fail "default mode enumerated solidation candidates (action-proposing)"
+
 echo "CHECKUP-SMOKE PASS"
