@@ -71,7 +71,7 @@ pointers at runnable checks keeps both.
 | home | artifact | writes | reads | staleness gate |
 |---|---|---|---|---|
 | code (incl. verification code) | src/ + tests/ (+ plugin probe assets) | campaigns | CI / every run | tests; verification disposition row at land; orphan census at checkup |
-| knowledge / reference (present-tense truth) | `docs/reference/` (3-4 files MAX) + CLAUDE.md hot kernel + MEMORY.md as pointer index | the land graduation row | every wake; DISPATCH BRIEFS FIRST | checkup byte-budget + pointer-resolve rows; every line cites executable truth |
+| knowledge / reference (present-tense truth) | `docs/reference/` (3-4 files MAX) + CLAUDE.md hot kernel + MEMORY.md as pointer index | the land graduation row | every wake; DISPATCH BRIEFS FIRST | checkup byte-budget + pointer-resolve rows; every line cites executable truth (state registry exempt — see state row) |
 | state (in-flight) | ONE registry file inside the reference tier (live runs, active worktrees, best-ckpt policy) | whoever starts/stops a run or campaign | session start; coordination | pointer-targets-exist + dated-claim expiry (checkup) |
 | history (append-only) | docs/campaigns/ + docs/archive/ + docs/superpowers/ | campaigns, append-only | grep archaeology | solidation at checkup/milestone; false-OPEN census |
 
@@ -85,7 +85,10 @@ fifth home: live ones are state, preserved ones are history-with-manifest.
 
 **S1 — Reference tier, double-gated, with a READ side.**
 - Scaffold `docs/reference/`: capabilities+gotchas / conventions+invariants /
-  state registry. Hard cap 3-4 files. Format law: EVERY line points at
+  state registry. Hard cap 3-4 files. The conventions file's named contents
+  include the ROUTE MAP for multi-route computations: computation → routes →
+  which is canonical → the assertion command that proves engagement (the
+  owner's wiring knowledge, first-class). Format law: EVERY line points at
   executable truth (`file:line` of a test, gate, or config) — prose with a
   failure path; this one law subsumes the proposed fact-store.
 - Write side: campaign-land row `reference: updated <file> | nothing to
@@ -125,12 +128,24 @@ subagent with zero adoption behavior).**
   repo CHANGELOG, not in memory).
 
 **S3 — Verification-code lifecycle (the owner's "professional developer" core).**
+- Principle (owner requirement, GPU-heavy fleet): the same computation has
+  MULTIPLE execution routes, and silent wrong-route runs are frequent and
+  near-invisible — agent consumers read logs through tails and summarizers,
+  so a warning line is structurally unseen. **Agent-facing failure must be
+  exit-code-shaped, not log-shaped**: route assertions DIE on mismatch, never
+  warn. The land-time engage assertion (Phase 2.5) generalizes to EVERY run:
+  expected route declared in config, runner compares actual vs expected,
+  non-zero on divergence.
 - Plugin ships exactly TWO probe assets, the ones campaign-land already
   mandates by name and never shipped: `mutation_run` and `engage_grep`
   (self-testing: one line that must match, one that must not, positive-state
   anchor, fixed-string default; mutation_run's spec — forced serial arms,
-  untouched-phase control, no-op control — follows the audit's §2.3 form). Everything else (A/B runners, provenance,
-  md5-pin, census) is DEFERRED until a project asks.
+  untouched-phase control, no-op control — follows the audit's §2.3 form)
+  PLUS `provenance_block` — its deferral trigger ("until a project asks")
+  fired: the owner asked, for the silent-route class. Every run artifact
+  carries a compact route proof (backend / kernel / device / active flags),
+  so "which route actually ran" is a recorded fact, not archaeology.
+  Everything else (A/B runners, md5-pin, census) stays DEFERRED.
 - campaign-land row: `verification: promoted to tests/ | one-shot — <reason>
   (state doc) | deleted`. Session-scratchpad verification is not a deliverable.
 - Checkup census row: verification orphans (no test AND no inbound reference),
@@ -222,12 +237,12 @@ campaign.sh-carried fixes remains that project's own backlog item.
 | S2 plans/specs corpus | 78 / 79 / 9 files per repo | ls \| wc -l |
 | S3 orphan verifiers | 29/62 (project B) | no-test AND no-inbound-ref census |
 | S3 probe re-implementation | 4 re-builds / 1 session; trap re-hit ×3 | grep campaign docs |
-| S4 coordinator shell share | 46.8% of intake; Explore 4/218 | transcript tool-name census |
+| S4 coordinator shell share | 66% Bash call-share (1,436/2,170); Explore 4/218 | transcript tool-name census (counts — R22-safe) |
 | S5 cell overflow | 155 cells >400 chars, max 2,935 | awk length census |
 | S4 fan-out deaths | 20 session-limit deaths, burst of 6 | transcript census (observational) |
 | S4 brief mass | 216k tok / 218 dispatches | transcript census (observational) |
 | S5 owner corrections | 3 recorded classes | corrections-per-week (observational) |
 
 Success = the RECURRING terms move (marginal question ≤3 calls; wake mass
-toward hot-kernel size; orphan inflow ~0; shell share materially down).
+toward hot-kernel size; orphan inflow ~0; Bash call-share halved).
 The one-off production term is explicitly out of scope this release.
