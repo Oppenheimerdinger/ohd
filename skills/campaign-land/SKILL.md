@@ -179,6 +179,10 @@ Leave the row's shape alone too — emphasis around the label is fine
 (`- [x] result / verdict: LANDS`) is refused by `clean` even though the audit
 accepts it.
 
+Fill the verdict and flip `- status: OPEN (<date>)` to the verdict state
+(`LANDED <date>` / `ABANDONED <date>`) in the SAME edit — a status line no gate
+reads is the one that rots (field: this repo measured 5/5 false-OPEN).
+
 ## Phase 5 — PR merge mechanics (the gotchas)
 
 - ⚠ **Stacked-PR base check**: `gh pr view <n> --json baseRefName`. A PR whose
@@ -207,9 +211,22 @@ accepts it.
   costs sit behind this row: verification with no failure path is where a FIXED
   bug stayed alive eight days in an untested duplicate, and where the next
   campaign re-implements the same probe from scratch. Before writing a new one,
-  check the plugin's `assets/probes/` — `engage_grep`, `mutation_run` and
-  `provenance_block` ship with ohd precisely because they were being re-built
-  per campaign. `/ohd-checkup structure` censuses the orphans that accumulate
+  run the probes ohd already ships — they exist precisely because they were
+  being re-built per campaign. Resolve the plugin root first; a bare
+  `${CLAUDE_PLUGIN_ROOT}` does not expand in a skill body:
+
+  ```bash
+  OHD="$(jq -r '.plugins | to_entries[]
+                | select(.key|startswith("ohd@")) | .value[0].installPath' \
+         ~/.claude/plugins/installed_plugins.json 2>/dev/null)"
+  [ -d "$OHD" ] || OHD="$(ls -d ~/.claude/plugins/cache/*/ohd/*/ 2>/dev/null | sort -V | tail -1)"
+  bash "$OHD/assets/probes/engage_grep.sh"      --help  # WHICH route actually ran
+  bash "$OHD/assets/probes/mutation_run.sh"     --help  # prove the checks CAN fail
+  bash "$OHD/assets/probes/provenance_block.sh" --help  # record the route as an artifact
+  ```
+
+  (installed_plugins.json is the authoritative path source; the cache glob is
+  the fallback.) `/ohd-checkup structure` censuses the orphans that accumulate
   when this row is skipped.
 - **Never write merge-status as a bare fact**: phrase as verify-on-read ("as
   of <date> pushed NOT merged — re-derive, don't trust this line") and flip it
@@ -298,6 +315,8 @@ memory is a soft layer, the script gate is the backstop).
   `git diff --name-only` artifact, AND `verification:` with one of its three
   verdicts. An item an evidence cell does not name by name is the item that
   goes missing.
+  **Forward-only**: this binds lands from here on; historical reports are
+  expected to fail it.
 - **The blank table `campaign.sh land --report` scaffolds does not yet carry
   `reference:` or `verification:`** — that heredoc lives in the lifecycle
   script, which this release deliberately does not touch. Until it does, these

@@ -169,3 +169,21 @@ campaign-land's forward-only contract. Fix belongs to the next release that
 touches campaign.sh: add both lines to the scaffold heredoc, and only then a
 version- or date-scoped audit row becomes derivable. (implementer finding,
 v0.6.0)
+
+## 14. The structure row cannot say when the last full audit ran — OPEN (opened v0.6.0)
+
+v0.6.0's default structure row ships the honest string `last full audit: no
+record`: the structure report is output-only, so nothing on disk marks that a
+run happened. The obvious quick fix — have `--structure` stamp a dated line
+into `docs/reference/state.md` — was tried and REJECTED on measurement, not on
+taste. state.md is exactly the file the default reference row gates for
+`as of <date>` claims older than 14 days, so the stamp turns every structure
+run into a guaranteed `reference | STALE` row 14 days later (reproduced: a
+15-day-old stamp yields `state.md dated claim(s) older than 14 days`). That
+breaks the rule the default run is built on — a default run is a drift doctor
+and must never nag a project into structural work — and it does so on a project
+whose only sin was running the opt-in mode once. Unblocking condition: an age
+signal scoped AWAY from the default reference row (its own stamp file or row,
+with its own staleness policy), which is a design pass in its own right, not a
+line of code. Until then the row says "no record" rather than implying it
+knows. (implementer finding, v0.6.0)
