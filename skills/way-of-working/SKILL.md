@@ -84,8 +84,11 @@ it is not a micro-edit at any cost ratio. Once they pass, weigh the actual
 costs: if writing the brief plus reading and verifying the reply costs more
 than just doing the work, do it directly — row 1's case, and the investigation
 row's too: one command answered in one breath stays inline, since that row is
-for SWEEPS, not one-liners. Otherwise delegate — the output then lives in the
-subagent's context, not yours.
+for SWEEPS, not one-liners. The exemption is per QUESTION, not per command: a
+RUN of one-liners in service of ONE question IS a sweep — dispatch it, or the
+row's evidence (coordinator Bash call-share) is satisfied away one breath at a
+time. Otherwise delegate — the output then lives in the subagent's context,
+not yours.
 
 Inside an open campaign the default is that an edit belongs to the plan —
 "standalone" is a claim you support by pointing at the plan section, not the

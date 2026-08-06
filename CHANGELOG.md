@@ -2,9 +2,11 @@
 
 BEHAVIOR-CHANGE: way-of-working's delegation table gains the row it was missing — shell/filesystem INVESTIGATION (enumerating, measuring, censusing, grepping across a tree) goes to a read-only sweep subagent with `Explore` as the named vehicle, and the model tier is an explicit lever rather than a default.
 
-BEHAVIOR-CHANGE: a land-report evidence cell now carries the VERDICT plus a pointer (aim ≤~200 chars) with the supporting argument moved into a named section of the same state doc, while v0.5.23's named cells (the Phase-3 convergence log with `simplifier:`, the Phase-6 `sanity:`) keep their names and their required contents unchanged.
+BEHAVIOR-CHANGE: a land-report evidence cell now carries the VERDICT plus a pointer (aim ≤~200 chars) with the supporting argument moved into a named section of the same state doc, and v0.5.23's named cells (the Phase-3 convergence log with `simplifier:`, the Phase-6 `sanity:`) keep their names and their required contents — except that when the convergence log runs past ~2 rounds the cell carries the terminal round line plus a pointer to the named section holding the full log.
 
 BEHAVIOR-CHANGE: an autonomous loop's completion is judged by the independent evaluator's verdict and never by whether the stop hook fired or stopped firing, since a hook can miss a correct promise and hook silence is not a verdict.
+
+BEHAVIOR-CHANGE: in the race where the verdict is banked verbatim but the stop hook keeps re-firing, an autonomous session re-emits the `<promise>` in the loop's exit format each iteration and does NO further mandate work, and if the race persists the user-owned cancel is the legitimate manual exit — legitimate because the banked verdict already decided completion.
 
 - This release is the VANGUARD of the "O(1) harness" design
   (`docs/superpowers/specs/2026-08-06-o1-harness-design.md`) — its S4 and S5
@@ -29,14 +31,19 @@ BEHAVIOR-CHANGE: an autonomous loop's completion is judged by the independent ev
 - Owner corrections are TRIGGER FAILURES by definition: when the owner corrects
   how the session works rather than what it concluded, a trigger that should
   have fired didn't, so it gets a backlog entry naming that missing trigger
-  (riding the existing backlog discipline; the fleet metric is
-  corrections-per-week).
+  (riding the existing backlog discipline; the metric is
+  corrections-per-week, read per project).
 - `claude-md-sanity` gains one check: a shared-infrastructure fact (a machine, a
   common service, a fleet-wide path) stated in MORE than one home — project
   CLAUDE.md, global config, memory — is compared across homes, and divergent
-  statements of the same fact are BROKEN. The recommendation is "state it in one
-  home, point at it from the others"; the skill audits only, and which home is
-  the fleet's stays the user's call.
+  statements of the same fact are BROKEN. Divergent means a VALUE conflict (a
+  different address, count, path, or state); the SAME values at different
+  detail, format, or verbosity is elaboration and is never flagged, and a case
+  you can't tell apart goes to MANUAL-CHECK rather than BROKEN — a field probe
+  across six real homes found zero value conflicts and universal format
+  variance, so the false positive is the live risk here. The recommendation is
+  "state it in one home, point at it from the others"; the skill audits only,
+  and which home is the fleet's stays the user's call.
 
 ## v0.5.23 (2026-07-31)
 

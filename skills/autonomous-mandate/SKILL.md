@@ -120,7 +120,8 @@ loop for it. This skill is for session-scope, user-absent mandates.
      dispatchable or watchable, that iteration is the LAST RESORT case
      below — name it as such; do not manufacture a dispatch to dodge the
      label (manufacturing work is banned there for the same reason).
-     (Step 3's completion exit is its own ending and needs none of these.)
+     (Step 3's completion exit is its own ending and needs none of these —
+     including its re-emission while the hook re-fires.)
    - **Read deliverables from git or the agent log, never from the
      notification** (step 5: idle != done). "Agent notified" is not "agent
      committed"; check, then tell it to finish.

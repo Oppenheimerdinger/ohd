@@ -253,10 +253,11 @@ memory is a soft layer, the script gate is the backstop).
 - **Two cells have NAMED contents, not free-form evidence** (both are Phase
   rules above, repeated here because this table is what actually gets filled):
   row 3 carries the convergence log — per round, the reviewer and the SHA it
-  reviewed, ending clean or with every residual ruled on — plus `simplifier:`
-  with a reason when it says `not needed`; row 6 carries `sanity:` with either
-  findings and their disposition or the skip and its `git diff --name-only`
-  artifact. An item an evidence cell does not name by name is the item that
+  reviewed, ending clean or with every residual ruled on, or, past ~2 rounds,
+  the terminal round line plus the pointer to the named log section (the
+  overflow rule below) — plus `simplifier:` with a reason when it says
+  `not needed`; row 6 carries `sanity:` with either findings and their
+  disposition or the skip and its `git diff --name-only` artifact. An item an evidence cell does not name by name is the item that
   goes missing.
 - **A cell carries the VERDICT plus a pointer** (aim ≤~200 chars; baseline: 155
   cells measured >400 chars, max 2,935) — the supporting ARGUMENT lives in a
@@ -264,10 +265,11 @@ memory is a soft layer, the script gate is the backstop).
   aim governs ARGUMENT mass only: the named cells' MANDATED lines (convergence
   log rounds, `simplifier:`, `sanity:`) do not count against it. When the
   convergence log runs past ~2 rounds, the cell carries the TERMINAL round line
-  plus a pointer to a named section holding the full round log — the cell still
-  carries the log's verdict, the argument mass still moves out. **Forward-only**
-  like Phase 6's contract: this binds lands from here on; historical reports are
-  expected to fail it.
+  plus a pointer to a named section holding the full round log — not because of
+  the char aim (mandated lines are exempt from it) but because a table cell
+  holding a long log is unscannable: the terminal line is the verdict, the
+  section is the record. **Forward-only** like Phase 6's contract: this binds
+  lands from here on; historical reports are expected to fail it.
 - **Substitution rationales are invalid.** A review that happened during
   implementation does not satisfy Phase 3 (it saw a different, earlier tree).
   "Low risk" is not an exemption. (A review **subagent** on the final diff is

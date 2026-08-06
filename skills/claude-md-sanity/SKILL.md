@@ -55,9 +55,11 @@ find . -name CLAUDE.md -not -path '*/.git/*'; ls MEMORY.md memory/ 2>/dev/null
 ```
 If the user names a specific file, audit that. Don't wander outside the repo —
 references that point *out* of it are their own finding type (Check 4). **One
-exception**: Check 8 is the single check that READS the named cross-homes (the
-user's global config, the memory index) — read-only and comparison-only; it
-never rewrites them and never audits them in their own right.
+exception**: two checks read outside the repo by design — Check 3 resolves
+memory slugs against the harness auto-memory store, and Check 8 compares
+shared-infrastructure values across the named cross-homes (the user's global
+config, the memory index). Both are read-only and comparison-only; neither
+rewrites those homes or audits them in their own right.
 
 **No git history?** (not a repo, or a shallow clone with no tags) — the dated-anchor
 and tag-based lock-step checks can't run; degrade those to MANUAL-CHECK and say so,
@@ -250,6 +252,7 @@ WATCH (N)         ← correct only while a paired qualifier holds
 - <file:LL> — <claim> ⟂ <the qualifier propping it up> → <the pair that must move together>
 MANUAL-CHECK (N)  ← needs your eyes (couldn't verify mechanically)
 - <file:LL> — <the promise> → <the exact thing to confirm>
+- <file:LL> vs <other home>:LL — <fact> stated as X here, Y there → confirm whether that is a value conflict or the same fact elaborated  (check 8)
 
 Clean: <dimensions actually verified — e.g. "memory pointers (3 slugs resolved),
         version lock-step (verified-empty), anchor topology">
