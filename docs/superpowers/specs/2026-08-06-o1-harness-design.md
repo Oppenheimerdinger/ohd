@@ -136,8 +136,8 @@ subagent with zero adoption behavior).**
   warn. The land-time engage assertion (Phase 2.5) generalizes to EVERY run:
   expected route declared in config, runner compares actual vs expected,
   non-zero on divergence.
-- Plugin ships exactly TWO probe assets, the ones campaign-land already
-  mandates by name and never shipped: `mutation_run` and `engage_grep`
+- Plugin ships THREE probe assets: the two campaign-land already mandates by
+  name and never shipped — `mutation_run` and `engage_grep`
   (self-testing: one line that must match, one that must not, positive-state
   anchor, fixed-string default; mutation_run's spec — forced serial arms,
   untouched-phase control, no-op control — follows the audit's §2.3 form)
@@ -242,6 +242,7 @@ campaign.sh-carried fixes remains that project's own backlog item.
 | S4 fan-out deaths | 20 session-limit deaths, burst of 6 | transcript census (observational) |
 | S4 brief mass | 216k tok / 218 dispatches | transcript census (observational) |
 | S5 owner corrections | 3 recorded classes | corrections-per-week (observational) |
+| S3 silent wrong-route runs | owner-reported; no pre-ship count possible (failures are silent) | post-ship: provenance-block greps + assertion die-count (observational) |
 
 Success = the RECURRING terms move (marginal question ≤3 calls; wake mass
 toward hot-kernel size; orphan inflow ~0; Bash call-share halved).
