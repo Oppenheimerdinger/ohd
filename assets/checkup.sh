@@ -186,16 +186,29 @@ fi
 # the row says so rather than implying it audited more than it did.
 HOT_TARGET=20480
 if [ -f CLAUDE.md ]; then
-  AL_MARK="$(grep -o '<!-- *ohd:always-loaded[^>]*-->' CLAUDE.md 2>/dev/null | head -1 || true)"
+  AL_MARKS="$(grep -o '<!-- *ohd:always-loaded[^>]*-->' CLAUDE.md 2>/dev/null || true)"
   AL_B="$(wc -c < CLAUDE.md)"; AL_N=1; AL_MISS=""
-  if [ -n "$AL_MARK" ]; then
-    for p in $(printf '%s' "$AL_MARK" | sed 's/<!-- *ohd:always-loaded//; s/-->//'); do
-      if [ -f "$p" ]; then
-        AL_B=$((AL_B + $(wc -c < "$p"))); AL_N=$((AL_N + 1))
-      else
-        AL_MISS="$AL_MISS$p "
-      fi
-    done
+  if [ -n "$AL_MARKS" ]; then
+    # EVERY marker, and each one's content read as a PATH rather than word-split.
+    # The unquoted expansion this replaces turned `docs/my plan.md` into two
+    # nonexistent paths and dropped the file's bytes out of the budget silently,
+    # and only the first marker was ever read. One path per marker always
+    # parses; the space-separated list still resolves when no path has a space.
+    while IFS= read -r mark; do
+      [ -n "$mark" ] || continue
+      body="$(printf '%s' "$mark" | sed 's/<!-- *ohd:always-loaded//; s/-->$//')"
+      body="${body#"${body%%[![:space:]]*}"}"; body="${body%"${body##*[![:space:]]}"}"
+      [ -n "$body" ] || continue
+      if [ -f "$body" ]; then AL_P=("$body"); else read -r -a AL_P <<< "$body"; fi
+      [ "${#AL_P[@]}" -gt 0 ] || continue
+      for p in "${AL_P[@]}"; do
+        if [ -f "$p" ]; then
+          AL_B=$((AL_B + $(wc -c < "$p"))); AL_N=$((AL_N + 1))
+        else
+          AL_MISS="$AL_MISS$p "
+        fi
+      done
+    done <<< "$AL_MARKS"
     AL_SCOPE="across $AL_N file(s) (CLAUDE.md + the always-loaded marker list)"
   else
     AL_SCOPE="CLAUDE.md only — no \`<!-- ohd:always-loaded <path>... -->\` marker, so a plan/ledger file every worker must read is NOT in this count; add one to budget it"
@@ -226,7 +239,10 @@ else
     [ -f "$f" ] || continue
     REF_N=$((REF_N + 1))
     IS_STATE=0; [ "$(basename "$f")" = state.md ] && IS_STATE=1
-    while IFS= read -r line; do
+    # `|| [ -n "$line" ]`: a file with no trailing newline hands its LAST line to
+    # `read` with a non-zero status, and that line — the one most likely to be
+    # freshly appended — went ungated.
+    while IFS= read -r line || [ -n "$line" ]; do
       case "$line" in
         [-*]" "*|"  "[-*]" "*) : ;;
         *) continue ;;
@@ -250,7 +266,10 @@ else
     done < "$f"
   done
   REF_PH_TXT="$REF_PH placeholder line(s) still to replace"
-  if [ -n "$REF_DEAD$REF_OLD" ]; then
+  if [ "$REF_N" = 0 ]; then
+    # an empty tier used to report exactly like a filled one
+    report "reference" "STALE" "0 file(s) — the directory exists but is EMPTY, which is not the same as healthy; scaffold it from the plugin's assets/home-set/reference/ (\`/ohd-checkup structure\` offers this) or remove the directory"
+  elif [ -n "$REF_DEAD$REF_OLD" ]; then
     D=""
     [ -z "$REF_DEAD" ] || D="dead pointer(s): $REF_DEAD"
     [ -z "$REF_OLD" ] || D="${D}${D:+; }state.md dated claim(s) older than 14 days: $REF_OLD"
@@ -261,6 +280,23 @@ else
   fi
 fi
 
+# ---- "this doc records a TERMINAL verdict" — one rule, three consumers -------
+# (the false-OPEN census, the structure summary, and the solidation list). Each
+# used a hardcoded strict `result / verdict` literal, which field measurement
+# found wrong in BOTH directions: it MISSED decorated, translated and
+# `status: LANDED` verdict rows — the census read 0 on a corpus full of them —
+# and it COUNTED placeholder and PENDING text as a filled verdict.
+# The shape is the land-report audit's rule below (same marker/checkbox/label
+# tolerance, and its comment carries the full reasoning), ANCHORED on a terminal
+# verdict word. That anchor is the part that cannot be dropped: the audit's rule
+# reused verbatim still counts every placeholder row, because its verdict-label
+# branch accepts ANY non-space value — both `*(fill in after the gate)*` and
+# `PENDING the GPU gate` match it, verified. The audit keeps that tolerance on
+# purpose (it over-reports, and its output is a prompt to go look); these three
+# rows drive batch-closing and archiving, where a false positive costs more.
+VERDICT_RE='^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*|[^[:space:]:]+:[[:space:]]*)?[*_`]*\b(LANDS|LANDED|ABANDONED|ABORTED)\b'
+has_verdict() { grep -qiE "$VERDICT_RE" "$1" 2>/dev/null; }
+
 # ---- campaign census: OPEN status vs filled verdict (the false-OPEN term) ---
 if [ -d "$SD" ]; then
   C_TOT=0; C_OPEN=0; C_FALSE=0
@@ -269,10 +305,9 @@ if [ -d "$SD" ]; then
     C_TOT=$((C_TOT + 1))
     grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*status[*_`]*:[[:space:]]*[*_`]*OPEN' "$d" 2>/dev/null || continue
     C_OPEN=$((C_OPEN + 1))
-    grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*result / verdict[*_`]*:[[:space:]]*[^[:space:]]' "$d" 2>/dev/null \
-      && C_FALSE=$((C_FALSE + 1))
+    has_verdict "$d" && C_FALSE=$((C_FALSE + 1))
   done
-  report "campaigns" "$C_OPEN open/$C_TOT total, $C_FALSE false-OPEN" "false-OPEN = the doc still says \`status: OPEN\` while its \`- result / verdict:\` row is filled; grep archaeology reads those as in-flight work"
+  report "campaigns" "$C_OPEN open/$C_TOT total, $C_FALSE false-OPEN" "false-OPEN = the doc still says \`status: OPEN\` while its verdict row records a terminal outcome; grep archaeology reads those as in-flight work — fix: flip \`status: OPEN\` to the verdict state in the same edit that fills the verdict (campaign-land Phase 4)"
 fi
 
 # ---- structure: ONE summary line. A count is a POINTER, not an audit — the
@@ -282,8 +317,7 @@ if [ -d "$SD" ]; then
   for d in "$SD"/*.md; do
     [ -f "$d" ] || continue
     case "$d" in docs/archive/*) continue ;; esac
-    grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*result / verdict[*_`]*:[[:space:]]*[^[:space:]]' "$d" 2>/dev/null \
-      && ST_CAND=$((ST_CAND + 1))
+    has_verdict "$d" && ST_CAND=$((ST_CAND + 1))
   done
 fi
 [ -d "$REFD" ] || ST_CAND=$((ST_CAND + 1))
@@ -404,7 +438,7 @@ if [ "$STRUCT" = 1 ]; then
     for d in "$SD"/*.md; do
       [ -f "$d" ] || continue
       case "$d" in docs/archive/*) continue ;; esac
-      grep -qiE '^[[:space:]]*[-*][[:space:]]+[*_`]*result / verdict[*_`]*:[[:space:]]*[^[:space:]]' "$d" 2>/dev/null || continue
+      has_verdict "$d" || continue
       SOL_N=$((SOL_N + 1)); SOL="$SOL  $d ($(wc -c < "$d" | tr -d ' ')B)
 "
     done
@@ -418,7 +452,9 @@ if [ "$STRUCT" = 1 ]; then
   # 2. orphan-verification census -------------------------------------------
   TF="$(mktemp)"; git ls-files -z > "$TF" 2>/dev/null || : > "$TF"
   ALLOWF=".ohd-orphan-allowlist"
-  VER_RE='(^|/)((test|check|verify|probe|bench|assert|validate|sanity|smoke|measure|audit)[-_.][^/]*|[^/]*[-_](test|check|verify|probe|bench|assert|validate|sanity|smoke))\.(sh|bash|py|mjs|js)$'
+  # the separator is OPTIONAL: requiring one made the commonest real form —
+  # a bare `check.sh` / `verify.py` — match nothing at all
+  VER_RE='(^|/)((test|check|verify|probe|bench|assert|validate|sanity|smoke|measure|audit)([-_.][^/]*)?|[^/]*[-_](test|check|verify|probe|bench|assert|validate|sanity|smoke))\.(sh|bash|py|mjs|js)$'
   ORPH=""; ORPH_N=0; ALLOW_N=0; CAND_N=0
   while IFS= read -r -d '' f; do
     case "$f" in bench/*|tools/*|scripts/*) : ;; *) continue ;; esac
@@ -428,7 +464,10 @@ if [ "$STRUCT" = 1 ]; then
       ALLOW_N=$((ALLOW_N + 1)); continue
     fi
     base="${f##*/}"
-    hit="$(xargs -0 grep -lF -- "$base" < "$TF" 2>/dev/null | grep -vxF "$f" | head -1 || true)"
+    # word-boundary-ish, not a raw substring: `recheck_gate.py` CONTAINS
+    # `check_gate.py`, and that collision reported a genuine orphan as referenced
+    BRE="$(printf '%s' "$base" | sed 's/[^[:alnum:]_-]/\\&/g')"
+    hit="$(xargs -0 grep -lE -- "(^|[^[:alnum:]_])$BRE([^[:alnum:]_]|\$)" < "$TF" 2>/dev/null | grep -vxF "$f" | head -1 || true)"
     [ -n "$hit" ] && continue
     ORPH_N=$((ORPH_N + 1)); ORPH="$ORPH  $f ($(wc -c < "$f" | tr -d ' ')B)
 "

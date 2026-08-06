@@ -383,12 +383,33 @@ printf '# tiny\n<!-- ohd:always-loaded docs/gone.md -->\n' > CLAUDE.md
 out="$("$CK" .)"
 grep -q "always-loaded | " <<<"$out"      || fail "marker naming a missing file crashed the row"
 grep -q "docs/gone.md" <<<"$out"          || fail "unresolvable always-loaded marker entry not named"
-printf '# tiny\n' > CLAUDE.md; rm -f docs/plan.md
+# a path with a SPACE: the marker used to be word-split, so the one file became
+# two nonexistent ones and its bytes left the budget entirely
+head -c 30000 /dev/zero | tr '\0' 'x' > "docs/my plan.md"
+printf '# tiny\n<!-- ohd:always-loaded docs/my plan.md -->\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "always-loaded | OVER" <<<"$out"  || fail "marker path containing a space not counted (word-split?)"
+grep -q "2 file(s)" <<<"$out"             || fail "spaced marker path not counted as one file"
+# the space-separated multi-path form still works when no path contains a space,
+# and a SECOND marker line is read too (only the first ever was)
+printf 'a\n' > docs/a.md; printf 'b\n' > docs/b.md
+printf '# tiny\n<!-- ohd:always-loaded docs/a.md docs/b.md -->\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "3 file(s)" <<<"$out"             || fail "space-separated multi-path marker stopped resolving"
+printf '# tiny\n<!-- ohd:always-loaded docs/a.md -->\n<!-- ohd:always-loaded docs/my plan.md -->\n' > CLAUDE.md
+out="$("$CK" .)"
+grep -q "3 file(s)" <<<"$out"             || fail "a second always-loaded marker is ignored"
+printf '# tiny\n' > CLAUDE.md; rm -f docs/plan.md "docs/my plan.md" docs/a.md docs/b.md
 
 # --- reference: existence + pointer resolution + dated-claim expiry ---
 out="$("$CK" .)"
 grep -q "reference | MISSING" <<<"$out"   || fail "absent docs/reference/ not reported MISSING"
 mkdir -p docs/reference
+# an EMPTY tier is not a healthy one: 'OK' there reads identically to a filled
+# tier, so the count is what makes 0 visible
+out="$("$CK" .)"
+grep -q "reference | STALE" <<<"$out"     || fail "empty docs/reference/ reported as a healthy tier"
+grep -q "0 file(s)" <<<"$out"             || fail "reference row does not report the file count"
 cp "$HERE/assets/home-set/reference/"*.md docs/reference/
 out="$("$CK" .)"
 grep -q "reference | OK" <<<"$out"        || fail "scaffold placeholders must not fabricate drift"
@@ -411,6 +432,14 @@ grep -q "reference | OK" <<<"$out"        || fail "3-day-old dated claim wrongly
 echo "- some capability, as of $(days_ago 90) — \`src/nowhere.py\`" >> docs/reference/capabilities.md
 out="$("$CK" .)"
 grep -q "reference | OK" <<<"$out"        || fail "dated-claim expiry wrongly applied outside state.md"
+# the LAST line of a file with no trailing newline: `read` returns non-zero on it
+# and the loop body never ran, so the final pointer of such a file went ungated
+cp docs/reference/conventions.md "$TMP/conv.bak"
+printf -- '- the last fact, unterminated — `src/gone_last.py`' >> docs/reference/conventions.md
+out="$("$CK" .)"
+grep -q "reference | STALE" <<<"$out"     || fail "dead pointer on an unterminated last line not gated"
+grep -q "src/gone_last.py" <<<"$out"      || fail "STALE detail does not name the unterminated line's pointer"
+cp "$TMP/conv.bak" docs/reference/conventions.md
 
 # --- campaigns: OPEN count vs verdict-filled count (the false-OPEN census) ---
 cat > docs/campaigns/c1.md <<'EOF'
@@ -430,6 +459,32 @@ cat > docs/campaigns/c3.md <<'EOF'
 EOF
 out="$("$CK" .)"
 grep -qE "campaigns \| 2 open/3 total, 1 false-OPEN" <<<"$out" || fail "campaign census wrong: $(grep '^campaigns' <<<"$out")"
+# every other row that proposes work names its remedy; this one closes the set
+grep '^campaigns | ' <<<"$out" | grep -q 'campaign-land' \
+  || fail "campaigns row detail carries no remedy pointer (its siblings all do)"
+
+# what counts as a FILLED verdict, both directions. The strict `result / verdict`
+# literal was wrong BOTH ways, field-verified: it missed decorated, translated
+# and `status:`-labelled verdicts (undercount to 0), and it counted placeholder
+# and PENDING text as filled — false positives the repair table then invites you
+# to batch-close. Same rule feeds the solidation list and the structure summary.
+rm -f docs/campaigns/*.md
+census_says() {   # <expected false-OPEN count> <verdict row>
+  printf '# campaign: x\n- status: OPEN (2026-07-20)\n%s\n' "$2" > docs/campaigns/x.md
+  local o; o="$(LC_ALL=C "$CK" .)"
+  grep -qE "campaigns \| 1 open/1 total, $1 false-OPEN" <<<"$o" \
+    || fail "false-OPEN census wants $1 for [$2] — got: $(grep '^campaigns' <<<"$o")"
+}
+census_says 1 '- **verdict**: LANDS'
+census_says 1 '- 결론: LANDS'
+census_says 1 '- status: LANDED (PR #12 merged)'
+census_says 1 '- result/verdict: LANDS — merged'
+census_says 1 '- result / verdict: LANDS — merged as PR #4'
+census_says 1 '- result / verdict: ABANDONED — superseded'
+census_says 0 '- result / verdict: *(fill in after the gate)*'
+census_says 0 '- result / verdict: PENDING the GPU gate'
+census_says 0 '- result / verdict:'
+rm -f docs/campaigns/x.md
 
 # --- structure: ONE summary line, never action-proposing in default mode ---
 out="$("$CK" .)"
@@ -484,6 +539,23 @@ grep -q "bench/verify_alpha.sh" <<<"$out"   && fail "allowlisted orphan still li
 grep -q "1 allowlisted" <<<"$out"           || fail "allowlisted orphan not counted"
 grep -q "scripts/smoke_gamma.sh" <<<"$out"  || fail "allowlist swallowed a non-allowlisted orphan"
 rm .ohd-orphan-allowlist
+# a BARE family name is the commonest real form and matched nothing: the pattern
+# required a separator (check_x.sh), so `check.sh` and `verify.py` were invisible
+printf '#!/bin/sh\necho c\n' > tools/check.sh
+printf 'print("v")\n' > bench/verify.py
+# ...and the inbound-reference test was a raw fixed string, so an unrelated file
+# merely NAMING recheck_gate.py made the genuine orphan check_gate.py look
+# referenced
+printf 'print("g")\n' > tools/check_gate.py
+printf '#!/bin/sh\n# nightly: python tools/recheck_gate.py --all\n' > scripts/runner.sh
+git add -A && git commit -qm fixture-collisions
+out="$("$CK" . --structure)"
+grep -q "tools/check.sh" <<<"$out"          || fail "bare family name check.sh not censused"
+grep -q "bench/verify.py" <<<"$out"         || fail "bare family name verify.py not censused"
+grep -q "tools/check_gate.py" <<<"$out"     || fail "substring collision (recheck_gate.py) hid a genuine orphan"
+grep -q "scripts/runner.sh" <<<"$out"       && fail "non-verification script censused (naming family ignored)"
+git rm -q tools/check.sh bench/verify.py tools/check_gate.py scripts/runner.sh
+git commit -qm fixture-collisions-undo
 # corpus + histogram + adoption offer + self-application
 out="$("$CK" . --structure)"
 grep -qi "plans/specs corpus" <<<"$out"     || fail "no plans/specs corpus size"
