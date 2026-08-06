@@ -138,11 +138,30 @@ LEAKY='leak|sed -i s/GOOD/BAD/ impl.txt && touch stray.txt|sed -i s/BAD/GOOD/ im
 out="$(bash "$M" --check 'grep -q GOOD impl.txt' --arm "$LEAKY" 2>&1)" \
   && fail "mutation_run passed an arm whose restore leaked a file into the tree"
 grep -q 'stray.txt' <<<"$out" || fail "the tree-contamination failure does not name the leftover path"
+grep -qi 'per-run-unique' <<<"$out" \
+  || fail "the contamination failure blames a leaked restore without naming the other cause"
 rm -f stray.txt
+# the OTHER cause of the same signal: a --check that writes a per-run-unique
+# file. The probe cannot tell the two apart, so the message must not pick one.
+# (A STABLE-named artifact is absorbed: the baseline runs happen before the
+# snapshot, so it is already in it — which is why the precondition is only
+# about per-run-unique names.)
+out="$(bash "$M" --check 'grep -q GOOD impl.txt && touch "log.$(date +%s%N)"' \
+       --arm 'clean|sed -i s/GOOD/BAD/ impl.txt|sed -i s/BAD/GOOD/ impl.txt' 2>&1)" \
+  && fail "a per-run-unique check artifact did not trip the tree comparison"
+grep -qi 'per-run-unique' <<<"$out" \
+  || fail "a per-run-unique check artifact is misreported as a leaked restore"
+rm -f log.*
+bash "$M" --help | grep -qi 'per-run-unique' \
+  || fail "--help does not state the no-per-run-unique-files precondition"
 # the same arm without the leak still passes — the check is contamination, not
 # "any git tree makes this fail"
-[ "$(rc bash "$M" --check 'grep -q GOOD impl.txt' --arm 'clean|sed -i s/GOOD/BAD/ impl.txt|sed -i s/BAD/GOOD/ impl.txt')" = 0 ] \
+out="$(bash "$M" --check 'grep -q GOOD impl.txt' --arm 'clean|sed -i s/GOOD/BAD/ impl.txt|sed -i s/BAD/GOOD/ impl.txt')" \
   || fail "a properly restoring arm failed the tree-contamination check"
+# ...and the success line does not overclaim: git status cannot see an ignored
+# path, so "tree unchanged" has to say what it actually compared
+grep -q 'ignored paths not checked' <<<"$out" \
+  || fail "the success line claims 'tree unchanged' without scoping it to what git status sees"
 cd "$TMP/mut"
 
 # ---------- provenance_block: which route ACTUALLY ran ----------
