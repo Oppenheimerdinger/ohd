@@ -24,7 +24,7 @@ reach later COLD solvers via the pitfall list — a mild anchoring channel into
 the round that exists to escape anchors. Normal path goes to SYNTH first, so
 this only fires when the forced SYNTH itself gets findings.
 
-## 3. ohd-share — shared-dir-style deployment tooling — OPEN
+## 3. ohd-share — shared-dir deployment tooling — OPEN
 
 snapshot/mirror deploy recorded by new-project but no executing tool yet.
 
@@ -187,3 +187,64 @@ signal scoped AWAY from the default reference row (its own stamp file or row,
 with its own staleness policy), which is a design pass in its own right, not a
 line of code. Until then the row says "no record" rather than implying it
 knows. (implementer finding, v0.6.0)
+
+## 15. provenance_block fabricates `git=n/a-dirty` outside a git tree + simplifier worth-doing batch — OPEN (opened v0.6.0 land)
+
+The land-time simplifier pass (report-only, over the merged v0.6.0 diff) found
+one real defect and five worthwhile simplifications; none block v0.6.0
+correctness in its intended (in-repo) use, so they ship as a follow-up batch:
+- **Defect**: `assets/probes/provenance_block.sh:78-79` — outside a git work
+  tree `git diff --quiet` exits 129 and the `||` records `git=n/a-dirty`, a
+  fabricated dirty flag in the one artifact whose job is honest provenance.
+  One-token fix: `[ "$GIT" = n/a ] || git diff --quiet 2>/dev/null || GIT="$GIT-dirty"`.
+- checkup.sh: duplicated always-loaded detail string (217-221); solidation
+  candidate rule written twice for the SAME consumer pair (337-344 vs 457-467 —
+  not the census/audit split, which stays); per-line `sed` re-slice in the
+  config loop (105/115); `--sync` guard spelled twice (85-90).
+- ohd-checkup.md:27-31 restates canonical exit-code-shaped text directly above
+  its own DRY invariant — cut to a pointer.
+Eleven marginal items and four considered-and-rejected (incl. probe `die`/`need`
+sharing — breaks standalone-copyability) are in the land records; do not
+re-litigate the rejected set without new evidence.
+
+## 16. Project-relay lines from two field incidents — OPEN (opened v0.6.0 land, v0.6.1 candidates)
+
+Two GPU-research field sessions independently hit failure modes the harness
+already guards against in its OWN development but never relays to projects.
+The v0.6.1 shape is relay text (scaffold/skill lines), NOT new machinery:
+- **Code→doc pointers** (read-direction gap): a multi-consumer physics helper
+  was misused because its purpose lived only in a campaign doc the session
+  never opened — doc→code pointers (`<claim> — <file:line>`) serve audits, but
+  working sessions read CODE first. Candidate: 2 conventions.md scaffold lines —
+  helpers whose output is a physical quantity / split index with ≥2 consumers
+  carry `VALID FOR / NOT VALID FOR` + `DERIVATION: <doc#anchor>` in the
+  docstring. Scope-limited by design (blanket application is ceremony).
+- **Absence-with-reason**: a structurally-absent risk gets a recorded reason,
+  never a vacuous guard (two injected "protections" proved VACUOUS in the
+  field — they asserted properties the code didn't hold and didn't need).
+- **r2c round-cap relay**: ">3 rounds = suspect the design/scope" exists only
+  in harness-dev lore; the field session self-diagnosed over-build at round 5.
+  Candidate: one sentence in review-to-convergence.
+- **Run-artifact router row**: the writing router's rows are doc-centric; run
+  artifacts (figures/data/logs) have no named row, and a field session's 25
+  files landed flat before being split `<date>-<campaign>/{plots,data}/`.
+  Candidate: one router row + one conventions.md scaffold line.
+
+## 17. Land-time sanity residuals: slashless-fsx gate blind spot, whitelist pairing, description budgets, probe headroom — OPEN (opened v0.6.0 land)
+
+- Release gate 1's `/f[s]x` pattern requires a leading slash, so slash-evading
+  forms (a project-slug path fragment, a "-style" prose reference) were
+  invisible; the two live instances were scrubbed at v0.6.0 land. Decide:
+  drop the slash from the pattern (then re-derive the whitelist — the
+  project-slug form contains the marketplace name and needs a rule, not an
+  eyeball).
+- WATCH pairing (from the same audit): CLAUDE.md's gate whitelists pass ONLY
+  because §RELEASING bullet 3 exempts the marketplace name in
+  docs/superpowers/{specs,plans} — the whitelist lines and bullet 3 must move
+  together; neither may be edited alone.
+- Skill description budget is "~50 words" but claude-md-sanity measures 87 and
+  deep-solve 78 (others ≤61). Decide: trim the two or annotate the convention.
+- `assets/probes/mutation_run.sh` sits at 117 of its 120-line budget and is
+  the file that attracts explanatory prose; next substantive edit likely trips
+  the size gate for unrelated reasons. Decide deliberately: move prose out or
+  move the cap (fleet-flagged at v0.6.0 land).
