@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# probes-smoke.sh — the shipped probe assets, black-box.
+#
+# The one contract every assertion below exists to hold: agent-facing failure is
+# EXIT-CODE-SHAPED. Agents read logs through tails and summarizers, so a warning
+# line is structurally unseen — a probe that warns and continues has failed open.
+# Every negative case here therefore asserts a NON-ZERO exit, not a message.
+set -euo pipefail
+HERE="$(cd "$(dirname "$0")/.." && pwd)"
+P="$HERE/assets/probes"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+fail() { echo "PROBES-SMOKE FAIL: $*" >&2; exit 1; }
+# run a probe, capture its exit code without tripping set -e
+rc() { local c=0; "$@" >/dev/null 2>&1 || c=$?; echo "$c"; }
+
+for probe in engage_grep.sh mutation_run.sh provenance_block.sh; do
+  [ -f "$P/$probe" ] || fail "$probe not shipped in assets/probes/"
+  [ -x "$P/$probe" ] || fail "$probe is not executable"
+  bash -n "$P/$probe" || fail "$probe has syntax errors"
+  # every probe carries its own failure path
+  [ "$(rc bash "$P/$probe" --self-test)" = 0 ] || fail "$probe --self-test did not pass"
+  # ...and a usage line naming itself
+  bash "$P/$probe" --help 2>&1 | grep -q "$probe" || fail "$probe --help does not name itself"
+  # SMALL: these are assets projects copy in, not a framework
+  n="$(wc -l < "$P/$probe")"
+  [ "$n" -le 120 ] || fail "$probe is $n lines (target <=120)"
+done
+
+# ---------- engage_grep: the route assertion ----------
+cd "$TMP"
+cat > run.log <<'EOF'
+starting
+backend=fused kernel selected
+step 1 ok
+run complete
+EOF
+E="$P/engage_grep.sh"
+[ "$(rc bash "$E" --must 'backend=fused' --must-not 'fallback' --anchor 'run complete' run.log)" = 0 ] \
+  || fail "engage_grep failed a log that satisfies every assertion"
+# the must-match line is missing -> DIE
+[ "$(rc bash "$E" --must 'backend=reference' --anchor 'run complete' run.log)" = 1 ] \
+  || fail "engage_grep did not die when the required route marker was absent"
+# the must-NOT line is present -> DIE
+[ "$(rc bash "$E" --must 'backend=fused' --must-not 'step 1' --anchor 'run complete' run.log)" = 1 ] \
+  || fail "engage_grep did not die when a forbidden line was present"
+# the positive-state anchor is what stops a CRASHED run from passing: a run that
+# died before reaching the fallback satisfies --must-not vacuously
+cat > crashed.log <<'EOF'
+starting
+backend=fused kernel selected
+EOF
+[ "$(rc bash "$E" --must 'backend=fused' --must-not 'fallback' --anchor 'run complete' crashed.log)" = 1 ] \
+  || fail "engage_grep passed a crashed run (anchor not enforced)"
+# skipping the anchor is possible but ATTESTED, never silent
+[ "$(rc bash "$E" --must 'backend=fused' --must-not 'fallback' crashed.log)" = 2 ] \
+  || fail "engage_grep ran without an anchor and without an attested skip"
+[ "$(rc bash "$E" --must 'backend=fused' --no-anchor 'log has no completion marker' crashed.log)" = 0 ] \
+  || fail "attested --no-anchor was not honored"
+bash "$E" --must 'backend=fused' --no-anchor 'no completion marker' crashed.log \
+  | grep -q 'no completion marker' || fail "attested skip reason does not reach the proof line"
+# FIXED-STRING by default: the hand-rolled regex that can never match is the
+# measured failure this default exists to prevent
+printf 'value = a.c\n' > lit.log
+[ "$(rc bash "$E" --must 'a.c' --no-anchor t lit.log)" = 0 ] || fail "fixed-string --must failed on a literal hit"
+[ "$(rc bash "$E" --must 'a?c' --no-anchor t lit.log)" = 1 ] || fail "'a?c' matched as a regex under the fixed-string default"
+[ "$(rc bash "$E" --regex --must 'a.c' --no-anchor t lit.log)" = 0 ] || fail "--regex did not enable regex matching"
+# a missing file is a hard error, never a vacuous pass
+[ "$(rc bash "$E" --must x --no-anchor t nosuch.log)" != 0 ] || fail "engage_grep passed on a missing file"
+
+# ---------- mutation_run: proving the tests CAN fail ----------
+M="$P/mutation_run.sh"
+mkdir -p mut && cd mut
+echo GOOD > impl.txt && echo OTHER > other.txt
+CHK='grep -q GOOD impl.txt'
+ARM='signflip|sed -i s/GOOD/BAD/ impl.txt|sed -i s/BAD/GOOD/ impl.txt'
+[ "$(rc bash "$M" --check "$CHK" --arm "$ARM" --untouched 'grep -q OTHER other.txt')" = 0 ] \
+  || fail "mutation_run failed a run whose arm is properly caught"
+bash "$M" --check "$CHK" --arm "$ARM" | grep -q '1 tried / 1 caught' \
+  || fail "mutation_run summary does not report tried/caught counts"
+bash "$M" --check "$CHK" --arm "$ARM" | grep -q 'no-op control ok' \
+  || fail "mutation_run summary does not report the no-op control"
+grep -q GOOD impl.txt || fail "mutation_run left the tree mutated after a clean run"
+# a check that CANNOT fail is the whole point -> DIE, naming the arm
+out="$(bash "$M" --check true --arm "$ARM" 2>&1)" && fail "mutation_run passed a check that cannot fail"
+grep -q signflip <<<"$out" || fail "the uncaught-arm failure does not name the arm"
+grep -q GOOD impl.txt || fail "mutation_run left the tree mutated after a FAILED run"
+# a red baseline makes every later result meaningless -> DIE before any arm runs
+[ "$(rc bash "$M" --check false --arm "$ARM")" != 0 ] || fail "mutation_run ran arms on a red baseline"
+# the untouched-phase control: if a mutation breaks a phase it never touched,
+# "caught" is not evidence of a sharp test
+[ "$(rc bash "$M" --check "$CHK" --arm "$ARM" --untouched 'grep -q GOOD impl.txt')" != 0 ] \
+  || fail "mutation_run accepted an arm that broke the untouched-phase control"
+grep -q GOOD impl.txt || fail "mutation_run left the tree mutated after the control failed"
+# arms are SERIAL by construction — no parallel mode to get the evidence wrong
+grep -qi 'serial' "$M" || fail "mutation_run does not state that arms run serially"
+[ "$(rc bash "$M" --check "$CHK" --arm "$ARM" --jobs 4)" = 2 ] || fail "mutation_run accepted a parallelism flag"
+# a restore that does not restore is a setup failure, not a pass
+[ "$(rc bash "$M" --check "$CHK" --arm 'bad|sed -i s/GOOD/BAD/ impl.txt|true')" != 0 ] \
+  || fail "mutation_run passed an arm whose restore left the tree dirty"
+echo GOOD > impl.txt
+
+# ---------- provenance_block: which route ACTUALLY ran ----------
+cd "$TMP"
+V="$P/provenance_block.sh"
+out="$(OHDTEST_FLAG=on bash "$V" --field backend=fused --cmd device='echo cuda:0' --env-prefix OHDTEST_)"
+grep -q 'backend=fused' <<<"$out"        || fail "provenance_block dropped a --field"
+grep -q 'device=cuda:0' <<<"$out"        || fail "provenance_block dropped a --cmd result"
+grep -q 'env.OHDTEST_FLAG=on' <<<"$out"  || fail "provenance_block dropped a matching env flag"
+grep -q 'OHDTEST_' <<<"$(bash "$V" --env-prefix OHDTEST_)" || fail "provenance_block hides the prefix it filtered on"
+# a field that could not be resolved is RECORDED as unavailable, never omitted
+out="$(bash "$V" --cmd gpu='exit 7' || true)"
+grep -q 'gpu=unavailable' <<<"$out"      || fail "an unresolvable --cmd was silently dropped"
+# --require turns a missing field into an exit code
+[ "$(rc bash "$V" --field backend=fused --require backend)" = 0 ] || fail "--require failed on a present field"
+[ "$(rc bash "$V" --field backend=fused --require kernel)" = 1 ] || fail "--require did not die on a missing field"
+[ "$(rc bash "$V" --cmd gpu='exit 7' --require gpu)" = 1 ]       || fail "--require accepted an unavailable field"
+# the artifact form: a run's route proof is a recorded fact, not archaeology
+bash "$V" --field backend=fused --out prov.txt >/dev/null
+grep -q 'backend=fused' prov.txt         || fail "--out did not write the provenance block"
+
+echo "PROBES-SMOKE PASS"
