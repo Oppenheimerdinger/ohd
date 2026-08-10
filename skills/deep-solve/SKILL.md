@@ -78,14 +78,16 @@ chosen during Phase 1:
    - Fix findings → re-dispatch → repeat until a round returns ZERO Critical
      and ZERO Important, every residual Minor carrying a disposition.
    - Keep a per-round convergence log and print it with the gate banner —
-     review-to-convergence's log format (`round N: <reviewers>× <lens> → X
-     findings → fixed/rebutted-upheld/minor-logged`; the `@<sha>` slot is
-     dropped here for LOG IDENTITY only — the deliverable is a brief, not a
-     tree; a content hash in the slot is what makes "same artifact ≠ new round"
-     checkable, and neither that rule nor r2c's confirmation-round carve-out
-     binds the isolated runner, which has its own COLD confirmation pass),
-     ending in the terminal round; the brief's review history is part of what
-     the user approves.
+     review-to-convergence's log format (`round N: <reviewers>× <lens> @<hash>
+     → X findings → fixed/rebutted-upheld/minor-logged`). The deliverable is a
+     brief, not a tree, so the `@<sha>` slot is FILLED with a CONTENT hash of
+     the brief — `sha256sum | cut -c1-7`, r2c's rule — never dropped: dropping
+     it is what made "re-reviewing the same artifact is not a new round"
+     unenforceable for exactly the deliverable class where an 11-round loop was
+     observed. LOG IDENTITY only: neither the same-hash rule nor r2c's
+     confirmation-round carve-out binds the isolated runner, which has its own
+     COLD confirmation pass. The log ends in the terminal round; the brief's
+     review history is part of what the user approves.
    - If not converged after 4 review iterations, stop and escalate to the user
      instead of looping further — and carry a DIAGNOSIS, not just a count.
      Split the findings so far by target: problem statement / premises /
@@ -236,7 +238,10 @@ schedule and honesty rules.
    is cheaply testable read-only must be TESTED by the solver itself and recorded in
    the appendix (a refutation IS the answer); only untestable doubts come back
    unresolved.
-2. **Reviewer**: one fresh agent, same tool regime. Its input is the brief plus
+2. **Reviewer**: one fresh agent, READ-ONLY — read tools + sandboxed Bash and no
+   write path of its own: the solver's sanctioned Bash redirection does NOT extend
+   here, and the reviewer READS the evidence directory, never writes to it. Its
+   input is the brief plus
    the solver's RAW return block — never a paraphrase — together with read access to
    the evidence directory that block points at (those files are part of the return,
    not a summary of it). Duties, every finding labelled Critical / Important /
