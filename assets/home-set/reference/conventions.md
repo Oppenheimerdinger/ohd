@@ -13,6 +13,8 @@ Replace the `(example)` lines as real entries arrive.
 
 - (example) every public entry point takes an explicit device argument — `tests/test_api.py:31`
 - (example) generated files are written atomically via a temp + rename — `src/io.py:64`
+- (example) a helper with more than one caller carries `VALID FOR:` / `NOT VALID FOR:` in its docstring — the regime it was derived under, and the ones where it silently returns a wrong number — `src/physics/screening.py:12`
+- (example) that docstring also carries `DERIVATION: <doc#anchor>`, so the next caller reads the derivation instead of inferring the regime from a call site — `tests/test_screening.py:44`
 
 ## Invariants
 
