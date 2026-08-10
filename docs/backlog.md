@@ -267,3 +267,24 @@ the terminal, and the runner's own COLD confirmation pass is its independent
 check. Deliberately NOT shipped in v0.7.0 to keep B1 one wording intervention
 rather than a schema migration. Revisit trigger: a runner-converged answer is
 later contradicted by a defect that a severity label would have held open.
+
+## 20. Privacy-gate abbreviation shape: narrowing a pattern bought a miss — RESOLVED (v0.7.0 review r1)
+
+v0.7.0 first shipped the no-hyphen internal-name sibling narrowed to an
+`[a-z]`-suffixed form, justified by a noise measurement (7 tree hits, all
+`conda-forge` or English inflections). Round-1 review found the narrowing let
+a real leak through: an internal project name suffixed with a non-ASCII
+particle (`<name>` + 형) in `docs/superpowers/specs/`, which is exactly where
+the hardened policy grants NO whitelist. Two projects were affected, three
+tokens, all anonymized to the doc's existing placeholder style.
+
+Fixed by matching the suffix class as `[^a-z]` and the second project by its
+3-letter stem; `conda-forge` becomes a named whitelist entry rather than a
+reason to narrow. Measured after the scrub: the stem forms add zero hits.
+
+CARRIED LESSON, which is why this entry stays: the gate did not catch this —
+a human reviewer did, by eye. A privacy pattern tuned on false-positive noise
+optimizes the wrong side of the tradeoff, because the cost of one miss is
+unbounded and the cost of one extra eyeballed hit is seconds. Prefer a named
+whitelist entry over a narrower pattern. Revisit trigger: any future proposal
+to narrow one of these patterns for noise reasons.
