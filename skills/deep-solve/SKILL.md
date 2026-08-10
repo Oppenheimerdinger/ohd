@@ -1,6 +1,6 @@
 ---
 name: deep-solve
-description: This skill should be used ONLY on explicit request — the user invokes /deep-solve or says "deep solve" / "deep-solve" / "딥솔브" / "solve to convergence" / "delegate and verify". Never auto-trigger for merely hard problems or stuck sessions; but when the session IS stuck on a hard separable problem, add ONE line noting that /deep-solve exists, then continue normally. Once invoked, fits hard self-contained problems with a definite right answer (derivation, proof, algorithm choice, root-cause, design tradeoff).
+description: ONLY on explicit request — /deep-solve, "deep solve", "deep-solve", "딥솔브", "solve to convergence", "delegate and verify". Never auto-trigger for merely hard problems or stuck sessions; if the session IS stuck on a hard separable problem, note in ONE line that /deep-solve exists and continue. Fits self-contained problems with a definite right answer (derivation, proof, algorithm choice, root-cause, design tradeoff).
 ---
 
 # Deep Solve
@@ -27,13 +27,25 @@ chosen during Phase 1:
    - Faithful to the REAL system: cite actual `file:line` and real values, not an
      idealized sketch.
    - Established constraints / what NOT to re-litigate stated.
-   - What a valid answer looks like and how it will be validated stated.
+   - What a valid answer looks like, and the validation stated PER MODE:
+     **isolated** states the correctness STANDARD only — the solver is
+     closed-book and can execute nothing, so a test harness written into the
+     brief draws findings for rounds and is then discarded; the author
+     validates after. **grounded** states the standard AND makes designing and
+     running the verification a solver deliverable.
    - No "see the session"; no references a fresh agent cannot open.
    - WITHHOLD your own tentative conclusion — the solvers must derive cold.
-   - ★EMPIRICAL-PREMISE PROVENANCE: classify every MEASURED claim the problem rests
+   - ★EMPIRICAL-PREMISE PROVENANCE: classify every MEASURED OR DERIVED claim the
+     problem rests
      on — especially LABELS/attributions connecting a measurement to an entity
      ("kernel X is call Y", "the slow phase is Z") — as (a) directly verified by a
-     described experiment, or (b) inherited/inferred. A load-bearing (b) with a
+     described experiment, or (b) inherited/inferred. For a DERIVED claim, grep
+     the repo, the memory store and prior review output BEFORE deriving; a
+     record that disagrees with your derivation IS the finding (test docstrings
+     and regression-guard names are the highest-yield targets — they are where
+     a project stores "we already got this wrong once"). Deriving feels
+     self-contained and searching feels like a detour; the economics are the
+     other way round. A load-bearing (b) with a
      cheap decisive test (≲30 min) is an UNCLOSED PREMISE: run that test and fold
      the result in BEFORE Phase 2. **A brief with an unclosed cheap-verifiable
      load-bearing premise is NOT converged** — this includes anything you were
@@ -68,10 +80,21 @@ chosen during Phase 1:
    - Keep a per-round convergence log and print it with the gate banner —
      review-to-convergence's log format (`round N: <reviewers>× <lens> → X
      findings → fixed/rebutted-upheld/minor-logged`; the `@<sha>` slot is
-     dropped here — the deliverable is a brief, not a tree), ending in the
-     terminal round; the brief's review history is part of what the user approves.
+     dropped here for LOG IDENTITY only — the deliverable is a brief, not a
+     tree; a content hash in the slot is what makes "same artifact ≠ new round"
+     checkable, and neither that rule nor r2c's confirmation-round carve-out
+     binds the isolated runner, which has its own COLD confirmation pass),
+     ending in the terminal round; the brief's review history is part of what
+     the user approves.
    - If not converged after 4 review iterations, stop and escalate to the user
-     instead of looping further.
+     instead of looping further — and carry a DIAGNOSIS, not just a count.
+     Split the findings so far by target: problem statement / premises /
+     acceptance apparatus (computed ad hoc; the shared log format is
+     untouched). Apparatus-dominated means DELETE the apparatus, not patch it
+     — a test suite always has another blind spot, so that class is unbounded
+     and the count will plateau rather than converge. Without the split, "N
+     rounds and still going" reads as failure when it may be one removable
+     section.
    - If a read-only reviewer idles without reporting, grep its transcript JSONL
      (under `~/.claude/projects/<project-slug>/`) for the final assistant
      message instead of re-prompting.
@@ -139,7 +162,11 @@ set them).
    approves. If the user edits the brief substantively, fold the edits in,
    re-run one brief review pass, and re-present the gate. If the user adjusts
    parameters or makes non-substantive edits, apply them and re-present the
-   gate with the updated banner; launch only on an explicit go.
+   gate with the updated banner; launch only on an explicit go. **A `--mode`
+   override is NOT a mere parameter change**: the validation item above is
+   mode-dependent, so a mode switch after the brief is frozen re-triggers the
+   brief-review pass — otherwise a grounded→isolated override ships a brief
+   whose validation section the solver cannot execute.
 
 **Pre-approval path**: if the user has explicitly authorized autonomous
 execution for this run ("자율적으로 진행", "run autonomously", "승인 생략" /
