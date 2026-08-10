@@ -339,3 +339,43 @@ optimizes the wrong side of the tradeoff, because the cost of one miss is
 unbounded and the cost of one extra eyeballed hit is seconds. Prefer a named
 whitelist entry over a narrower pattern. Revisit trigger: any future proposal
 to narrow one of these patterns for noise reasons.
+
+## 21. The era marker is silent about its own load-bearing role — in-band self-description deferred — OPEN (opened v0.7.0 review r5)
+
+`campaign.sh --report` emits the bare literal
+`<!-- ohd:land-report-scaffold v0.7.0 -->` (assets/campaign.sh:144). Nothing
+in the artifact says why it matters. A reader who meets it in a state doc sees
+an empty HTML comment — the shape most likely to be tidied away by whoever is
+cleaning up markdown — and the land gate's die message (`:178`) enumerates
+only the `## land report` heading and the `| phase | ran? |` header, so even
+the one place that lists the scaffold's load-bearing lines omits it.
+
+The contract IS documented, in campaign-land (the three-line LOAD-BEARING
+list, the fenced example, the `--report` bullet) and in checkup's row text.
+All of that is out-of-band: it helps the person who reads the skill, not the
+person editing the doc.
+
+FIX SHAPE (two edits, both mechanical):
+- append self-description INSIDE the comment —
+  `<!-- ohd:land-report-scaffold v0.7.0 — do not delete: /ohd-checkup's
+  ritual-bypass row scopes on this line -->`. The detector is a fixed
+  substring grep (`grep -qF 'ohd:land-report-scaffold'`) and the region
+  helper anchors with `index()`, so extra text cannot break scoping —
+  verified on a fixture: the self-describing form still reports `1 of 1` and
+  the region still starts at the marker.
+- name the marker in campaign.sh:178's die message alongside the heading and
+  the table header, so the one enumeration a refused author actually reads is
+  complete.
+
+WHY DEFERRED: r5 was the terminal wave and text-only by contract; this touches
+the EMITTED artifact plus both parity copies (`assets/` and `tools/`), which
+is a code change with a fixture and a re-mirror, not a docs edit. And the
+strip case it mitigates is a DISCLOSED accepted trade (checkup's row states
+that a deleted marker drops the report from the count while the land gate
+still passes), not an open defect — so this is hardening a known, stated
+limit rather than closing a hole.
+
+REVISIT TRIGGER: a field report of a marker tidied away, OR the next release
+that touches campaign.sh's `--report` heredoc — whichever comes first. The
+second is the cheap one: the edit costs nothing when the heredoc is already
+open.
