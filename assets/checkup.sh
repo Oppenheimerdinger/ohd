@@ -410,15 +410,23 @@ if [ -d "$SD" ]; then
     # by the land-reports row's post-scaffold exclusion below. Nesting it there
     # would let a hand-rolled bypass escape the count by deleting the dated
     # status line — the one edit a bypasser is most likely to make.
-    # The marker is C0's scaffold CELL, not the bare words: a land-report
-    # artifact must exist AND carry '| … | reference:' / '| … | verification:'
-    # inside a table row. An unanchored whole-file grep counted two shapes that
-    # are not bypasses at all — a compliant pre-v0.7.0 report recording the same
-    # facts as prose bullets, and an OPEN doc whose validation-gate line merely
-    # contains the word.
+    # The marker is the named cell inside a land-report TABLE LINE, not the
+    # bare words anywhere in the file: a land-report artifact must exist AND a
+    # table row must carry 'reference:' / 'verification:'. An unanchored
+    # whole-file grep counted two shapes that are not bypasses at all — a
+    # compliant pre-v0.7.0 report recording the same facts as prose bullets,
+    # and an OPEN doc whose validation-gate line merely contains the word.
+    # The anchor stops at the TABLE LINE and deliberately does NOT require the
+    # token to open the cell: real reports write it after the evidence text
+    # ('| … | CHANGELOG updated, backlog closed; reference: … |'), and
+    # demanding cell-initial silenced this row entirely on the two genuine
+    # reports in this very repo.
     if has_land_report "$d" \
-       && grep -qE '^[[:space:]]*\|.*\|[[:space:]]*(reference|verification):' "$d" 2>/dev/null; then
+       && grep -qE '^[[:space:]]*\|.*(reference|verification):' "$d" 2>/dev/null; then
       BYP_TOT=$((BYP_TOT + 1))
+      # The BARE-PROMPT test stays cell-initial on purpose: an unfilled
+      # scaffold prompt is cell-initial by construction, so this is the one
+      # place the tighter shape is the correct one.
       if grep -qE '^[[:space:]]*\|.*\|[[:space:]]*(reference|verification):[[:space:]]*(\|[[:space:]]*)?$' "$d" 2>/dev/null \
          || ! grep -q 'sanity:' "$d" 2>/dev/null; then
         BYP_N=$((BYP_N + 1)); BYP="$BYP$(basename "$d") "

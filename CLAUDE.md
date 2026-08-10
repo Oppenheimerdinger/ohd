@@ -25,7 +25,7 @@ CI). Larger changes go branch→PR→`code-review:code-review`→merge.
    exactly these lines to projects on sync. The project-facing judgment
    happens here, at authoring time, never downstream.
 3. Release gates (clean before push; run over git-tracked files only):
-   - `grep -rniE "nanof[o]rge|f[o]rge[^a-z]|f[o]rgen[a-z]|x[r]d|sr[u]uk|f[s]x|dip[a]rk" $(git ls-files)`
+   - `grep -rniE "nanof[o]rge|f[o]rge([^a-z]|$)|f[o]rgen[a-z]|x[r]d|sr[u]uk|f[s]x|dip[a]rk" $(git ls-files)`
      — allowed hits ONLY: marketplace name `dipark`, plugin.json author,
      install/rollback commands referencing the `dipark` marketplace in
      README/USAGE-ko/CHANGELOG, ohd-setup's stale-plugin
@@ -44,10 +44,14 @@ CI). Larger changes go branch→PR→`code-review:code-review`→merge.
      an internal name suffixed with a non-ASCII particle (`<name>` + 형)
      matches neither the hyphenated pattern nor a `[a-z]`-suffixed sibling,
      and one such token sat in a design doc — where there is NO whitelist —
-     until review caught it by eye. So the suffix class is `[^a-z]`, not
+     until review caught it by eye. So the suffix class is `([^a-z]|$)`, not
      `[a-z]`, and the powder-diffraction project's name is matched by its
-     3-letter stem rather than its full slug. Measured after that scrub: the
-     stem forms cost ZERO extra hits, and `f[o]rge[^a-z]`'s only noise is
+     3-letter stem rather than its full slug. The `|$` alternation is load
+     bearing: a bare negated class cannot match at END OF LINE, so a name
+     sitting as the last token on a line would read clean. No live instance
+     exists today — which is exactly the acceptance bar #20 says not to use.
+     Measured after that scrub: the stem forms cost ZERO extra hits, and
+     `f[o]rge([^a-z]|$)`'s only noise is
      `conda-f[o]rge`, whitelisted above by name. English "forging"/"forges"
      stay unmatched, which is the point — a gate whose output must be
      eyeballed past every release is a gate that trains dismissal, but a gate

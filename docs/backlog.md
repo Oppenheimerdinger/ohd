@@ -170,6 +170,20 @@ touches campaign.sh: add both lines to the scaffold heredoc, and only then a
 version- or date-scoped audit row becomes derivable. (implementer finding,
 v0.6.0)
 
+RESOLVED in v0.7.0: that release is the one that touches campaign.sh, so all
+three of the blockers above are now false and the paragraph should be read as
+history. `land --report` seeds both cells with the literal prompts (96f2eb2).
+The prediction that "nothing on disk marks a report as post-adoption" is what
+changed: the seeded prompt IS that marker — only a v0.7.0+ scaffold emits it,
+so pre-v0.7.0, forked and stale-plugin reports lack it and are excluded by
+construction rather than by a version guess. On that marker the scoped audit
+row shipped too, as the advisory `ritual-bypass` sub-count, which is the
+"version- or date-scoped audit row" this entry said would become derivable —
+it is scoped by the marker, needing neither a version nor a date. Review
+narrowed the marker twice after it first landed: to the named cell inside a
+land-report table line, and then away from requiring the token to OPEN the
+cell, because real reports write it after the evidence text.
+
 ## 14. The structure row cannot say when the last full audit ran — OPEN (opened v0.6.0)
 
 v0.6.0's default structure row ships the honest string `last full audit: no
@@ -219,10 +233,10 @@ record of what was considered.
 Two GPU-research field sessions independently hit failure modes the harness
 already guards against in its OWN development but never relays to projects.
 The v0.6.1 shape is relay text (scaffold/skill lines), NOT new machinery:
-- **Code→doc pointers** (read-direction gap) — SHIPPED v0.7.0 (bc44181), 2 conventions.md scaffold lines: a multi-consumer physics helper
+- **Code→doc pointers** (read-direction gap) — SHIPPED v0.7.0 (bc44181): a multi-consumer physics helper
   was misused because its purpose lived only in a campaign doc the session
   never opened — doc→code pointers (`<claim> — <file:line>`) serve audits, but
-  working sessions read CODE first. Candidate: 2 conventions.md scaffold lines —
+  working sessions read CODE first. What shipped is 2 conventions.md scaffold lines —
   helpers whose output is a physical quantity / split index with ≥2 consumers
   carry `VALID FOR / NOT VALID FOR` + `DERIVATION: <doc#anchor>` in the
   docstring. Scope-limited by design (blanket application is ceremony).
@@ -241,18 +255,18 @@ The v0.6.1 shape is relay text (scaffold/skill lines), NOT new machinery:
 
 - SHIPPED v0.7.0 (2b73e51, corrected 2d41540 — see #20): Release gate 1's `/f[s]x` pattern required a leading slash, so slash-evading
   forms (a project-slug path fragment, a "-style" prose reference) were
-  invisible; the two live instances were scrubbed at v0.6.0 land. Decide:
-  drop the slash from the pattern (then re-derive the whitelist — the
-  project-slug form contains the marketplace name and needs a rule, not an
-  eyeball).
+  invisible; the two live instances were scrubbed at v0.6.0 land. DONE: the
+  slash was dropped and the whitelist re-derived rather than eyeballed — the
+  project-slug form's marketplace name is exempted by name, and the widening
+  was corrected again in review (see #20).
 - WATCH pairing (from the same audit): CLAUDE.md's gate whitelists pass ONLY
   because §RELEASING bullet 3 exempts the marketplace name in
   docs/superpowers/{specs,plans} — the whitelist lines and bullet 3 must move
   together; neither may be edited alone.
 - Skill description budget is "~50 words" but claude-md-sanity measures 87 and
-  deep-solve 78 (others ≤61). Decide: trim the two or annotate the convention.
-  deep-solve trimmed to 60 words, SHIPPED v0.7.0 (3078c7a); claude-md-sanity's
-  87 is untouched and this bullet stays OPEN for it.
+  deep-solve 78 (others ≤61). deep-solve was trimmed to 60 words, SHIPPED
+  v0.7.0 (3078c7a). STILL OPEN for claude-md-sanity's 87: trim it or annotate
+  the convention.
 - `assets/probes/mutation_run.sh` sits at 117 of its 120-line budget and is
   the file that attracts explanatory prose; next substantive edit likely trips
   the size gate for unrelated reasons. Decide deliberately: move prose out or
@@ -269,27 +283,6 @@ the terminal, and the runner's own COLD confirmation pass is its independent
 check. Deliberately NOT shipped in v0.7.0 to keep B1 one wording intervention
 rather than a schema migration. Revisit trigger: a runner-converged answer is
 later contradicted by a defect that a severity label would have held open.
-
-## 20. Privacy-gate abbreviation shape: narrowing a pattern bought a miss — RESOLVED (v0.7.0 review r1)
-
-v0.7.0 first shipped the no-hyphen internal-name sibling narrowed to an
-`[a-z]`-suffixed form, justified by a noise measurement (7 tree hits, all
-`conda-forge` or English inflections). Round-1 review found the narrowing let
-a real leak through: an internal project name suffixed with a non-ASCII
-particle (`<name>` + 형) in `docs/superpowers/specs/`, which is exactly where
-the hardened policy grants NO whitelist. Two projects were affected, three
-tokens, all anonymized to the doc's existing placeholder style.
-
-Fixed by matching the suffix class as `[^a-z]` and the second project by its
-3-letter stem; `conda-forge` becomes a named whitelist entry rather than a
-reason to narrow. Measured after the scrub: the stem forms add zero hits.
-
-CARRIED LESSON, which is why this entry stays: the gate did not catch this —
-a human reviewer did, by eye. A privacy pattern tuned on false-positive noise
-optimizes the wrong side of the tradeoff, because the cost of one miss is
-unbounded and the cost of one extra eyeballed hit is seconds. Prefer a named
-whitelist entry over a narrower pattern. Revisit trigger: any future proposal
-to narrow one of these patterns for noise reasons.
 
 ## 19. Issue #7 disposition: retired-route fossils — OPEN (recorded v0.7.0)
 
@@ -312,3 +305,26 @@ Revisit trigger: the next fossil incident — a session mis-briefed by a
 reference to a route that no longer exists. That incident is what turns the
 one-time sweep from speculation into scheduled work, and #7 is where it gets
 recorded.
+
+## 20. Privacy-gate abbreviation shape: narrowing a pattern bought a miss — RESOLVED (v0.7.0 review r1)
+
+v0.7.0 first shipped the no-hyphen internal-name sibling narrowed to an
+`[a-z]`-suffixed form, justified by a noise measurement (7 tree hits, all
+`conda-forge` or English inflections). Round-1 review found the narrowing let
+a real leak through: an internal project name suffixed with a non-ASCII
+particle (`<name>` + 형) in `docs/superpowers/specs/`, which is exactly where
+the hardened policy grants NO whitelist. Two projects were affected, three
+tokens, all anonymized to the doc's existing placeholder style.
+
+Fixed by matching the suffix class as `([^a-z]|$)` — the `|$` alternation
+because a bare negated class cannot match at end of line, a gap with no live
+instance today and therefore exactly the acceptance bar this entry warns
+against — and the second project by its 3-letter stem; `conda-forge` becomes a named whitelist entry rather than a
+reason to narrow. Measured after the scrub: the stem forms add zero hits.
+
+CARRIED LESSON, which is why this entry stays: the gate did not catch this —
+a human reviewer did, by eye. A privacy pattern tuned on false-positive noise
+optimizes the wrong side of the tradeoff, because the cost of one miss is
+unbounded and the cost of one extra eyeballed hit is seconds. Prefer a named
+whitelist entry over a narrower pattern. Revisit trigger: any future proposal
+to narrow one of these patterns for noise reasons.
