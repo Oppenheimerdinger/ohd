@@ -371,6 +371,12 @@ PATH="/usr/bin:/bin" "$CS" land g1 --report >/dev/null || fail "land --report fa
 grep -q '| phase | ran? | evidence |' docs/campaigns/g1.md || fail "--report did not append the table"
 grep -q 'reference:' docs/campaigns/g1.md || fail "--report did not seed the row-4 'reference:' prompt"
 grep -q 'verification:' docs/campaigns/g1.md || fail "--report did not seed the row-6 'verification:' prompt"
+# the era marker: the seeded PROMPTS cannot date a report (they are mandated
+# ritual vocabulary from v0.6.0, so pre-scaffold reports carry them too), so
+# the scaffold emits one literal only it can produce. checkup's ritual-bypass
+# row scopes on exactly this string.
+grep -qF '<!-- ohd:land-report-scaffold v0.7.0 -->' docs/campaigns/g1.md \
+  || fail "--report did not emit the scaffold era marker"
 PATH="/usr/bin:/bin" "$CS" land g1 >/dev/null 2>&1 || fail "land refused despite land-report table"
 git ls-remote --exit-code origin g1 >/dev/null 2>&1 || fail "land did not push with table present"
 "$CS" abort g1 --purge >/dev/null

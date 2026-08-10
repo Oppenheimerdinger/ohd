@@ -360,6 +360,25 @@ has_land_report() {
     || grep -qiE '^##[[:space:]]*([0-9]+\.?[[:space:]]*)?land[- ]report' "$1" 2>/dev/null
 }
 
+# Print a doc's LAND-REPORT REGION: from the scaffold marker (or, absent one,
+# the land-report heading) to the next '## ' heading. Content checks read this
+# rather than the whole file — a `sanity:` sitting in unrelated prose elsewhere
+# in a long state doc must not satisfy the land report's own contract.
+land_report_region() {
+  awk '
+    {
+      low = tolower($0)
+      isLR = (low ~ /^##[ \t]*([0-9]+\.?[ \t]*)?land[- ]report/)
+      if (!inr) {
+        if (index($0, "ohd:land-report-scaffold") > 0 || isLR) { inr = 1; started = NR }
+      } else if (low ~ /^##[ \t]/ && NR > started && !isLR) {
+        exit
+      }
+      if (inr) print
+    }
+  ' "$1" 2>/dev/null
+}
+
 # Solidation candidates — one path per line: a state doc whose verdict is filled
 # and which is not yet under docs/archive/. ONE rule for its two consumers (the
 # default row counts them, --structure lists them with sizes), so the SOLIDATION
@@ -410,25 +429,25 @@ if [ -d "$SD" ]; then
     # by the land-reports row's post-scaffold exclusion below. Nesting it there
     # would let a hand-rolled bypass escape the count by deleting the dated
     # status line — the one edit a bypasser is most likely to make.
-    # The marker is the named cell inside a land-report TABLE LINE, not the
-    # bare words anywhere in the file: a land-report artifact must exist AND a
-    # table row must carry 'reference:' / 'verification:'. An unanchored
-    # whole-file grep counted two shapes that are not bypasses at all — a
-    # compliant pre-v0.7.0 report recording the same facts as prose bullets,
-    # and an OPEN doc whose validation-gate line merely contains the word.
-    # The anchor stops at the TABLE LINE and deliberately does NOT require the
-    # token to open the cell: real reports write it after the evidence text
-    # ('| … | CHANGELOG updated, backlog closed; reference: … |'), and
-    # demanding cell-initial silenced this row entirely on the two genuine
-    # reports in this very repo.
-    if has_land_report "$d" \
-       && grep -qE '^[[:space:]]*\|.*(reference|verification):' "$d" 2>/dev/null; then
+    # Scoped by an EXPLICIT scaffold marker, because the named-cell TOKENS
+    # cannot mark an era: `reference:` and `verification:` have been MANDATED
+    # ritual vocabulary since v0.6.0, so a pre-scaffold report legitimately
+    # contains them. Both genuine reports in the plugin's own repo do, written
+    # four days before the scaffold existed — token-based scoping counted them
+    # as scaffold-born no matter where the anchor sat, which is why anchor
+    # position was never the fix. Only a v0.7.0+ `--report` run emits the
+    # comment marker, so it is the one thing a report the scaffold did not
+    # write cannot contain.
+    if grep -qF 'ohd:land-report-scaffold' "$d" 2>/dev/null; then
       BYP_TOT=$((BYP_TOT + 1))
-      # The BARE-PROMPT test stays cell-initial on purpose: an unfilled
-      # scaffold prompt is cell-initial by construction, so this is the one
+      REGION="$(land_report_region "$d")"
+      # Content checks read the REGION, not the file: a `sanity:` in unrelated
+      # prose elsewhere in the doc must not attest this land report.
+      # The BARE-PROMPT test stays cell-initial on purpose — an unfilled
+      # scaffold prompt is cell-initial by construction, so that is the one
       # place the tighter shape is the correct one.
-      if grep -qE '^[[:space:]]*\|.*\|[[:space:]]*(reference|verification):[[:space:]]*(\|[[:space:]]*)?$' "$d" 2>/dev/null \
-         || ! grep -q 'sanity:' "$d" 2>/dev/null; then
+      if printf '%s\n' "$REGION" | grep -qE '^[[:space:]]*\|.*\|[[:space:]]*(reference|verification):[[:space:]]*(\|[[:space:]]*)?$' \
+         || ! printf '%s\n' "$REGION" | grep -q 'sanity:'; then
         BYP_N=$((BYP_N + 1)); BYP="$BYP$(basename "$d") "
       fi
     fi
@@ -484,12 +503,12 @@ if [ -d "$SD" ]; then
   else
     report "land-reports" "OK" "every landed state doc carries its land-report table"
   fi
-  if [ "$BYP_TOT" -gt 0 ]; then
-    if [ "$BYP_N" -gt 0 ]; then
-      report "ritual-bypass" "$BYP_N of $BYP_TOT" "land report(s) leaving a named cell at its bare prompt or carrying no \`sanity:\`: ${BYP}— ADVISORY, not a gate: those cells are what campaign-land Phase 4/6 attest, and a prompt with nothing after it reads as silent rather than attested. Counted only among reports whose land-report table carries the v0.7.0 scaffold cells, so pre-v0.7.0, forked and stale-plugin reports are excluded rather than false-flagged. Honest false negative: a bypasser who fills the cells with plausible text reads clean"
-    else
-      report "ritual-bypass" "OK" "$BYP_TOT scaffolded land report(s), every named cell filled"
-    fi
+  if [ "$BYP_N" -gt 0 ]; then
+    report "ritual-bypass" "$BYP_N of $BYP_TOT" "scaffold-written land report(s) leaving a named cell at its bare prompt or carrying no \`sanity:\` in the land-report section: ${BYP}— ADVISORY, not a gate: those cells are what campaign-land Phase 4/6 attest, and a prompt with nothing after it reads as silent rather than attested. Honest false negative: a bypasser who fills the cells with plausible text reads clean"
+  elif [ "$BYP_TOT" -gt 0 ]; then
+    report "ritual-bypass" "OK" "$BYP_TOT scaffold-written land report(s), every named cell filled"
+  else
+    report "ritual-bypass" "0 scaffolded" "no land report here carries the \`ohd:land-report-scaffold\` marker, so this row has nothing to audit yet — SILENT BY SCOPE, not a health claim. The marker is explicit because the named cells cannot date a report: \`reference:\`/\`verification:\` are mandated ritual vocabulary from v0.6.0, so pre-scaffold reports legitimately carry them. Reports written before v0.7.0, by a fork, or by a stale plugin are excluded by construction"
   fi
 fi
 

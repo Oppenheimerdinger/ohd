@@ -172,17 +172,28 @@ v0.6.0)
 
 RESOLVED in v0.7.0: that release is the one that touches campaign.sh, so all
 three of the blockers above are now false and the paragraph should be read as
-history. `land --report` seeds both cells with the literal prompts (96f2eb2).
-The prediction that "nothing on disk marks a report as post-adoption" is what
-changed: the seeded prompt IS that marker — only a v0.7.0+ scaffold emits it,
-so pre-v0.7.0, forked and stale-plugin reports lack it and are excluded by
-construction rather than by a version guess. On that marker the scoped audit
-row shipped too, as the advisory `ritual-bypass` sub-count, which is the
-"version- or date-scoped audit row" this entry said would become derivable —
-it is scoped by the marker, needing neither a version nor a date. Review
-narrowed the marker twice after it first landed: to the named cell inside a
-land-report table line, and then away from requiring the token to OPEN the
-cell, because real reports write it after the evidence text.
+history. `land --report` seeds both cells with the literal prompts (96f2eb2) AND
+emits an explicit era marker, `<!-- ohd:land-report-scaffold v0.7.0 -->`.
+
+The marker is the correction this entry is really about. The original plan —
+and the spec's own wording — made the seeded PROMPT the era boundary, on the
+belief that "nothing on disk marks a report as post-adoption". The prompts
+cannot do that job: `reference:` and `verification:` became MANDATED ritual
+vocabulary at v0.6.0, so a report written before the scaffold existed
+legitimately contains both. This repo's own two land reports are the proof —
+written 2026-08-06 under v0.6.0's contract, four days before the scaffold
+landed, and counted as scaffold-born by every token-based version of the rule.
+No anchor position fixes that, which is why two rounds of moving the anchor
+(narrowed to the named cell in a table line, then widened off cell-initial
+because real reports write the token after the evidence text) each fixed a
+real defect and left the era boundary exactly as broken.
+
+What works is a literal only the scaffold emits. On that marker the scoped
+audit row shipped as the advisory `ritual-bypass` sub-count — the
+"version- or date-scoped audit row" this entry predicted would become
+derivable, needing neither a version nor a date. Its content checks read the
+land-report REGION rather than the whole doc, so a `sanity:` in unrelated
+prose cannot attest a land report.
 
 ## 14. The structure row cannot say when the last full audit ran — OPEN (opened v0.6.0)
 
