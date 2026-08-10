@@ -5,7 +5,7 @@ description: Use when about to dispatch a reviewer, hand off or finalize a deliv
 
 # Review to Convergence
 
-A substantive deliverable is **not done when you think it is done**. It is done when an *independent* reviewer pass finds nothing left to fix.
+A substantive deliverable is **not done when you think it is done**. It is done when an *independent* reviewer pass finds nothing that must be fixed.
 
 Independent review repeatedly catches the *author's own* wrong assumptions — mistakes invisible to the person who made them. The more novel the work, the more this holds. **Your confidence is not evidence.**
 
@@ -25,9 +25,9 @@ Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial 
 2. Dispatch an **independent** reviewer (fresh context; reviewer ≠ author).
 3. Fix Critical/Important; log Minor.
 4. Re-review → step 2.
-5. A pass with **zero findings** ⟹ done. Not before.
+5. A round returning **zero Critical and zero Important**, every residual disposed ⟹ done. Not before.
 
-**Violating the letter of this rule violates the spirit.** Do not stop at one pass; the last pass must be clean or fully disposed.
+**Violating the letter of this rule violates the spirit.** Do not stop at one pass; the last round must come back C0 I0 with every residual disposed.
 
 **Finding closure — the author never closes a finding by fiat.** A finding
 closes exactly two ways: (a) fix it, and the NEXT review pass sees the fixed
@@ -38,27 +38,31 @@ finding yourself to avoid a fix is closure by fiat. "The reviewer
 misunderstood" is itself a finding — against your artifact's clarity.
 
 **Every finding ends in a DISPOSITION, and those dispositions ARE the
-"rulings" other skills cite.** "Zero findings" in step 5 means zero NEW
-findings: a residual survives the terminal round only as a logged disposition
-carrying its reason — `rebutted-upheld` (a reviewer, not you, upheld the
-rebuttal) or `minor-logged` (triaged, naming what was deferred) — recorded in
-that round's log line and, when working inside a campaign, in the state doc. A
-residual with no recorded disposition means NOT converged: that is closure by
-fiat with a log line drawn around it.
+"rulings" other skills cite.** Step 5 tests severity, not count: counts do not
+converge — an adversarial reviewer returns items against an artifact two prior
+reviewers called correct — severity does. A residual survives the terminal
+round only as a logged disposition carrying its reason — `rebutted-upheld` or
+`minor-logged` (triaged, naming what was deferred) — recorded in that round's
+log line and, inside a campaign, in the state doc. **Only a Minor can be a
+residual**; a Critical or Important closes by fix or `rebutted-upheld`, never
+by riding out the terminal round. A residual with none recorded means NOT
+converged: closure by fiat with a log line drawn around it.
 
 **Convergence log (artifact, hand-off blocker):** when declaring done, print
 one line per round — `round N: <reviewers>× <lens> @<sha> → X findings →
-fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ clean`, or `→ X findings → <disposition each>` with no finding left undisposed.
+fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ C0 I0` (zero Critical, zero Important) plus each residual's disposition.
 **This is the one format**; other skills point here rather than restate it.
-The lens and reviewer count are part of the log: "clean" from one design-lens
+The lens and reviewer count are part of the log: `C0 I0` from one design-lens
 pass must not relay as the multi-reviewer rigor it wasn't. A fixed-pipeline
 INSTRUMENT counts as one under its own name, and that name stands as the lens
 (`1× code-review:code-review` — the plugin's set of review lenses is fixed and
 documented); an ad-hoc reviewer names its lens itself (`1× review subagent
-(bugs lens)`). `@<sha>` is the tree that round reviewed — re-reviewing the
-same SHA is not a new round —
-and is dropped only when the deliverable is not a tree (a plan, a problem
-statement). No log line for a terminal pass that is clean or fully disposed = not converged; go run it.
+(bugs lens)`). `@<sha>` is the tree that round reviewed — re-reviewing the same
+SHA is not a new round, with ONE exception: after the Scope guard's
+moving-target stop fires, the replaced artifact's first terminal-candidate
+round gets one confirmation round on the frozen hash, fresh reviewer mandatory
+— and is dropped only when the deliverable is not a tree (a plan, a problem
+statement). No log line for a terminal round = not converged; go run it.
 **When the deliverable is a committed
 file** (design doc, ADR, analysis), the log goes INTO it (a short `## Review
 log` footer) or its commit message — the file outlives the chat that

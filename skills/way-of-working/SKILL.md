@@ -16,7 +16,7 @@ router — which tool, when.
 | The answer does not exist yet (unsolved problem) | `deep-solve` (it routes isolated/grounded internally) |
 | A deliverable exists and must be checked | `review-to-convergence` |
 | The deliverable is a code diff | `review-to-convergence`; instrument = the code-review plugin (agents: `Skill(code-review:code-review)` on the PR — the bare `/code-review` built-in is user-only) or a review subagent |
-| RISKY coding just completed (numerics, hot paths, code whose output experiments will trust) | the session may CHOOSE the heavy route on its own judgment — push the campaign branch, open a (draft) PR, run `Skill(code-review:code-review, <PR#>)` plus an independently-dispatched mutation/numerics reviewer, and loop fixes to a clean pass (r2c rules; the plugin runs once per PR — later rounds use subagents). Announce the choice in one line. Skipping it is fine for routine code — land Phase 3 remains the backstop |
+| RISKY coding just completed (numerics, hot paths, code whose output experiments will trust) | the session may CHOOSE the heavy route on its own judgment — push the campaign branch, open a (draft) PR, run `Skill(code-review:code-review, <PR#>)` plus an independently-dispatched mutation/numerics reviewer, and loop fixes to r2c's terminal — C0 I0, residuals disposed (the plugin runs once per PR — later rounds use subagents). Announce the choice in one line. Skipping it is fine for routine code — land Phase 3 remains the backstop |
 | A creative/structural piece of work just completed | workflow review (below) |
 | Landing/merging a campaign branch (incl. after push+PR) | `campaign-land` — re-load on EVERY land; never re-enact from memory |
 | "Is X merged?" / before pin/clean/re-run / any note asserting merge status | `campaign-status` |
@@ -37,8 +37,9 @@ Below that, a single independent reviewer (review-to-convergence) suffices.
 Run it as 2–3 independent fresh-context reviewers with distinct lenses (design
 soundness, correctness, simplicity), each given the goal + the diff; reconcile
 findings before banking, and close on review-to-convergence's rule rather than
-by adjudication: a final pass comes back clean, or every residual carries an
-explicit ruling — r2c's recorded disposition, never the author's own fiat.
+by adjudication: a final round returns zero Critical and zero Important, every
+residual carrying an explicit ruling — r2c's recorded disposition, never the
+author's own fiat. A Critical or Important never rides out as a residual.
 
 ## Two force-multipliers (defaults, not ad-hoc)
 
@@ -62,7 +63,8 @@ explicit ruling — r2c's recorded disposition, never the author's own fiat.
    REASONING is two dispatches: the sweep, then a reasoning agent briefed on
    its findings — one agent when the sweep is trivial.
 2. **Review to convergence before banking.** Any substantive deliverable gets
-   an independent fresh-context reviewer until a clean pass. Your confidence is
+   an independent fresh-context reviewer until r2c's terminal — a round with
+   zero Critical and zero Important, residuals disposed. Your confidence is
    not evidence; a fresh solver's isn't either — gate load-bearing answers on
    ground truth, not self-consistency. Compose the two: delegate to produce,
    independently review before adopting.
@@ -253,11 +255,11 @@ two counts. **(i) The spec and the plan are reviewed by their AUTHOR only** —
 writing-plans says so verbatim ("a checklist you run yourself — not a subagent
 dispatch") and brainstorming's spec self-review is likewise author-run ("look
 at it with fresh eyes… Fix any issues inline. No need to re-review") — so each
-gets an independent r2c pass before execution begins. **(ii) SDD's own review loop terminates on ADJUDICATION, not on a clean
-pass** ("there is no second fix wave — residual load-bearing findings surface to
+gets an independent r2c pass before execution begins. **(ii) SDD's own review loop terminates on ADJUDICATION, not on a review
+terminal** ("there is no second fix wave — residual load-bearing findings surface to
 your human partner"), so r2c supplies the stopping rule it lacks: the last round
-comes back clean, or every residual carries an explicit ruling — r2c's recorded
-disposition — in the state doc. The instrument stays SDD's own reviewer — this
+returns zero Critical and zero Important, every residual carrying an explicit
+ruling — r2c's recorded disposition — in the state doc. The instrument stays SDD's own reviewer — this
 adds no tool, only a termination condition — and it binds hardest under an unattended mandate, where
 the "surface to your human partner" exit does not exist. A completion claim NAMES its review pass (what
 reviewed it, verdict) — a claim that names none is unreviewed work, whatever
