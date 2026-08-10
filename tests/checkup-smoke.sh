@@ -121,14 +121,17 @@ cd "$TMP/proj"
 # 9) land-report audit: landed doc without a table → GAPS; with table → OK; abandoned → ignored
 cat > docs/campaigns/oldland.md <<'EOF'
 # campaign: oldland
+- status: LANDED (2026-07-20)
 - result / verdict: LANDS — merged 2026-07-20
 EOF
 cat > docs/campaigns/aborted.md <<'EOF'
 # campaign: aborted
+- status: ABANDONED (2026-07-21)
 - result / verdict: ABANDONED — superseded
 EOF
 cat > docs/campaigns/openplan.md <<'EOF'
 # campaign: openplan
+- status: OPEN (2026-07-22)
 - result / verdict:
 
 ## plan
@@ -137,6 +140,7 @@ cat > docs/campaigns/openplan.md <<'EOF'
 EOF
 cat > docs/campaigns/prose.md <<'EOF'
 # campaign: prose
+- status: LANDED (2026-07-23)
 - goal: retries must not abort on transient errors
 - result / verdict: LANDS — merged
 EOF
@@ -154,22 +158,27 @@ rm docs/campaigns/openplan.md
 #     header must not exempt a landed doc either.
 cat > docs/campaigns/deco.md <<'EOF'
 # campaign: deco
+- status: LANDED (2026-07-24)
 - **verdict**: LANDS — merged as PR #13
 EOF
 cat > docs/campaigns/korean.md <<'EOF'
 # campaign: korean
+- status: LANDED (2026-07-25)
 - 결론: LANDS — PR #13 머지됨
 EOF
 cat > docs/campaigns/boxed.md <<'EOF'
 # campaign: boxed
+- status: LANDED (2026-07-26)
 - [x] LANDED as PR #7
 EOF
 cat > docs/campaigns/decoabandon.md <<'EOF'
 # campaign: decoabandon
+- status: ABANDONED (2026-07-27)
 - **verdict**: ABANDONED — superseded
 EOF
 cat > docs/campaigns/fakephase.md <<'EOF'
 # campaign: fakephase
+- status: LANDED (2026-07-28)
 - result / verdict: LANDS — merged
 
 ## plan
@@ -210,10 +219,12 @@ cat > docs/campaigns/todobox.md <<'EOF'
 EOF
 cat > docs/campaigns/longkorean.md <<'EOF'
 # campaign: longkorean
+- status: LANDED (2026-07-24)
 - 결론결론결론결론: LANDS — PR #13 머지됨
 EOF
 cat > docs/campaigns/boxabandon.md <<'EOF'
 # campaign: boxabandon
+- status: ABANDONED (2026-07-24)
 - [x] verdict: ABANDONED — superseded by another campaign
 EOF
 out="$(LC_ALL=C "$FAKE_ASSETS/checkup.sh" .)"
@@ -263,7 +274,10 @@ rm docs/campaigns/todonobox.md docs/campaigns/konobox.md
 #     authorize `campaign.sh clean` — the two consumers diverge here by design,
 #     so this matrix is the audit's own contract and does not track clean's.
 audit_sees() {   # <slug> <verdict row>
-  printf '# campaign: %s\n%s\n' "$1" "$2" > "docs/campaigns/m_$1.md"
+  # the dated scaffold line keeps the doc inside the audit's post-scaffold
+  # scope; 'CLOSED' is deliberately verdict-neutral so the matrix still tests
+  # the row under test and nothing else
+  printf '# campaign: %s\n- status: CLOSED (2026-07-24)\n%s\n' "$1" "$2" > "docs/campaigns/m_$1.md"
   local out; out="$(LC_ALL=C "$FAKE_ASSETS/checkup.sh" .)"
   grep -q "m_$1.md" <<<"$out" || fail "audit no longer recognizes a legitimate verdict row: $2"
   rm "docs/campaigns/m_$1.md"
@@ -288,6 +302,76 @@ audit_sees a15 '- verdict: LANDED'
   || fail "producer table header not found in campaign.sh (scaffold/audit integration broken)" 
 out="$("$FAKE_ASSETS/checkup.sh" .)"; grep -q "land-reports | OK" <<<"$out" || fail "expected land-reports OK after backfill"
 grep -q "^— scope:" <<<"$out" || fail "scope footer missing from report"
+
+# 9f) E5 scoping: a doc with no scaffold '- status: … (date)' line predates the
+#     ritual entirely and must be EXCLUDED, not reported as a gap it could
+#     never have filled. The dated line is the scoping key precisely because it
+#     is neither mtime nor git-derived.
+cat > docs/campaigns/prescaffold.md <<'EOF'
+# campaign: prescaffold
+- result / verdict: LANDS — merged long before the scaffold existed
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "prescaffold.md" <<<"$out" && fail "pre-scaffold doc reported as a land-report gap"
+# ...but a dated one with the same shape IS in scope
+cat > docs/campaigns/postscaffold.md <<'EOF'
+# campaign: postscaffold
+- status: LANDED (2026-08-01)
+- result / verdict: LANDS — merged as PR #99
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "postscaffold.md" <<<"$out" || fail "dated post-scaffold doc wrongly excluded from the audit"
+# A9: the remedy must name the PR merge date and warn off the doc's git log
+grep -q "MERGE date" <<<"$out"        || fail "GAPS remedy does not name the PR merge date"
+grep -q 'git log -1 -- <doc>' <<<"$out" || fail "GAPS remedy does not warn off the back-fill-skewed derivation"
+rm docs/campaigns/prescaffold.md docs/campaigns/postscaffold.md
+
+# 9g) C1 ritual-bypass sub-count, self-scoped on the scaffold's named-cell
+#     prompts. A report with no prompts at all is PRE-v0.7.0 and excluded —
+#     that exclusion is what stops every fork-lagged consumer false-flagging.
+cat > docs/campaigns/nomarker.md <<'EOF'
+# campaign: nomarker
+- status: LANDED (2026-08-02)
+- result / verdict: LANDS — merged
+## land report
+| phase | ran? | evidence |
+|---|---|---|
+| 4 docs same-land | yes | done |
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "^ritual-bypass" <<<"$out" && fail "a report with no scaffold prompts entered the bypass count"
+# a scaffolded-but-unfilled report is the bypass signal
+cat > docs/campaigns/bypassed.md <<'EOF'
+# campaign: bypassed
+- status: LANDED (2026-08-03)
+- result / verdict: LANDS — merged
+## land report
+| phase | ran? | evidence |
+|---|---|---|
+| 4 docs same-land | yes | reference: |
+| 6 distill + hygiene | yes | verification: |
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "named cells left at their bare prompts not counted"
+grep -q "bypassed.md" <<<"$out"            || fail "bypass row does not name the doc"
+# filling the cells (and adding sanity:) clears it
+cat > docs/campaigns/bypassed.md <<'EOF'
+# campaign: bypassed
+- status: LANDED (2026-08-03)
+- result / verdict: LANDS — merged
+## land report
+| phase | ran? | evidence |
+|---|---|---|
+| 4 docs same-land | yes | reference: nothing to graduate — one-line fix |
+| 6 distill + hygiene | yes | sanity: no findings; verification: re-ran the suite, green |
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "ritual-bypass | OK" <<<"$out" || fail "filled named cells still counted as a bypass"
+# a filled report that never names sanity: is still a bypass
+sed -i 's/sanity: no findings; //' docs/campaigns/bypassed.md
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "missing 'sanity:' not counted as a bypass"
+rm docs/campaigns/nomarker.md docs/campaigns/bypassed.md
 
 # 10) plugin-cache staleness: versioned cache layout with a newer sibling → STALE
 CACHE="$TMP/cache/ohd"; mkdir -p "$CACHE/1.0.0/assets" "$CACHE/1.0.0/.claude-plugin" "$CACHE/9.9.9"
@@ -353,6 +437,42 @@ grep -q "harness-changes | ANOMALY" <<<"$out" || fail "inverted stamp not flagge
 grep -v '^# synced-from' tools/campaign.sh > t.tmp && mv t.tmp tools/campaign.sh && chmod +x tools/campaign.sh
 out="$("$FAKE_ASSETS/checkup.sh" .)"
 grep -q "harness-changes | NO-BASELINE" <<<"$out" || fail "missing stamp not reported as NO-BASELINE"
+
+# 12b) E2 fork stamp — version-pinned acceptance of a deliberately divergent
+#      copy. It suppresses the LINE-DIFF nag and nothing else.
+# scenario 7 deliberately left this copy markerless — re-instantiate a clean
+# one so the fork case is tested, not the markerless one
+cp "$FAKE_ASSETS/campaign.sh" tools/campaign.sh && chmod +x tools/campaign.sh
+sed -i '3a # synced-from ohd v0.5.2 (fork)' tools/campaign.sh
+echo '# a deliberate local divergence' >> tools/campaign.sh
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "campaign.sh | FORK" <<<"$out"         || fail "fork stamp did not suppress the line-diff nag"
+grep -q "differing line(s)" <<<"$out"          && fail "fork stamp still emitted the line-diff count"
+grep -q "review and restamp" <<<"$out"         || fail "fork behind the running plugin was not asked to restamp"
+# the stamp version must still be extractable THROUGH the '(fork)' suffix, or
+# the relay silently stops for exactly the consumers most likely to be behind
+grep -q "harness-changes | REVIEW" <<<"$out"   || fail "BEHAVIOR-CHANGE relay stopped at a (fork) stamp"
+grep -q "\[v0.5.10\] new gate ten" <<<"$out"   || fail "fork stamp lost the relayed marker lines"
+# a new template config key must OUTRANK the fork suppression
+cp "$FAKE_ASSETS/campaign.sh" "$TMP/tpl.bak"
+sed -i 's/^# ── config.*/&\nFORK_ERA_VAR="z"/' "$FAKE_ASSETS/campaign.sh"
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "campaign.sh | DRIFT" <<<"$out"        || fail "fork stamp swallowed a new template config var"
+grep -q "FORK_ERA_VAR" <<<"$out"               || fail "new-key detail not named for a forked copy"
+cp "$TMP/tpl.bak" "$FAKE_ASSETS/campaign.sh"
+# --sync on a fork is a one-command fork-destroyer — it must REFUSE
+out="$("$FAKE_ASSETS/checkup.sh" . --sync)"
+grep -q "campaign.sh | FORK-REFUSED" <<<"$out" || fail "--sync did not refuse a (fork)-stamped copy"
+grep -q '(fork)' tools/campaign.sh             || fail "--sync dropped the fork stamp"
+grep -q 'a deliberate local divergence' tools/campaign.sh || fail "--sync overwrote the forked body"
+# restamping at the running version clears the restamp prompt, keeps FORK
+sed -i 's/^# synced-from ohd v.*/# synced-from ohd v0.5.11 (fork)/' tools/campaign.sh
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "campaign.sh | FORK" <<<"$out"         || fail "restamped fork lost its FORK status"
+grep -q "review and restamp" <<<"$out"         && fail "restamped fork still asked to restamp"
+"$FAKE_ASSETS/checkup.sh" . --sync >/dev/null || true
+sed -i '/a deliberate local divergence/d' tools/campaign.sh
+"$HERE/assets/checkup.sh" . --sync >/dev/null || true
 
 # 13) CHANGELOG header-format pin (the relay's parsing contract)
 grep -E '^## v' "$HERE/CHANGELOG.md" | grep -vE '^## v[0-9]+\.[0-9]+\.[0-9]+ \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$' \
@@ -446,6 +566,23 @@ out="$("$CK" .)"
 grep -q "reference | STALE" <<<"$out"     || fail "dead pointer on an unterminated last line not gated"
 grep -q "src/gone_last.py" <<<"$out"      || fail "STALE detail does not name the unterminated line's pointer"
 cp "$TMP/conv.bak" docs/reference/conventions.md
+# A7: adopters write pointers relative to the reference DOC, not the repo root
+# — bare names and `../` shapes. Root-only resolution called both dead. The
+# fresh scaffold is vacuously green on this (its bare names sit in ungated
+# prose), so the regression needs adopter-shaped bullets to bite.
+echo '- the state registry lives beside this — `state.md`' >> docs/reference/conventions.md
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "bare-name pointer beside the reference doc read as dead"
+mkdir -p docs/adr && echo x > docs/adr/0001.md
+echo '- the decision record — `../adr/0001.md`' >> docs/reference/conventions.md
+out="$("$CK" .)"
+grep -q "reference | OK" <<<"$out"        || fail "../ pointer relative to the reference doc read as dead"
+# try-both is permissive, NOT blind: a pointer dead under both must stay dead
+echo '- nothing is here — `../adr/absent.md`' >> docs/reference/conventions.md
+out="$("$CK" .)"
+grep -q "reference | STALE" <<<"$out"     || fail "try-both resolution swallowed a genuinely dead pointer"
+grep -q "adr/absent.md" <<<"$out"         || fail "STALE detail does not name the dead adopter-shaped pointer"
+cp "$TMP/conv.bak" docs/reference/conventions.md
 
 # --- campaigns: OPEN count vs verdict-filled count (the false-OPEN census) ---
 cat > docs/campaigns/c1.md <<'EOF'
@@ -460,7 +597,7 @@ cat > docs/campaigns/c2.md <<'EOF'
 EOF
 cat > docs/campaigns/c3.md <<'EOF'
 # campaign: c3
-- status: LANDED
+- status: LANDED (2026-07-24)
 - result / verdict: LANDS — merged as PR #5
 EOF
 out="$("$CK" .)"
@@ -541,6 +678,7 @@ S="$TMP/struct"; newrepo "$S"
 mkdir -p docs/campaigns docs/archive docs/superpowers/plans docs/superpowers/specs bench tools scripts
 cat > docs/campaigns/done1.md <<'EOF'
 # campaign: done1
+- status: LANDED (2026-07-24)
 - result / verdict: LANDS — merged as PR #4
 EOF
 cat > docs/campaigns/open1.md <<'EOF'
@@ -606,6 +744,34 @@ grep -qi "harness repo itself" <<<"$out"    || fail "census does not state it ap
 grep -qi "baseline" <<<"$out"               || fail "structure run banks no baselines for the re-count"
 # R22: counts and byte sizes ONLY — no token estimates anywhere
 grep -qiE "[0-9][^|]*tok(en)?s?\b" <<<"$out" && fail "structure output estimates tokens (R22-blocked)"
+# C5 state-claim staleness: opt-in only, listed with NO dating, and the
+# reference tier is excluded (its own expiry gate already covers state.md)
+mkdir -p docs/reference
+cat > docs/roadmap-fixture.md <<'EOF'
+# roadmap
+- stage 4 is NOT landed (LAND owed) on the integration branch
+- stage 5 is pending review
+EOF
+cat > docs/reference/state.md <<'EOF'
+# state
+- the nightly job is pending a rewrite, as of 2026-08-01 — `docs/roadmap-fixture.md`
+EOF
+git add -A docs && git commit -qm fixture-c5
+out="$("$CK" . --structure)"
+grep -qi "state-claim staleness" <<<"$out"     || fail "structure mode has no state-claim staleness section"
+grep -q "roadmap-fixture.md" <<<"$out"         || fail "state claim outside the reference tier not listed"
+grep -q "NOT landed" <<<"$out"                 || fail "the matched claim line is not shown"
+grep -qE "state-claim staleness" <<<"$out" && \
+  { grep -A3 "state-claim staleness" <<<"$out" | grep -qiE "days? (old|ago)|mtime|last (touched|modified)" \
+    && fail "C5 dated the candidates — mtime/git-log dating re-imports the back-fill skew"; }
+grep -q "docs/reference/state.md:" <<<"$out"   && fail "reference tier not excluded from the staleness list"
+# A8: the executed work-list is a deliverable and says so
+grep -qi "review-to-convergence" <<<"$out"     || fail "structure footer does not route the executed list to r2c"
+grep -qi "deliverable" <<<"$out"               || fail "structure footer does not call the executed list a deliverable"
+# still opt-in: the default run must not carry any of it
+out="$("$CK" .)"
+grep -qi "state-claim staleness" <<<"$out"     && fail "default mode ran the staleness listing"
+
 # and the DEFAULT run never carries the work-list
 #     (done1.md legitimately appears in the pre-existing land-report row; what
 #     must NOT appear is any part of the work-list itself)
