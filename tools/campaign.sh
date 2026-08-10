@@ -109,6 +109,9 @@ cmd_new() {
 - validation gate:
 - result / verdict:
 - follow-on:
+<!-- a finding made during REVIEW belongs on the follow-on line above: the
+review log is not read at land time. Harness friction goes on a '- friction:'
+line as it happens — reconstructing it at the end loses the small stuff. -->
 
 ## plan
 <!-- living plan: certain stretch = task checkboxes; uncertain stretch = ONE
