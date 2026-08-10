@@ -23,7 +23,7 @@ Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial 
 ## The loop
 1. Produce it (test-first for code).
 2. Dispatch an **independent** reviewer (fresh context; reviewer ≠ author).
-3. Fix Critical/Important; log Minor.
+3. Fix Critical/Important; log Minor. A false claim is fixed by sweeping every restatement of it, not the one line the reviewer happened to cite.
 4. Re-review → step 2.
 5. A round returning **zero Critical and zero Important**, every residual disposed ⟹ done. Not before.
 
@@ -60,9 +60,8 @@ documented); an ad-hoc reviewer names its lens itself (`1× review subagent
 (bugs lens)`). `@<sha>` is the tree that round reviewed — re-reviewing the same
 SHA is not a new round, with ONE exception: after the Scope guard's
 moving-target stop fires, the replaced artifact's first terminal-candidate
-round gets one confirmation round on the frozen hash, fresh reviewer mandatory
-— and is dropped only when the deliverable is not a tree (a plan, a problem
-statement). No log line for a terminal round = not converged; go run it.
+round gets one confirmation round on the frozen hash, fresh reviewer mandatory.
+A non-tree deliverable (a plan, a problem statement) fills the slot with a CONTENT hash — `sha256sum | cut -c1-7`, named so two agents produce comparable slots — rather than dropping it. No log line for a terminal round = not converged; go run it.
 **When the deliverable is a committed
 file** (design doc, ADR, analysis), the log goes INTO it (a short `## Review
 log` footer) or its commit message — the file outlives the chat that
@@ -87,6 +86,11 @@ looping.
 | design / plan | faithful to the real system + assumptions verified |
 | code (being built) | superpowers:subagent-driven-development carries the loop (task + whole-branch reviewers); each fix gets a regression test |
 | code (finished diff) | PR exists AND the code-review plugin is installed → `Skill(code-review:code-review, args: <PR#>)` as this loop's reviewer (the bare `/code-review` built-in is user-only); else → a fresh review subagent on the diff, saying which route and why |
+| gate / check | ask the whole ladder at once, or it arrives one rung per round: is the VERDICT correct + does each test test what its NAME says (mutation only finds this) + what do ALL fixtures hold CONSTANT + WHICH artifact is under test (hook body? CI shell? the instrument itself?) + does the verdict BIND + what is it ABOUT (one change vs one base) + how would someone EVADE it + is every CLAIM about it true + has it run in a SECOND environment |
+
+**Across every row: a verification NAMES the parameter it varies, and that parameter is the one the claim quantifies over.** A check that holds fixed the quantity the claim ranges over is not evidence, however often it passes. An instrument whose output will be committed asserts the precondition it depends on and runs once in a deliberately degraded mode where it MUST answer differently; a summary count may not include rows that cannot fail.
+
+**Reviewer briefs carry the tree rules** — read-only, never mutate the reviewed tree; isolate with `git clone --no-local`, never `cp -a` (the worktree gitfile makes the copy write to the ORIGINAL, which is how a reviewer once committed to the branch under review); report `git status --porcelain` before finishing; an extracted reproduction keeps the original's shell flags and runs from inside a checkout.
 
 ## Red flags — STOP, you are about to skip the loop
 - "ready to hand off as-is" / "I'm confident it's clean"
