@@ -447,6 +447,28 @@ printf '\n| phase | ra |\n' >> docs/campaigns/ga.md
 if PATH="/usr/bin:/bin" "$CS" land ga 2>/dev/null; then fail "land accepted '| phase | ra |' — the '?' in 'ran?' lost its escape"; fi
 "$CS" abort ga --purge >/dev/null
 
+# C2 repo-debt line: report-only, and NEVER a wrong number when gh is absent
+"$CS" new gb >/dev/null
+( cd "$TMP/wt/gb" && echo w > gb.txt && git add . && git commit -qm gb )
+PATH="/usr/bin:/bin" "$CS" land gb --report >/dev/null
+out="$(PATH="/usr/bin:/bin" "$CS" land gb 2>&1)" || fail "gb land failed outright"
+grep -q "repo debt: unverifiable" <<<"$out" || fail "no gh: debt line must say unverifiable, not a number"
+# with gh present, the count is a set difference against the PR list — a
+# squash-merged branch HAS a PR and must not be counted (ancestry counting
+# would; that is the phantom-debt trap this leg pins)
+mkdir -p "$TMP/fakebin"
+printf '#!/bin/sh\nif [ "$1" = pr ] && [ "$2" = list ]; then echo gb-had-a-pr; else exit 0; fi\n' > "$TMP/fakebin/gh"
+chmod +x "$TMP/fakebin/gh"
+git update-ref refs/remotes/origin/gb-had-a-pr HEAD
+git update-ref refs/remotes/origin/gb-never-offered HEAD
+out="$(PATH="$TMP/fakebin:/usr/bin:/bin" "$CS" land gb 2>&1)" || fail "gb land with gh failed"
+grep -qE "repo debt: [0-9]+ remote branch\(es\) never offered as a PR" <<<"$out" \
+  || fail "debt line missing or malformed with gh present"
+grep -q "repo debt: 0 " <<<"$out" && fail "debt count did not see gb-never-offered"
+"$CS" abort gb --purge >/dev/null
+git update-ref -d refs/remotes/origin/gb-had-a-pr
+git update-ref -d refs/remotes/origin/gb-never-offered
+
 # LAND_GUARD=0 bypass
 "$CS" new g2 >/dev/null
 ( cd "$TMP/wt/g2" && echo w > g2.txt && git add . && git commit -qm g2 )

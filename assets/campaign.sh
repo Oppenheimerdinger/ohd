@@ -189,6 +189,34 @@ TBL
     echo "coordinator model: merge order = ${DEP_DIR:+dep PR → pin → }this PR → clean."
     echo "verify with 'campaign.sh status $n' after merging."
   fi
+  report_debt
+}
+
+# Repo debt at land time, REPORT-ONLY — never a gate, never a die. Every land
+# gate asks about the campaign; none asks about the repo, so debt accrues at
+# exactly the rate campaigns are created while every campaign passes. This puts
+# the number in front of the one person who is definitely paying attention.
+# NEVER-OFFERED = remote heads MINUS every head that has any PR, computed as a
+# set difference over ONE 'gh pr list --state all' call. Never count by
+# ancestry: a squash-merged branch is not an ancestor of trunk, so ancestry
+# counting fabricates phantom debt out of landed work. No gh, or a failed
+# call, prints "unverifiable" — a wrong number here is worse than no number.
+report_debt() {
+  command -v gh >/dev/null 2>&1 || { echo "repo debt: unverifiable (gh not found)"; return 0; }
+  local prs cutoff never=0 old=0 ts ref
+  prs="$(gh pr list --state all --limit 1000 --json headRefName -q '.[].headRefName' 2>/dev/null)" \
+    || { echo "repo debt: unverifiable (gh pr list failed)"; return 0; }
+  cutoff=$(( $(date +%s) - 30*86400 ))
+  while read -r ts ref; do
+    [ -n "$ref" ] || continue
+    case "$ref" in "$TRUNK"|HEAD) continue ;; esac
+    printf '%s\n' "$prs" | grep -qxF "$ref" && continue
+    never=$(( never + 1 ))
+    [ "$ts" -lt "$cutoff" ] && old=$(( old + 1 ))
+  done <<EOF
+$(git for-each-ref --format='%(committerdate:unix) %(refname:lstrip=3)' refs/remotes/origin)
+EOF
+  echo "repo debt: $never remote branch(es) never offered as a PR, $old older than 30d (report only)"
 }
 
 # Verdict rule (campaign-status skill): MERGED = ancestry MERGED OR a MERGED PR exists.
