@@ -25,14 +25,24 @@ CI). Larger changes go branch→PR→`code-review:code-review`→merge.
    exactly these lines to projects on sync. The project-facing judgment
    happens here, at authoring time, never downstream.
 3. Release gates (clean before push; run over git-tracked files only):
-   - `grep -rniE "nanof[o]rge|f[o]rge-|xrd2xt[a]l|sr[u]uk|/f[s]x|dip[a]rk" $(git ls-files)`
+   - `grep -rniE "nanof[o]rge|f[o]rge-|f[o]rgen[a-z]|xrd2xt[a]l|sr[u]uk|f[s]x|dip[a]rk" $(git ls-files)`
      — allowed hits ONLY: marketplace name `dipark`, plugin.json author,
      install/rollback commands referencing the `dipark` marketplace in
      README/USAGE-ko/CHANGELOG, ohd-setup's stale-plugin
      check (`deep-solve@dipark` uninstall command — same exception gate 2
      already grants), the LICENSE copyright line, this §RELEASING section's
      own grep-pattern/whitelist text (self-referential — the rule has to
-     quote the words it's filtering for).
+     quote the words it's filtering for), and the literal blind-spot NAME
+     `slashless-f[s]x` where docs/backlog.md #17 and the v0.6.0 land report
+     record this gate's own history (same self-referential exemption).
+     v0.7.0 widened two patterns (backlog #17): `f[s]x` DROPPED its leading
+     slash — requiring one made every slash-evading form invisible, which is
+     how two live strings reached v0.6.0; and `f[o]rgen[a-z]` is the
+     no-hyphen sibling of `f[o]rge-`. That sibling is deliberately narrow: a
+     bare no-hyphen `f[o]rge` was measured against the tree and matched
+     `conda-forge` plus English "forging"/"forges" — 8 hits, none of them
+     leaks — and a gate whose output must be eyeballed past every release is
+     a gate that trains dismissal.
    - `grep -rnE "Oppenheimerdinger/deep-solve|deep-solve@dipark|deep-solve:deep-solve" $(git ls-files)`
      — allowed ONLY: docs/backlog.md and CHANGELOG.md history links, README
      version note, USAGE-ko migration note, ohd-setup's stale-plugin check,
