@@ -101,20 +101,23 @@ The log lines follow review-to-convergence's format — reviewer and reviewed
 SHA per round, findings and their disposition — flattened into the cell while
 it fits, terminal round line plus a pointer to the named log section when it
 does not; that skill owns the format, this one only says the cell carries it.
-It ends either in a round that came back CLEAN or with every residual finding
-carrying an explicit ruling recorded in this doc (r2c supplies that rule — a
-ruling is its recorded disposition, and a finding closed by the author's own
-fiat is not one). Shape:
+It ends in a round returning zero Critical and zero Important, every residual
+finding carrying an explicit ruling recorded in this doc (r2c supplies that
+rule — a ruling is its recorded disposition, a Critical or Important is never a
+residual, and a finding closed by the author's own fiat is not one). Shape:
 
 ```
-| 3 quality gate | yes | round 1: 1× code-review:code-review PR#16 @a1b2c3d → 2 findings → fixed; round 2: 1× review subagent (bugs lens) @e4f5a6b → clean. simplifier: not needed — diff is one guard clause |
+| 3 quality gate | yes | round 1: 1× code-review:code-review PR#16 @a1b2c3d → 2 findings → fixed; round 2: 1× review subagent (bugs lens) @e4f5a6b → C0 I0. simplifier: not needed — diff is one guard clause |
 ```
 
-- A first round that finds nothing IS a complete log — one line. Rounds exist
-  because findings do.
+- A first round that returns C0 I0 IS a complete log — one line. Rounds exist
+  because Critical and Important findings do.
 - Round N+1 reviews a DIFFERENT tree than round N: re-reviewing the same SHA is
   not a round, it is the same round reported twice. Its scope is the FIX diff,
-  not a fresh full pass.
+  not a fresh full pass. ONE exception, and it is r2c's: after that skill's
+  moving-target stop fires and the loop restarts on the replaced artifact, the
+  artifact's first terminal-candidate round gets one confirmation round on the
+  frozen SHA, fresh reviewer mandatory.
 - **No scaling by diff size.** "Small diff, one finding, obviously fixed" is
   exactly the shape of the regression this rule exists for. A one-line fix gets
   a second look at the fixed SHA like everything else.
@@ -306,7 +309,7 @@ memory is a soft layer, the script gate is the backstop).
 - **Three rows have NAMED contents, not free-form evidence** (all are Phase
   rules above, repeated here because this table is what actually gets filled):
   row 3 carries the convergence log — per round, the reviewer and the SHA it
-  reviewed, ending clean or with every residual ruled on, or, past ~2 rounds,
+  reviewed, ending C0 I0 with every residual ruled on, or, past ~2 rounds,
   the terminal round line plus the pointer to the named log section (the
   overflow rule below) — plus `simplifier:` with a reason when it says
   `not needed`; row 4 carries `reference:` with the graduated file or the

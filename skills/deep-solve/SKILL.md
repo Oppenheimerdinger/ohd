@@ -55,19 +55,21 @@ chosen during Phase 1:
      and flagging any (b) that has a cheap decisive test as a BLOCKING finding
      — **running that test itself when it can (read-only, cheap) and inlining
      the result (command + output) instead of just flagging**. It returns a
-     findings list (empty list = pass).
+     findings list, each finding labelled Critical / Important / Minor (the
+     terminal below is a severity test, so an unlabelled list cannot close it).
    - In grounded mode the reviewer additionally verifies each entry of the
      brief's "Open questions" section: load-bearing? and NOT cheaply closable
      read-only? (If the reviewer can close one itself, that is a finding: the
      fact gets inlined with its command+output, the question removed. A
      non-load-bearing entry is likewise a finding — demote it to a hint or
      drop it.)
-   - Fix findings → re-dispatch → repeat until a pass with ZERO findings.
+   - Fix findings → re-dispatch → repeat until a round returns ZERO Critical
+     and ZERO Important, every residual Minor carrying a disposition.
    - Keep a per-round convergence log and print it with the gate banner —
      review-to-convergence's log format (`round N: <reviewers>× <lens> → X
      findings → fixed/rebutted-upheld/minor-logged`; the `@<sha>` slot is
      dropped here — the deliverable is a brief, not a tree), ending in the
-     clean pass; the brief's review history is part of what the user approves.
+     terminal round; the brief's review history is part of what the user approves.
    - If not converged after 4 review iterations, stop and escalate to the user
      instead of looping further.
    - If a read-only reviewer idles without reporting, grep its transcript JSONL
@@ -210,7 +212,8 @@ schedule and honesty rules.
 2. **Reviewer**: one fresh agent, same tool regime. Its input is the brief plus
    the solver's RAW return block — never a paraphrase — together with read access to
    the evidence directory that block points at (those files are part of the return,
-   not a summary of it). Duties: (i) review the answer against the brief; (ii) produce
+   not a summary of it). Duties, every finding labelled Critical / Important /
+   Minor: (i) review the answer against the brief; (ii) produce
    a per-item **verification table** over the appendix — `confirmed / failed /
    not-reproduced` (re-open files, re-run cheap commands; expensive measurements are
    `not-reproduced`, never `confirmed` — a script on disk is reproducible, not cheap,
@@ -226,12 +229,12 @@ schedule and honesty rules.
    is resumed or a new one is spawned). Its output gets a FULL re-review by the same reviewer (new or
    changed appendix items added to the table).
 4. **Grade** (NEVER `independent-agreement`):
-   - zero-finding final pass AND all load-bearing items `confirmed` →
-     `grounded-single-solver, reviewer-verified`
-   - zero findings but `not-reproduced` load-bearing items or an unresolved
-     premise doubt → `grounded-single-solver, partially-verified` (name the
-     items on the grade line)
-   - findings remain → `unconverged-grounded` (findings attached)
+   - final pass returns zero Critical and zero Important AND all load-bearing
+     items `confirmed` → `grounded-single-solver, reviewer-verified`
+   - terminal on severity but `not-reproduced` load-bearing items or an
+     unresolved premise doubt → `grounded-single-solver, partially-verified`
+     (name the items on the grade line)
+   - a Critical or Important remains → `unconverged-grounded` (findings attached)
    The final report ALWAYS includes the reviewer's final raw output — findings
    AND table — verbatim next to the grade, plus the evidence directory path. If the
    table itself is too large to return, it goes to that directory under the same

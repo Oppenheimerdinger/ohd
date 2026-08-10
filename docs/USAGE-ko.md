@@ -12,7 +12,7 @@ ohd(=oppenheimerdinger의 약칭)는 연구·개발용 Claude Code 하네스 플
 - `/ohd-new-project` — 새 연구 프로젝트 스캐폴더 (인터뷰 주도: 캠페인 라이프사이클·보호 트렁크·머신×환경 매트릭스·외부코드 hosts)
 - (스킬) `autonomous-mandate` — "자율진행"/"자율로 완수해" 순간 자동 발화: 공식 ralph-loop 세팅이 첫 행동 (맨몸 자율 세션의 침묵 정지 방지)
 - `/ohd-checkup` — 기존 프로젝트 하네스 점검·정비 (campaign.sh 드리프트 재동기화 + CLAUDE.md 배선 — 채택 경로 겸용; 플러그인 업데이트 후 각 프로젝트에서 한 번씩)
-- `review-to-convergence` — 완성된 산출물을 zero-finding까지 검증
+- `review-to-convergence` — 완성된 산출물을 Critical/Important 0까지 검증
 - `claude-md-sanity` — CLAUDE.md/메모리 드리프트 감사
 
 ## 설치
@@ -71,7 +71,7 @@ CLAUDE.md·메모리가 루트에 있어서, 루트에서 열어야 하네스가
 
 1. **Phase 1 — 문제 정식화(brief)**: 메인 에이전트가 자기완결 문제 문서를
    작성하고, 독립 리뷰어가 "자기완결? 시스템에 충실? 풀 수 있음? 전제
-   검증됨?" 4개 축으로 zero-finding까지 검증합니다. 검증 가능한 전제는 이
+   검증됨?" 4개 축으로 Critical/Important 0까지 검증합니다. 검증 가능한 전제는 이
    단계에서 직접 테스트됩니다.
 2. **사용자 게이트**: 수렴한 brief 전문 + 실행 배너(모드/모델/예산)를
    보여주고 **당신의 승인을 기다립니다**. 여기서 brief 수정, 파라미터 조정,

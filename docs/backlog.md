@@ -255,3 +255,15 @@ The v0.6.1 shape is relay text (scaffold/skill lines), NOT new machinery:
   the file that attracts explanatory prose; next substantive edit likely trips
   the size gate for unrelated reasons. Decide deliberately: move prose out or
   move the cap (fleet-flagged at v0.6.0 land).
+
+## 18. solve-converge.js cannot evaluate the severity terminal — OPEN (opened v0.7.0)
+
+B1 made the review terminal severity-anchored (zero Critical, zero Important;
+residuals Minor-only, each disposed). The isolated-mode runner's finding schema
+has NO severity field — `SOLVE_SCHEMA`/`REVIEW_SCHEMA` findings carry
+`summary`/`detail` only — so the runner cannot evaluate that terminal and still
+converges on a count. Named non-ship, not an oversight: the prose skill governs
+the terminal, and the runner's own COLD confirmation pass is its independent
+check. Deliberately NOT shipped in v0.7.0 to keep B1 one wording intervention
+rather than a schema migration. Revisit trigger: a runner-converged answer is
+later contradicted by a defect that a severity label would have held open.
