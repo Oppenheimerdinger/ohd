@@ -1,6 +1,6 @@
 ---
 name: deep-solve
-description: This skill should be used ONLY on explicit request — the user invokes /deep-solve or says "deep solve" / "deep-solve" / "딥솔브" / "solve to convergence" / "delegate and verify". Never auto-trigger for merely hard problems or stuck sessions; but when the session IS stuck on a hard separable problem, add ONE line noting that /deep-solve exists, then continue normally. Once invoked, fits hard self-contained problems with a definite right answer (derivation, proof, algorithm choice, root-cause, design tradeoff).
+description: ONLY on explicit request — /deep-solve, "deep solve", "deep-solve", "딥솔브", "solve to convergence", "delegate and verify". Never auto-trigger for merely hard problems or stuck sessions; if the session IS stuck on a hard separable problem, note in ONE line that /deep-solve exists and continue. Fits self-contained problems with a definite right answer (derivation, proof, algorithm choice, root-cause, design tradeoff).
 ---
 
 # Deep Solve
@@ -27,13 +27,25 @@ chosen during Phase 1:
    - Faithful to the REAL system: cite actual `file:line` and real values, not an
      idealized sketch.
    - Established constraints / what NOT to re-litigate stated.
-   - What a valid answer looks like and how it will be validated stated.
+   - What a valid answer looks like, and the validation stated PER MODE:
+     **isolated** states the correctness STANDARD only — the solver is
+     closed-book and can execute nothing, so a test harness written into the
+     brief draws findings for rounds and is then discarded; the author
+     validates after. **grounded** states the standard AND makes designing and
+     running the verification a solver deliverable.
    - No "see the session"; no references a fresh agent cannot open.
    - WITHHOLD your own tentative conclusion — the solvers must derive cold.
-   - ★EMPIRICAL-PREMISE PROVENANCE: classify every MEASURED claim the problem rests
+   - ★EMPIRICAL-PREMISE PROVENANCE: classify every MEASURED OR DERIVED claim the
+     problem rests
      on — especially LABELS/attributions connecting a measurement to an entity
      ("kernel X is call Y", "the slow phase is Z") — as (a) directly verified by a
-     described experiment, or (b) inherited/inferred. A load-bearing (b) with a
+     described experiment, or (b) inherited/inferred. For a DERIVED claim, grep
+     the repo, the memory store and prior review output BEFORE deriving; a
+     record that disagrees with your derivation IS the finding (test docstrings
+     and regression-guard names are the highest-yield targets — they are where
+     a project stores "we already got this wrong once"). Deriving feels
+     self-contained and searching feels like a detour; the economics are the
+     other way round. A load-bearing (b) with a
      cheap decisive test (≲30 min) is an UNCLOSED PREMISE: run that test and fold
      the result in BEFORE Phase 2. **A brief with an unclosed cheap-verifiable
      load-bearing premise is NOT converged** — this includes anything you were
@@ -55,21 +67,36 @@ chosen during Phase 1:
      and flagging any (b) that has a cheap decisive test as a BLOCKING finding
      — **running that test itself when it can (read-only, cheap) and inlining
      the result (command + output) instead of just flagging**. It returns a
-     findings list (empty list = pass).
+     findings list, each finding labelled Critical / Important / Minor (the
+     terminal below is a severity test, so an unlabelled list cannot close it).
    - In grounded mode the reviewer additionally verifies each entry of the
      brief's "Open questions" section: load-bearing? and NOT cheaply closable
      read-only? (If the reviewer can close one itself, that is a finding: the
      fact gets inlined with its command+output, the question removed. A
      non-load-bearing entry is likewise a finding — demote it to a hint or
      drop it.)
-   - Fix findings → re-dispatch → repeat until a pass with ZERO findings.
+   - Fix findings → re-dispatch → repeat until a round returns ZERO Critical
+     and ZERO Important, every residual Minor carrying a disposition.
    - Keep a per-round convergence log and print it with the gate banner —
-     review-to-convergence's log format (`round N: <reviewers>× <lens> → X
-     findings → fixed/rebutted-upheld/minor-logged`; the `@<sha>` slot is
-     dropped here — the deliverable is a brief, not a tree), ending in the
-     clean pass; the brief's review history is part of what the user approves.
+     review-to-convergence's log format (`round N: <reviewers>× <lens> @<hash>
+     → X findings → fixed/rebutted-upheld/minor-logged`). The deliverable is a
+     brief, not a tree, so the `@<sha>` slot is FILLED with a CONTENT hash of
+     the brief — `sha256sum | cut -c1-7`, r2c's rule — never dropped: dropping
+     it is what made "re-reviewing the same artifact is not a new round"
+     unenforceable for exactly the deliverable class where an 11-round loop was
+     observed. LOG IDENTITY only: neither the same-hash rule nor r2c's
+     confirmation-round carve-out binds the isolated runner, which has its own
+     COLD confirmation pass. The log ends in the terminal round; the brief's
+     review history is part of what the user approves.
    - If not converged after 4 review iterations, stop and escalate to the user
-     instead of looping further.
+     instead of looping further — and carry a DIAGNOSIS, not just a count.
+     Split the findings so far by target: problem statement / premises /
+     acceptance apparatus (computed ad hoc; the shared log format is
+     untouched). Apparatus-dominated means DELETE the apparatus, not patch it
+     — a test suite always has another blind spot, so that class is unbounded
+     and the count will plateau rather than converge. Without the split, "N
+     rounds and still going" reads as failure when it may be one removable
+     section.
    - If a read-only reviewer idles without reporting, grep its transcript JSONL
      (under `~/.claude/projects/<project-slug>/`) for the final assistant
      message instead of re-prompting.
@@ -137,7 +164,11 @@ set them).
    approves. If the user edits the brief substantively, fold the edits in,
    re-run one brief review pass, and re-present the gate. If the user adjusts
    parameters or makes non-substantive edits, apply them and re-present the
-   gate with the updated banner; launch only on an explicit go.
+   gate with the updated banner; launch only on an explicit go. **A `--mode`
+   override is NOT a mere parameter change**: the validation item above is
+   mode-dependent, so a mode switch after the brief is frozen re-triggers the
+   brief-review pass — otherwise a grounded→isolated override ships a brief
+   whose validation section the solver cannot execute.
 
 **Pre-approval path**: if the user has explicitly authorized autonomous
 execution for this run ("자율적으로 진행", "run autonomously", "승인 생략" /
@@ -147,14 +178,18 @@ do not set up a persistence loop for it.) — but STILL print the
 full brief and the banner, AND write brief + banner + convergence log (and,
 after the run, the result + evidence grade WITH its mode inline — the
 "a grade never travels alone" rule applies doubly to a file) to a file
-(`docs/deep-solve/<slug>-<date>.md` or the project's notes dir): an
+(`docs/deep-solve/<slug>-<date>.md` or the project's notes dir — the FILE is
+the summary/note convention; grounded mode's bulk evidence goes in the sibling
+DIRECTORY `docs/deep-solve/<slug>-<date>/`, same stem): an
 unattended run's chat record evaporates, and "the record stands" must mean a
 record someone can later open. Then launch immediately. Vague delegation ("알아서 해줘" without reference to
 this run's approval) does NOT qualify — present the gate normally.
-**Grounded mode never runs under this waiver** (it depends on the attended
-permission barrier): print the brief + banner, state that grounded mode needs
-an attended session, and stop — do NOT switch modes yourself; the user must
-explicitly choose isolated mode.
+**Grounded mode never runs under this waiver**: its solver writes evidence
+files (Phase 2 below), and what makes that safe is the attended permission
+system gating each Bash call — unattended, there is neither that gate nor
+anyone to read what got written. Print the brief + banner, state that grounded
+mode needs an attended session, and stop — do NOT switch modes yourself; the
+user must explicitly choose isolated mode.
 
 Render everything — banner labels included — in the conversation language (e.g.
 Korean labels for a Korean conversation). When `effort` is high (the default),
@@ -190,34 +225,53 @@ schedule and honesty rules.
 ## Phase 2, grounded mode (attended; no Workflow; only after user approval)
 
 1. **Solver**: one fresh agent, the resolved effort, read tools + sandboxed Bash, no
-   write/edit (the attended permission system is the write barrier). Returns:
-   answer + reasoning + an **evidence appendix** — verbatim command output or
-   `file:line` excerpt for EVERY newly established load-bearing fact — plus
-   `premiseChallenge`: a suspect load-bearing premise that is cheaply testable
-   read-only must be TESTED by the solver itself and recorded in the appendix
-   (a refutation IS the answer); only untestable doubts come back unresolved.
-2. **Reviewer**: one fresh agent, same tool regime. Its input is the brief plus
-   the solver's RAW return block — never a paraphrase. Duties: (i) review the
-   answer against the brief; (ii) produce a per-item **verification table**
-   over the appendix — `confirmed / failed / not-reproduced` (re-open files,
-   re-run cheap commands; expensive measurements are `not-reproduced`, never
-   `confirmed`; `failed` = the re-run materially CONTRADICTS the claim, not
-   byte-inequality). A `failed` load-bearing item is a blocking finding;
-   (iii) any load-bearing claim WITHOUT an appendix entry is a finding.
+   write/edit tools (the attended permission system is the write barrier). Its ONE
+   sanctioned write path is Bash redirection into the run's evidence directory
+   `docs/deep-solve/<slug>-<date>/` — no tool grant changes. Returns: answer +
+   reasoning + an **evidence appendix** — for EVERY newly established load-bearing
+   fact, a claim-table row carrying its file pointer under that directory AND the
+   decisive excerpt inline. Bulk output (full logs, sweeps, long command output) goes
+   to the directory so a refused over-long message cannot lose the solve; paraphrase
+   stays banned — an excerpt is quoted verbatim, never summarized. Long-running jobs:
+   one launch, teardown by PID, unbuffered output (`python -u` / `stdbuf`), never two
+   writers on one path. Plus `premiseChallenge`: a suspect load-bearing premise that
+   is cheaply testable read-only must be TESTED by the solver itself and recorded in
+   the appendix (a refutation IS the answer); only untestable doubts come back
+   unresolved.
+2. **Reviewer**: one fresh agent, READ-ONLY — read tools + sandboxed Bash and no
+   write path of its own: the solver's sanctioned Bash redirection does NOT extend
+   here, and the reviewer READS the evidence directory, never writes to it. Its
+   input is the brief plus
+   the solver's RAW return block — never a paraphrase — together with read access to
+   the evidence directory that block points at (those files are part of the return,
+   not a summary of it). Duties, every finding labelled Critical / Important /
+   Minor: (i) review the answer against the brief; (ii) produce
+   a per-item **verification table** over the appendix — `confirmed / failed /
+   not-reproduced` (re-open files, re-run cheap commands; expensive measurements are
+   `not-reproduced`, never `confirmed` — a script on disk is reproducible, not cheap,
+   so file availability never upgrades a grade; `failed` = the re-run materially
+   CONTRADICTS the claim, not byte-inequality). A `failed` load-bearing item is a
+   blocking finding; (iii) any load-bearing claim WITHOUT an appendix entry is a
+   finding; (iv) every path-referenced entry is opened — one resolving to a missing
+   or empty file is a finding (a 0-byte redirect target is exactly what an unflushed
+   or doubly-launched job leaves behind).
 3. **Continuation**: on findings, at most ONE continuation; the continuation
    prompt is the brief + the solver's raw return block + the reviewer's raw
-   output block (this works whether the same agent is resumed or a new one is
-   spawned). Its output gets a FULL re-review by the same reviewer (new or
+   output block + the evidence directory path (this works whether the same agent
+   is resumed or a new one is spawned). Its output gets a FULL re-review by the same reviewer (new or
    changed appendix items added to the table).
 4. **Grade** (NEVER `independent-agreement`):
-   - zero-finding final pass AND all load-bearing items `confirmed` →
-     `grounded-single-solver, reviewer-verified`
-   - zero findings but `not-reproduced` load-bearing items or an unresolved
-     premise doubt → `grounded-single-solver, partially-verified` (name the
-     items on the grade line)
-   - findings remain → `unconverged-grounded` (findings attached)
+   - final pass returns zero Critical and zero Important AND all load-bearing
+     items `confirmed` → `grounded-single-solver, reviewer-verified`
+   - terminal on severity but `not-reproduced` load-bearing items or an
+     unresolved premise doubt → `grounded-single-solver, partially-verified`
+     (name the items on the grade line)
+   - a Critical or Important remains → `unconverged-grounded` (findings attached)
    The final report ALWAYS includes the reviewer's final raw output — findings
-   AND table — verbatim next to the grade.
+   AND table — verbatim next to the grade, plus the evidence directory path. If the
+   table itself is too large to return, it goes to that directory under the same
+   rule (verbatim file, decisive rows inline) — the cap must not simply move one
+   level up.
 5. **Still failing** after the one continuation → the user chooses: accept as
    unconverged, or return to Phase 1 FRESH (the verification table is attached
    as input evidence to audit — no fact carries over pre-accepted).

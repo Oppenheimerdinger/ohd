@@ -30,7 +30,7 @@ memory live there) — never inside a campaign worktree.
   squash-safe merge verdicts
 - `/ohd-new-project` — interview-driven scaffolder for a new research project
   (campaign lifecycle, protected trunk, machine×env matrix, hosts machinery)
-- `review-to-convergence` — verify a finished deliverable to zero findings
+- `review-to-convergence` — verify a finished deliverable to zero Critical/Important
 - `claude-md-sanity` — audit a repo's CLAUDE.md / memory files for drift
 - `/ohd-checkup` — harness doctor for an existing project: drift check + repair (also the adoption path)
 - `/ohd-setup` — check (and on approval install) the plugins this harness

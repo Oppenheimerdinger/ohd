@@ -1,3 +1,82 @@
+## v0.7.0 (2026-08-10)
+
+BEHAVIOR-CHANGE: `campaign.sh land` now REFUSES a state doc whose only `| phase |` table is a plan, status or measurement table — the gate anchors on the full scaffold header `| phase | ran? |` and accepts numbered land-report headings (`## 13. Land report`), so docs that passed vacuously before will now be refused until they carry a real land report.
+
+BEHAVIOR-CHANGE: the review terminal is severity-anchored, not count-anchored — a round ends the loop when it returns zero Critical and zero Important with every residual (Minor only) carrying a disposition, replacing "a pass with zero findings" everywhere it was stated.
+
+BEHAVIOR-CHANGE: `campaign-land` Phase 0 now requires the PR's checks to be green when the repo defines any — existing at the head SHA and green against the current base — and to state so and pass when the repo defines none.
+
+Field-hardening release: everything below comes from adoption runs and the
+public issues #21-#29, not from harness-dev speculation.
+
+FLEET NOTE: field reports came from 0.5.15, 0.5.23 and 0.6.1 across different
+nodes, so reload everywhere rather than assuming one machine speaks for the
+fleet. Consumers running a local FORK of a skill must port B1, B2, A2 and A3
+by hand — no checkup row tracks skill forks, and that is a known hole rather
+than something this release closes.
+
+### Gates and scripts
+
+- `campaign.sh`: the land gate and `--report`'s duplicate check both widen the
+  heading regex to numbered dialects and tighten the table anchor to the full
+  scaffold header. Neither half works alone — the tighter table alone refuses
+  the hand-written reports the field actually writes, and the wider heading
+  alone still passes a plan table. The `- land-report:` label pattern is
+  UNCHANGED. The `?` in `ran?` is escaped and a smoke leg guards the escape in
+  both directions. The die message was rewritten in the same edit, since it
+  described the old patterns to exactly the person just refused.
+- `campaign.sh land --report` seeds the Phase-4 and Phase-6 evidence cells with
+  the literal prompts `reference:` and `verification:`, and emits an explicit
+  era marker `<!-- ohd:land-report-scaffold v0.7.0 -->` above the table
+  (backlog #13). The marker, not the prompts, is what dates a report: the
+  prompts have been mandated ritual vocabulary since v0.6.0, so reports
+  written before the scaffold existed legitimately carry them.
+- `campaign.sh land` prints a report-only repo-debt line: branches never
+  offered as a PR, computed as a set difference over one `gh pr list` call —
+  never by ancestry, which counts squash-merged work as debt. No `gh` prints
+  "unverifiable" rather than a wrong number.
+- `checkup.sh`: reference pointers resolve root-relative OR relative to the
+  reference doc (adopters write both); the land-report audit gains the widened
+  heading test and is scoped to docs carrying the scaffold's dated `- status:`
+  line; a new advisory `ritual-bypass` row counts scaffolded land reports whose
+  named cells are still at their bare prompts; `--structure` lists state-claim
+  staleness candidates with no dating, and its footer routes the executed
+  work-list to review-to-convergence.
+- `checkup.sh` fork stamps: `# synced-from ohd vX.Y.Z (fork)` suppresses the
+  line-diff nag ONLY — new config keys and BEHAVIOR-CHANGE relay keep firing,
+  the row asks for a restamp once the plugin moves past the stamped version,
+  and `--sync` REFUSES on a fork stamp instead of silently destroying it.
+
+### Skills
+
+- `review-to-convergence`: the severity terminal and its confirmation-round
+  carve-out; a sweep rule (fix the claim, not the cited line); a content hash
+  in the `@<sha>` slot for non-tree deliverables; a `gate / check` reviewer row
+  carrying the nine-axis ladder; a cross-cutting verification-validity rule
+  (name the parameter you vary, assert the precondition, run once degraded, and
+  never count rows that cannot fail); and reviewer-brief tree hygiene. Net +8
+  lines, the cap this release set itself.
+- `campaign-land`: CI preconditions, review findings promoted onto
+  `- follow-on:`, an optional friction line at distill, and a Phase-0 checkup
+  pointer.
+- `deep-solve`: the grounded evidence appendix now has a sanctioned home — a
+  `docs/deep-solve/<slug>-<date>/` directory beside the existing summary file,
+  so an over-long return can no longer lose an entire solve; provenance covers
+  derived claims, not just measured ones; the brief's validation item splits by
+  mode and a `--mode` override re-triggers the brief review; the 4-iteration
+  escalation carries a by-target diagnosis.
+- `way-of-working`, README and USAGE-ko carried restatements of the old
+  terminal and were swept with it.
+
+### Recorded, not shipped
+
+- `solve-converge.js` has no severity field, so the isolated runner cannot
+  evaluate the new terminal; the prose skill governs (backlog #18).
+- Severity labelling itself is uncalibrated — one field population observed.
+  Revisit if a shipped regression traces to an under-labelled finding.
+- Release-gate patterns widened for two leak shapes they missed (backlog #17);
+  the no-hyphen sibling is narrow by measurement, not by preference.
+
 ## v0.6.1 (2026-08-06)
 
 BEHAVIOR-CHANGE: provenance_block no longer fabricates a dirty flag outside a git tree (git=n/a stays n/a).

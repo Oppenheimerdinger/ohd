@@ -68,6 +68,15 @@ cfg_keys() {  # $1=file → its config-block variable names, one per line
 # ---- campaign.sh ----
 NEW_KEYS=""
 [ -f "$DST" ] && NEW_KEYS="$(comm -23 <(cfg_keys "$TPL" | sort) <(cfg_keys "$DST" | sort) | tr '\n' ' ')"
+# A '# synced-from ohd vX.Y.Z (fork)' stamp is VERSION-PINNED ACCEPTANCE of a
+# deliberately divergent copy. It suppresses the line-diff nag and NOTHING
+# else: the config-key check below and the BEHAVIOR-CHANGE relay further down
+# both keep firing, because a fork still needs to hear about new knobs and
+# changed contracts. The version in the stamp is what makes it expire — once
+# the running plugin moves past it, the row asks for a review and a restamp
+# rather than going quiet forever.
+FORK_VER=""
+[ -f "$DST" ] && FORK_VER="$(grep -m1 '^# synced-from ohd v.*(fork)' "$DST" 2>/dev/null | sed 's/.*ohd v\([0-9][0-9.]*\).*/\1/' || true)"
 if [ ! -f "$DST" ]; then
   CS_STATUS=MISSING; CS_DETAIL="no $DST — --sync instantiates the template (all defaults)"
 elif [ -n "${NEW_KEYS// /}" ]; then
@@ -76,13 +85,25 @@ elif [ -n "${NEW_KEYS// /}" ]; then
   CS_STATUS=DRIFT; CS_DETAIL="template has new config var(s) your copy lacks: ${NEW_KEYS}— --sync adds them (your values kept)"
 elif diff -q <(normalize "$TPL") <(normalize "$DST") >/dev/null 2>&1; then
   CS_STATUS=IN-SYNC; CS_DETAIL="matches template (config block excluded); $(grep -m1 '^# synced-from' "$DST" 2>/dev/null || echo 'no synced-from stamp')"
+elif [ -n "$FORK_VER" ]; then
+  CS_STATUS=FORK
+  if ver_gt "$PLUGVER" "$FORK_VER"; then
+    CS_DETAIL="accepted fork, upstream v$FORK_VER→v$PLUGVER — review and restamp \`# synced-from ohd v$PLUGVER (fork)\` once you have; line diff suppressed, config-key drift and BEHAVIOR-CHANGE relay still report"
+  else
+    CS_DETAIL="accepted fork stamped at v$FORK_VER — line diff suppressed; config-key drift and BEHAVIOR-CHANGE relay still report"
+  fi
 else
   CS_STATUS=DRIFT
   CS_DETAIL="$({ diff <(normalize "$TPL") <(normalize "$DST") || true; } | grep -c '^[<>]' || true) differing line(s) vs template v$PLUGVER — --sync updates while keeping your config"
 fi
 report "campaign.sh" "$CS_STATUS" "$CS_DETAIL"
 
-if [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
+if [ "$SYNC" = 1 ] && [ -n "$FORK_VER" ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
+  # Without this, the fork stamp arms a one-command fork-destroyer: --sync
+  # resets the body to the template AND drops the marker recording that the
+  # divergence was deliberate, leaving no trace of either.
+  report "campaign.sh" "FORK-REFUSED" "$DST carries a '(fork)' stamp — --sync would overwrite the fork's body and drop the stamp that records it. Merge by hand against $TPL, then restamp \`# synced-from ohd v$PLUGVER (fork)\`"
+elif [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
   if [ -f "$DST" ] && [ -z "$(cfg_range "$DST")" ]; then
     # markerless project copy: a blind splice would silently revert its config
     # values and drop custom vars — refuse instead of corrupting
@@ -257,7 +278,13 @@ else
           case "$ptr" in
             *'`'*)
               p="${ptr#*\`}"; p="${p%%\`*}"; p="${p%%:[0-9]*}"
-              [ -z "$p" ] || [ -e "$p" ] || REF_DEAD="$REF_DEAD$p "
+              # Try BOTH resolutions — root-relative (the format law's dominant
+              # shape, and the passing majority) and relative to the reference
+              # file itself. Adopters write bare names and `../` shapes, which
+              # resolved dead under root-only. Strictly permissive on purpose:
+              # pure dir-relative would break every currently-passing pointer.
+              [ -z "$p" ] || [ -e "$p" ] || [ -e "$(dirname "$f")/$p" ] \
+                || REF_DEAD="$REF_DEAD$p "
               ;;
           esac ;;
       esac
@@ -322,6 +349,37 @@ has_verdict() {
   grep -qiE "$VERDICT_LABEL_RE" "$1" 2>/dev/null || grep -qE "$VERDICT_BARE_RE" "$1" 2>/dev/null
 }
 
+# "this doc carries a land-report artifact" — used by the land-reports gap
+# test, which asks for its ABSENCE. Single consumer: the ritual-bypass
+# sub-count used to call it too, but that row now scopes on the scaffold
+# marker instead, since a land-report artifact says nothing about which era
+# wrote it. The TABLE test stays deliberately LOOSE here, unlike campaign.sh's
+# gate: tightening it to the full scaffold header was measured to false-flag
+# genuine hand-written reports whose tables use other columns.
+has_land_report() {
+  grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$1" 2>/dev/null \
+    || grep -qiE '^##[[:space:]]*([0-9]+\.?[[:space:]]*)?land[- ]report' "$1" 2>/dev/null
+}
+
+# Print a doc's LAND-REPORT REGION: from the scaffold marker (or, absent one,
+# the land-report heading) to the next '## ' heading. Content checks read this
+# rather than the whole file — a `sanity:` sitting in unrelated prose elsewhere
+# in a long state doc must not satisfy the land report's own contract.
+land_report_region() {
+  awk '
+    {
+      low = tolower($0)
+      isLR = (low ~ /^##[ \t]*([0-9]+\.?[ \t]*)?land[- ]report/)
+      if (!inr) {
+        if (index($0, "ohd:land-report-scaffold") > 0 || isLR) { inr = 1; started = NR }
+      } else if (low ~ /^##[ \t]/ && NR > started && !isLR) {
+        exit
+      }
+      if (inr) print
+    }
+  ' "$1" 2>/dev/null
+}
+
 # Solidation candidates — one path per line: a state doc whose verdict is filled
 # and which is not yet under docs/archive/. ONE rule for its two consumers (the
 # default row counts them, --structure lists them with sizes), so the SOLIDATION
@@ -365,15 +423,61 @@ report "structure" "$ST_CAND candidates" "last full audit: no record (the struct
 
 # ---- land-report audit (behavioral fossils: landed without the ritual?) ----
 if [ -d "$SD" ]; then
-  GAPS=""
+  GAPS=""; BYP=""; BYP_N=0; BYP_TOT=0
   for d in "$SD"/*.md; do
     [ -f "$d" ] || continue
-    # DELIBERATELY NOT the same rule as campaign.sh's clean gate. Their inputs
-    # differ: 'clean' only sees campaigns 'campaign.sh new' opened, so it can
-    # anchor on the literal '- result / verdict:' scaffold row that 'new'
-    # writes, and it does. This audit reads LEGACY docs, of which only 84 of 365
-    # carry that row, so anchoring on it would silently skip the other 77% —
-    # the failure this audit exists to remove. It stays TOLERANT instead:
+    # Ritual-bypass sub-count runs FIRST and is scoped by its OWN marker, NOT
+    # by the land-reports row's post-scaffold exclusion below. Nesting it there
+    # would let a hand-rolled bypass escape the count by deleting the dated
+    # status line — the one edit a bypasser is most likely to make.
+    # Scoped by an EXPLICIT scaffold marker, because the named-cell TOKENS
+    # cannot mark an era: `reference:` and `verification:` have been MANDATED
+    # ritual vocabulary since v0.6.0, so a pre-scaffold report legitimately
+    # contains them. Both genuine reports in the plugin's own repo do, written
+    # four days before the scaffold existed — token-based scoping counted them
+    # as scaffold-born no matter where the anchor sat, which is why anchor
+    # position was never the fix. Only a v0.7.0+ `--report` run emits the
+    # comment marker, so it is the one thing a report the scaffold did not
+    # write cannot contain.
+    # ACCEPTED TRADE, disclosed in the row text: scoping on a line the author
+    # can delete means deleting it removes the report from BOTH the count and
+    # the named list, while the land gate still passes — measured, `1 of 2`
+    # becomes `OK | 1`. This row is MARKER-scoped, not ritual-scoped, and says
+    # so. The era boundary is real and nothing weaker draws it, so the trade is
+    # taken rather than hidden; C1's honesty precedent is that a detector
+    # states what it cannot see.
+    if grep -qF 'ohd:land-report-scaffold' "$d" 2>/dev/null; then
+      BYP_TOT=$((BYP_TOT + 1))
+      REGION="$(land_report_region "$d")"
+      # Content checks read the REGION, not the file: a `sanity:` in unrelated
+      # prose elsewhere in the doc must not attest this land report.
+      # The BARE-PROMPT test stays cell-initial on purpose — an unfilled
+      # scaffold prompt is cell-initial by construction, so that is the one
+      # place the tighter shape is the correct one.
+      if printf '%s\n' "$REGION" | grep -qE '^[[:space:]]*\|.*\|[[:space:]]*(reference|verification):[[:space:]]*(\|[[:space:]]*)?$' \
+         || ! printf '%s\n' "$REGION" | grep -q 'sanity:'; then
+        BYP_N=$((BYP_N + 1)); BYP="$BYP$(basename "$d") "
+      fi
+    fi
+    # The land-reports row SCOPES to the post-scaffold era: 'campaign.sh new'
+    # writes a '- status: <state> (YYYY-MM-DD)' line, so a doc without one
+    # predates the scaffold and is excluded BY INTENT (#21 §6 asked for exactly
+    # this narrowing). That line is the one on-disk date that is neither mtime
+    # nor git-derived, which is why it is the scoping key rather than a date
+    # the audit would have to derive. HONEST HALF: this removes pre-ritual
+    # history only — the never-landed lexical misclassification below is
+    # unaffected and stays (backlog #11's accepted trade).
+    grep -qiE '^[[:space:]]*-[[:space:]]*status:.*\([0-9]{4}-[0-9]{2}-[0-9]{2}\)' "$d" 2>/dev/null || continue
+    # The VERDICT test below is deliberately NOT campaign.sh clean's rule, and
+    # the scoping line above does not change that. Their inputs differ: 'clean'
+    # only sees campaigns 'campaign.sh new' opened, so it can anchor on the
+    # literal '- result / verdict:' scaffold row, and it does. This audit reads
+    # LEGACY docs, of which only 84 of 365 carry that row — so anchoring the
+    # VERDICT on a scaffold row would silently skip 77% of the docs the audit
+    # exists to read. (The status-line scoping above is the opposite move and
+    # is safe for the same reason: it SUBTRACTS docs that predate the ritual
+    # rather than deciding which verdicts count.) The verdict test stays
+    # TOLERANT instead:
     # a REAL list marker (space after '[-*]', so a bold PARAGRAPH of
     # sub-conclusions is not a verdict row), a checkbox only when CHECKED (an
     # unchecked box is a TODO), and between marker and verdict only decoration:
@@ -398,14 +502,21 @@ if [ -d "$SD" ]; then
     # for its own reason: a bullet mentioning '| phase |' is prose.
     if grep -qiE '^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|([^[:space:]:]+:[[:space:]]*)?[*_`]*\b(LANDS|LANDED)\b)' "$d" 2>/dev/null \
        && ! grep -qiE '^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?[*_`]*(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
-       && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$d" 2>/dev/null; then
+       && ! has_land_report "$d"; then
       GAPS="$GAPS$(basename "$d") "
     fi
   done
   if [ -n "$GAPS" ]; then
-    report "land-reports" "GAPS" "landed state doc(s) without a land-report table: ${GAPS}— lands that predate or skipped the ritual; backfill honestly or annotate (see campaign-land)"
+    report "land-reports" "GAPS" "landed state doc(s) without a land-report table: ${GAPS}— lands that skipped the ritual; backfill honestly or annotate (see campaign-land). SCOPE CHANGED in v0.7.0: only docs carrying the scaffold's \`- status: … (date)\` line are audited, so pre-scaffold docs are excluded and this row no longer sees them (spec E5 honest-half — it removes pre-ritual history only; the never-landed lexical misclassification is unchanged). Any landing date you backfill comes from the PR's MERGE date — never \`git log -1 -- <doc>\`, which reports when the file was last touched and is skewed by every back-fill and later edit"
   else
     report "land-reports" "OK" "every landed state doc carries its land-report table"
+  fi
+  if [ "$BYP_N" -gt 0 ]; then
+    report "ritual-bypass" "$BYP_N of $BYP_TOT" "scaffold-written land report(s) leaving a named cell at its bare prompt or carrying no \`sanity:\` in the land-report section: ${BYP}— ADVISORY, not a gate: those cells are what campaign-land Phase 4/6 attest, and a prompt with nothing after it reads as silent rather than attested. The denominator counts reports carrying the \`ohd:land-report-scaffold\` marker — it is MARKER-scoped, not ritual-scoped. Two honest false negatives: a bypasser who fills the cells with plausible text reads clean, and one who DELETES the marker line drops out of this row entirely while still passing the land gate"
+  elif [ "$BYP_TOT" -gt 0 ]; then
+    report "ritual-bypass" "OK" "$BYP_TOT scaffold-written land report(s) (those carrying the \`ohd:land-report-scaffold\` marker), every named cell filled — MARKER-scoped, not ritual-scoped: a report whose marker line was deleted is not counted here at all, and still passes the land gate"
+  else
+    report "ritual-bypass" "0 scaffolded" "no land report here carries the \`ohd:land-report-scaffold\` marker, so this row has nothing to audit yet — SILENT BY SCOPE, not a health claim. The marker is explicit because the named cells cannot date a report: \`reference:\`/\`verification:\` are mandated ritual vocabulary from v0.6.0, so pre-scaffold reports legitimately carry them. Reports written before v0.7.0, by a fork, or by a stale plugin are excluded by construction"
   fi
 fi
 
@@ -567,7 +678,36 @@ if [ "$STRUCT" = 1 ]; then
   fi
   echo ""
 
-  # 5. baselines for the re-count -------------------------------------------
+  # 5. state-claim staleness: re-verify candidates --------------------------
+  # Reference integrity is gated; claim CURRENCY is not gated anywhere, so a
+  # doc can be arbitrarily wrong about the state of the world and stay green
+  # indefinitely. Deliberately NO dating: mtime and git-log dating both
+  # re-import the back-fill skew the land-reports remedy warns about, and the
+  # human reading the list judges staleness better than either.
+  echo "## state-claim staleness — re-verify candidates"
+  SC=""; SC_N=0
+  if [ -n "$TRACKED_DOCS" ]; then
+    while IFS= read -r g; do
+      [ -f "$g" ] || continue
+      case "$g" in "$REFD"/*) continue ;; esac
+      while IFS= read -r hit; do
+        [ -n "$hit" ] || continue
+        SC_N=$((SC_N + 1)); SC="$SC  $g:$hit
+"
+      done < <(grep -nE 'NOT landed|LAND owed|pending|TODO' "$g" 2>/dev/null || true)
+    done <<< "$TRACKED_DOCS"
+  fi
+  echo "  $SC_N line(s) asserting state, outside the reference tier"
+  [ -z "$SC" ] || printf '%s' "$SC"
+  echo "   Each is a CANDIDATE to re-verify, never a defect on its own: a gate can"
+  echo "   check that a path resolves, never that a claim is still true. One stale"
+  echo "   \"NOT landed (LAND owed)\" line made three dead branches look like a live"
+  echo "   blocker and cost a full triage campaign to disprove."
+  echo "   Kin: campaign-land's verify-on-read rule and the false-OPEN census"
+  echo "   already cover the state-DOC half of this class."
+  echo ""
+
+  # 6. baselines for the re-count -------------------------------------------
   echo "## baselines (this run) — paste into the cleanup campaign's state doc"
   echo "  | item | count / bytes |"
   echo "  |---|---|"
@@ -577,6 +717,12 @@ if [ "$STRUCT" = 1 ]; then
   echo "  | docs corpus (tracked .md) | $((H1 + H2 + H3 + H4)) file(s) |"
   echo "  | docs at/over 64KB | $H4 |"
   echo "  Counts and byte sizes only, by construction — re-run this mode to compare."
+  echo ""
+  echo "## before you commit the executed work-list"
+  echo "  The executed list is a DELIVERABLE, not bookkeeping: run"
+  echo "  review-to-convergence on it before committing. A docs-only cleanup on a"
+  echo "  docs-only trunk never reaches campaign.sh's land die-gate, so this is the"
+  echo "  only review it gets — and a field run confirmed the error mass is real."
   echo ""
 fi
 

@@ -109,6 +109,9 @@ cmd_new() {
 - validation gate:
 - result / verdict:
 - follow-on:
+<!-- a finding made during REVIEW belongs on the follow-on line above: the
+review log is not read at land time. Harness friction goes on a '- friction:'
+line as it happens — reconstructing it at the end loses the small stuff. -->
 
 ## plan
 <!-- living plan: certain stretch = task checkboxes; uncertain stretch = ONE
@@ -132,13 +135,14 @@ cmd_land() {
   # only remaining work.
   if [ "${2:-}" = "--report" ]; then
     [ -f "$doc" ] || die "no state doc at $doc (run 'campaign.sh new' first?)"
-    grep -qiE '^##[[:space:]]*land[- ]report|^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$doc" && die "$doc already has a land-report table"
+    grep -qiE '^##[[:space:]]*([0-9]+\.?[[:space:]]*)?land[- ]report|^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|[[:space:]]*ran\?[[:space:]]*\|' "$doc" && die "$doc already has a land-report table"
     cat >> "$doc" <<'TBL'
 
 ## land report
 Scope: land ritual only (branch→trunk mechanics and gates) — a green table is
 NOT a claim the work is correct (validation gate, external) or enabled by
 default (that is exactly the 2.5 row, no more).
+<!-- ohd:land-report-scaffold v0.7.0 -->
 | phase | ran? | evidence |
 |-------|------|----------|
 | 0 preconditions      | | |
@@ -147,9 +151,9 @@ default (that is exactly the 2.5 row, no more).
 | 2 re-validation      | | |
 | 2.5 reachability     | | |
 | 3 quality gate       | | |
-| 4 docs same-land     | | |
+| 4 docs same-land     | | reference: |
 | 5 merge mechanics    | | |
-| 6 distill + hygiene  | | |
+| 6 distill + hygiene  | | verification: |
 TBL
     echo "appended land-report table to $doc — fill it per the campaign-land skill, then run 'campaign.sh land $n'"
     return 0
@@ -158,13 +162,21 @@ TBL
   # artifact BEFORE push+PR. Prose reminders here were skipped twice in the
   # field; die-gates never were. Existence-only check — content honesty stays
   # with the campaign-land skill (re-load it on EVERY land; do not re-enact
-  # from memory). The header match is line-anchored: a plan bullet that merely
-  # MENTIONS '| phase |' is prose, not the artifact.
+  # from memory). Line-anchoring alone (v0.5.22) stopped a prose MENTION of
+  # '| phase |' but not a genuine second table using 'phase' as a column name,
+  # which is what a plan or status table looks like — so the table test is
+  # anchored on the FULL scaffold header and the heading test accepts the
+  # numbered dialects the field writes ('## 13. Land report'). Both are needed:
+  # the tighter table alone refuses hand-written reports whose columns differ,
+  # and the wider heading alone still passes a plan table. The '?' in 'ran?'
+  # MUST stay escaped — unescaped ERE makes the 'n' optional, which misses
+  # every real header and matches '| phase | ra |'. The third pattern (the
+  # '- land-report:' label) is deliberately UNCHANGED.
   if [ "${LAND_GUARD:-1}" != "0" ] \
-     && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$doc" 2>/dev/null \
-     && ! grep -qiE '^##[[:space:]]*land[- ]report' "$doc" 2>/dev/null \
+     && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|[[:space:]]*ran\?[[:space:]]*\|' "$doc" 2>/dev/null \
+     && ! grep -qiE '^##[[:space:]]*([0-9]+\.?[[:space:]]*)?land[- ]report' "$doc" 2>/dev/null \
      && ! grep -qiE '^[[:space:]]*-?[[:space:]]*land-report[[:space:]]*:' "$doc" 2>/dev/null; then
-    die "refusing land: '$doc' has no land-report — the gate matches the '## land report' heading or the '| phase |' header (keep those lines intact; row content is yours). Scaffold: 'campaign.sh land $n --report'. Bypass: LAND_GUARD=0 campaign.sh land $n"
+    die "refusing land: '$doc' has no land-report — the gate matches a '## land report' heading (numbered forms like '## 13. Land report' count) or the scaffold's '| phase | ran? |' header (keep those lines intact; row content is yours). A table that merely uses 'phase' as a column name is NOT a land report. Scaffold: 'campaign.sh land $n --report'. Bypass: LAND_GUARD=0 campaign.sh land $n"
   fi
   if git -C "$wt" ls-files --error-unmatch "$doc" >/dev/null 2>&1; then
     echo "WARN: the campaign branch tracks $doc — the state doc is TRUNK-owned; if the merge conflicts on it, resolve as UNION (campaign-land Phase 5)." >&2
@@ -182,6 +194,39 @@ TBL
     echo "coordinator model: merge order = ${DEP_DIR:+dep PR → pin → }this PR → clean."
     echo "verify with 'campaign.sh status $n' after merging."
   fi
+  report_debt
+}
+
+# Repo debt at land time, REPORT-ONLY — never a gate, never a die. Every land
+# gate asks about the campaign; none asks about the repo, so debt accrues at
+# exactly the rate campaigns are created while every campaign passes. This puts
+# the number in front of the one person who is definitely paying attention.
+# NEVER-OFFERED = remote heads MINUS every head that has any PR, computed as a
+# set difference over ONE 'gh pr list --state all' call. Never count by
+# ancestry: a squash-merged branch is not an ancestor of trunk, so ancestry
+# counting fabricates phantom debt out of landed work. No gh, or a failed
+# call, prints "unverifiable" — a wrong number here is worse than no number.
+report_debt() {
+  command -v gh >/dev/null 2>&1 || { echo "repo debt: unverifiable (gh not found)"; return 0; }
+  local prs cutoff never=0 old=0 ts ref
+  prs="$(gh pr list --state all --limit 1000 --json headRefName -q '.[].headRefName' 2>/dev/null)" \
+    || { echo "repo debt: unverifiable (gh pr list failed)"; return 0; }
+  # A truncated PR list silently INFLATES the count: every head whose PR fell
+  # off the end reads as never-offered. Same rule as the missing-gh case — say
+  # unverifiable rather than print a number that is wrong in a plausible way.
+  [ "$(printf '%s\n' "$prs" | grep -c .)" -lt 1000 ] \
+    || { echo "repo debt: unverifiable (PR list hit the 1000 fetch limit)"; return 0; }
+  cutoff=$(( $(date +%s) - 30*86400 ))
+  while read -r ts ref; do
+    [ -n "$ref" ] || continue
+    case "$ref" in "$TRUNK"|HEAD) continue ;; esac
+    printf '%s\n' "$prs" | grep -qxF "$ref" && continue
+    never=$(( never + 1 ))
+    [ "$ts" -lt "$cutoff" ] && old=$(( old + 1 ))
+  done <<EOF
+$(git for-each-ref --format='%(committerdate:unix) %(refname:lstrip=3)' refs/remotes/origin)
+EOF
+  echo "repo debt: $never remote branch(es) never offered as a PR, $old older than 30d (report only)"
 }
 
 # Verdict rule (campaign-status skill): MERGED = ancestry MERGED OR a MERGED PR exists.

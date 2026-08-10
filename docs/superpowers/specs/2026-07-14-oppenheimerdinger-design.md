@@ -74,11 +74,11 @@ campaign.sh(무거움)와 milestone.sh(가벼움)는 같은 라이프사이클
 1. **외부 코드 반입**: 없음 / fork+manifest pin (hosts/ 패턴: VEHICLE=fork,
    TRUNK, PIN, campaign.sh pin 연동) / patches (VEHICLE=patches) / submodule /
    vendor. 기본 추천: 수정이 필요한 외부코드 = fork+pin, 읽기전용 = pin된 clone.
-2. **병합 모델**: 코디네이터 로컬 병합 (forge형 — 앵커 세션이 gh pr merge) /
-   GitHub 리뷰 게이트 (xrd형 — land에서 세션 종료). 기본: 1인 프로젝트면
+2. **병합 모델**: 코디네이터 로컬 병합 (umbrella-proj형 — 앵커 세션이 gh pr merge) /
+   GitHub 리뷰 게이트 (validation-proj형 — land에서 세션 종료). 기본: 1인 프로젝트면
    코디네이터형, 협업이면 리뷰 게이트형.
 3. **배포 형태**: 없음 / <shared-storage> vX.Y.Z 스냅숏+latest+cache (pkg-proj형) /
-   read-only main 미러 (xrd형). 사내 공유 여부 질문으로 분기.
+   read-only main 미러 (validation-proj형). 사내 공유 여부 질문으로 분기.
 4. **환경**: uv / conda / 모듈 — venv 공유 여부(read-only symlink + --local-venv
    탈출구) 포함.
 5. **데이터**: 대용량 공유 데이터 여부 → datasets/ read-only symlink +
