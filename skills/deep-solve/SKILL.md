@@ -147,14 +147,18 @@ do not set up a persistence loop for it.) — but STILL print the
 full brief and the banner, AND write brief + banner + convergence log (and,
 after the run, the result + evidence grade WITH its mode inline — the
 "a grade never travels alone" rule applies doubly to a file) to a file
-(`docs/deep-solve/<slug>-<date>.md` or the project's notes dir): an
+(`docs/deep-solve/<slug>-<date>.md` or the project's notes dir — the FILE is
+the summary/note convention; grounded mode's bulk evidence goes in the sibling
+DIRECTORY `docs/deep-solve/<slug>-<date>/`, same stem): an
 unattended run's chat record evaporates, and "the record stands" must mean a
 record someone can later open. Then launch immediately. Vague delegation ("알아서 해줘" without reference to
 this run's approval) does NOT qualify — present the gate normally.
-**Grounded mode never runs under this waiver** (it depends on the attended
-permission barrier): print the brief + banner, state that grounded mode needs
-an attended session, and stop — do NOT switch modes yourself; the user must
-explicitly choose isolated mode.
+**Grounded mode never runs under this waiver**: its solver writes evidence
+files (Phase 2 below), and what makes that safe is the attended permission
+system gating each Bash call — unattended, there is neither that gate nor
+anyone to read what got written. Print the brief + banner, state that grounded
+mode needs an attended session, and stop — do NOT switch modes yourself; the
+user must explicitly choose isolated mode.
 
 Render everything — banner labels included — in the conversation language (e.g.
 Korean labels for a Korean conversation). When `effort` is high (the default),
@@ -190,24 +194,36 @@ schedule and honesty rules.
 ## Phase 2, grounded mode (attended; no Workflow; only after user approval)
 
 1. **Solver**: one fresh agent, the resolved effort, read tools + sandboxed Bash, no
-   write/edit (the attended permission system is the write barrier). Returns:
-   answer + reasoning + an **evidence appendix** — verbatim command output or
-   `file:line` excerpt for EVERY newly established load-bearing fact — plus
-   `premiseChallenge`: a suspect load-bearing premise that is cheaply testable
-   read-only must be TESTED by the solver itself and recorded in the appendix
-   (a refutation IS the answer); only untestable doubts come back unresolved.
+   write/edit tools (the attended permission system is the write barrier). Its ONE
+   sanctioned write path is Bash redirection into the run's evidence directory
+   `docs/deep-solve/<slug>-<date>/` — no tool grant changes. Returns: answer +
+   reasoning + an **evidence appendix** — for EVERY newly established load-bearing
+   fact, a claim-table row carrying its file pointer under that directory AND the
+   decisive excerpt inline. Bulk output (full logs, sweeps, long command output) goes
+   to the directory so a refused over-long message cannot lose the solve; paraphrase
+   stays banned — an excerpt is quoted verbatim, never summarized. Long-running jobs:
+   one launch, teardown by PID, unbuffered output (`python -u` / `stdbuf`), never two
+   writers on one path. Plus `premiseChallenge`: a suspect load-bearing premise that
+   is cheaply testable read-only must be TESTED by the solver itself and recorded in
+   the appendix (a refutation IS the answer); only untestable doubts come back
+   unresolved.
 2. **Reviewer**: one fresh agent, same tool regime. Its input is the brief plus
-   the solver's RAW return block — never a paraphrase. Duties: (i) review the
-   answer against the brief; (ii) produce a per-item **verification table**
-   over the appendix — `confirmed / failed / not-reproduced` (re-open files,
-   re-run cheap commands; expensive measurements are `not-reproduced`, never
-   `confirmed`; `failed` = the re-run materially CONTRADICTS the claim, not
-   byte-inequality). A `failed` load-bearing item is a blocking finding;
-   (iii) any load-bearing claim WITHOUT an appendix entry is a finding.
+   the solver's RAW return block — never a paraphrase — together with read access to
+   the evidence directory that block points at (those files are part of the return,
+   not a summary of it). Duties: (i) review the answer against the brief; (ii) produce
+   a per-item **verification table** over the appendix — `confirmed / failed /
+   not-reproduced` (re-open files, re-run cheap commands; expensive measurements are
+   `not-reproduced`, never `confirmed` — a script on disk is reproducible, not cheap,
+   so file availability never upgrades a grade; `failed` = the re-run materially
+   CONTRADICTS the claim, not byte-inequality). A `failed` load-bearing item is a
+   blocking finding; (iii) any load-bearing claim WITHOUT an appendix entry is a
+   finding; (iv) every path-referenced entry is opened — one resolving to a missing
+   or empty file is a finding (a 0-byte redirect target is exactly what an unflushed
+   or doubly-launched job leaves behind).
 3. **Continuation**: on findings, at most ONE continuation; the continuation
    prompt is the brief + the solver's raw return block + the reviewer's raw
-   output block (this works whether the same agent is resumed or a new one is
-   spawned). Its output gets a FULL re-review by the same reviewer (new or
+   output block + the evidence directory path (this works whether the same agent
+   is resumed or a new one is spawned). Its output gets a FULL re-review by the same reviewer (new or
    changed appendix items added to the table).
 4. **Grade** (NEVER `independent-agreement`):
    - zero-finding final pass AND all load-bearing items `confirmed` →
@@ -217,7 +233,10 @@ schedule and honesty rules.
      items on the grade line)
    - findings remain → `unconverged-grounded` (findings attached)
    The final report ALWAYS includes the reviewer's final raw output — findings
-   AND table — verbatim next to the grade.
+   AND table — verbatim next to the grade, plus the evidence directory path. If the
+   table itself is too large to return, it goes to that directory under the same
+   rule (verbatim file, decisive rows inline) — the cap must not simply move one
+   level up.
 5. **Still failing** after the one continuation → the user chooses: accept as
    unconverged, or return to Phase 1 FRESH (the verification table is attached
    as input evidence to audit — no fact carries over pre-accepted).
