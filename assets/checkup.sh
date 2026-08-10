@@ -68,6 +68,15 @@ cfg_keys() {  # $1=file → its config-block variable names, one per line
 # ---- campaign.sh ----
 NEW_KEYS=""
 [ -f "$DST" ] && NEW_KEYS="$(comm -23 <(cfg_keys "$TPL" | sort) <(cfg_keys "$DST" | sort) | tr '\n' ' ')"
+# A '# synced-from ohd vX.Y.Z (fork)' stamp is VERSION-PINNED ACCEPTANCE of a
+# deliberately divergent copy. It suppresses the line-diff nag and NOTHING
+# else: the config-key check below and the BEHAVIOR-CHANGE relay further down
+# both keep firing, because a fork still needs to hear about new knobs and
+# changed contracts. The version in the stamp is what makes it expire — once
+# the running plugin moves past it, the row asks for a review and a restamp
+# rather than going quiet forever.
+FORK_VER=""
+[ -f "$DST" ] && FORK_VER="$(grep -m1 '^# synced-from ohd v.*(fork)' "$DST" 2>/dev/null | sed 's/.*ohd v\([0-9][0-9.]*\).*/\1/' || true)"
 if [ ! -f "$DST" ]; then
   CS_STATUS=MISSING; CS_DETAIL="no $DST — --sync instantiates the template (all defaults)"
 elif [ -n "${NEW_KEYS// /}" ]; then
@@ -76,13 +85,25 @@ elif [ -n "${NEW_KEYS// /}" ]; then
   CS_STATUS=DRIFT; CS_DETAIL="template has new config var(s) your copy lacks: ${NEW_KEYS}— --sync adds them (your values kept)"
 elif diff -q <(normalize "$TPL") <(normalize "$DST") >/dev/null 2>&1; then
   CS_STATUS=IN-SYNC; CS_DETAIL="matches template (config block excluded); $(grep -m1 '^# synced-from' "$DST" 2>/dev/null || echo 'no synced-from stamp')"
+elif [ -n "$FORK_VER" ]; then
+  CS_STATUS=FORK
+  if ver_gt "$PLUGVER" "$FORK_VER"; then
+    CS_DETAIL="accepted fork, upstream v$FORK_VER→v$PLUGVER — review and restamp \`# synced-from ohd v$PLUGVER (fork)\` once you have; line diff suppressed, config-key drift and BEHAVIOR-CHANGE relay still report"
+  else
+    CS_DETAIL="accepted fork stamped at v$FORK_VER — line diff suppressed; config-key drift and BEHAVIOR-CHANGE relay still report"
+  fi
 else
   CS_STATUS=DRIFT
   CS_DETAIL="$({ diff <(normalize "$TPL") <(normalize "$DST") || true; } | grep -c '^[<>]' || true) differing line(s) vs template v$PLUGVER — --sync updates while keeping your config"
 fi
 report "campaign.sh" "$CS_STATUS" "$CS_DETAIL"
 
-if [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
+if [ "$SYNC" = 1 ] && [ -n "$FORK_VER" ]; then
+  # Without this, the fork stamp arms a one-command fork-destroyer: --sync
+  # resets the body to the template AND drops the marker recording that the
+  # divergence was deliberate, leaving no trace of either.
+  report "campaign.sh" "FORK-REFUSED" "$DST carries a '(fork)' stamp — --sync would overwrite the fork's body and drop the stamp that records it. Merge by hand against $TPL, then restamp \`# synced-from ohd v$PLUGVER (fork)\`"
+elif [ "$SYNC" = 1 ] && [ "$CS_STATUS" != "IN-SYNC" ]; then
   if [ -f "$DST" ] && [ -z "$(cfg_range "$DST")" ]; then
     # markerless project copy: a blind splice would silently revert its config
     # values and drop custom vars — refuse instead of corrupting
@@ -257,7 +278,13 @@ else
           case "$ptr" in
             *'`'*)
               p="${ptr#*\`}"; p="${p%%\`*}"; p="${p%%:[0-9]*}"
-              [ -z "$p" ] || [ -e "$p" ] || REF_DEAD="$REF_DEAD$p "
+              # Try BOTH resolutions — root-relative (the format law's dominant
+              # shape, and the passing majority) and relative to the reference
+              # file itself. Adopters write bare names and `../` shapes, which
+              # resolved dead under root-only. Strictly permissive on purpose:
+              # pure dir-relative would break every currently-passing pointer.
+              [ -z "$p" ] || [ -e "$p" ] || [ -e "$(dirname "$f")/$p" ] \
+                || REF_DEAD="$REF_DEAD$p "
               ;;
           esac ;;
       esac
@@ -365,9 +392,17 @@ report "structure" "$ST_CAND candidates" "last full audit: no record (the struct
 
 # ---- land-report audit (behavioral fossils: landed without the ritual?) ----
 if [ -d "$SD" ]; then
-  GAPS=""
+  GAPS=""; BYP=""; BYP_N=0; BYP_TOT=0
   for d in "$SD"/*.md; do
     [ -f "$d" ] || continue
+    # SCOPED to the post-scaffold era: 'campaign.sh new' writes a
+    # '- status: <state> (YYYY-MM-DD)' line, so a doc without one predates the
+    # scaffold and cannot be judged against a ritual it never had. That line is
+    # the one on-disk date that is neither mtime nor git-derived, which is why
+    # it is the scoping key. HONEST HALF: this removes pre-ritual history only
+    # — the never-landed lexical misclassification below is unaffected and
+    # stays (backlog #11's accepted trade).
+    grep -qiE '^[[:space:]]*-[[:space:]]*status:.*\([0-9]{4}-[0-9]{2}-[0-9]{2}\)' "$d" 2>/dev/null || continue
     # DELIBERATELY NOT the same rule as campaign.sh's clean gate. Their inputs
     # differ: 'clean' only sees campaigns 'campaign.sh new' opened, so it can
     # anchor on the literal '- result / verdict:' scaffold row that 'new'
@@ -398,14 +433,36 @@ if [ -d "$SD" ]; then
     # for its own reason: a bullet mentioning '| phase |' is prose.
     if grep -qiE '^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?([*_`]*(verdict|result)[^:]*:[[:space:]]*[^[:space:]]|([^[:space:]:]+:[[:space:]]*)?[*_`]*\b(LANDS|LANDED)\b)' "$d" 2>/dev/null \
        && ! grep -qiE '^[[:space:]]*[-*][[:space:]]+(\[[xX]\][[:space:]]*)?[*_`]*(verdict|result|status)[^:]*:.*(abandon|abort)' "$d" 2>/dev/null \
-       && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$d" 2>/dev/null; then
+       && ! grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$d" 2>/dev/null \
+       && ! grep -qiE '^##[[:space:]]*([0-9]+\.?[[:space:]]*)?land[- ]report' "$d" 2>/dev/null; then
       GAPS="$GAPS$(basename "$d") "
+    fi
+    # Ritual-bypass sub-count, SELF-SCOPING on the scaffold's named-cell
+    # prompts. Only a v0.7.0+ scaffold emits both literals, so pre-v0.7.0,
+    # forked and stale-plugin reports simply lack them and are excluded —
+    # which is what kills the fork-lag false-positive class rather than
+    # reporting every consumer behind on syncs. Honest false negative: a
+    # bypasser who forges the cells reads clean, but forging requires reading
+    # the contract, which is most of the battle.
+    if grep -q 'reference:' "$d" 2>/dev/null && grep -q 'verification:' "$d" 2>/dev/null; then
+      BYP_TOT=$((BYP_TOT + 1))
+      if grep -qE '(reference|verification):[[:space:]]*(\|[[:space:]]*)?$' "$d" 2>/dev/null \
+         || ! grep -q 'sanity:' "$d" 2>/dev/null; then
+        BYP_N=$((BYP_N + 1)); BYP="$BYP$(basename "$d") "
+      fi
     fi
   done
   if [ -n "$GAPS" ]; then
-    report "land-reports" "GAPS" "landed state doc(s) without a land-report table: ${GAPS}— lands that predate or skipped the ritual; backfill honestly or annotate (see campaign-land)"
+    report "land-reports" "GAPS" "landed state doc(s) without a land-report table: ${GAPS}— lands that skipped the ritual; backfill honestly or annotate (see campaign-land). Scoped to docs carrying the scaffold's \`- status: … (date)\` line, so pre-scaffold history is excluded. Any landing date you backfill comes from the PR's MERGE date — never \`git log -1 -- <doc>\`, which reports when the file was last touched and is skewed by every back-fill and later edit"
   else
     report "land-reports" "OK" "every landed state doc carries its land-report table"
+  fi
+  if [ "$BYP_TOT" -gt 0 ]; then
+    if [ "$BYP_N" -gt 0 ]; then
+      report "ritual-bypass" "$BYP_N of $BYP_TOT" "land report(s) leaving a named cell at its bare prompt or carrying no \`sanity:\`: ${BYP}— ADVISORY, not a gate: those cells are what campaign-land Phase 4/6 attest, and a prompt with nothing after it reads as silent rather than attested"
+    else
+      report "ritual-bypass" "OK" "$BYP_TOT scaffolded land report(s), every named cell filled"
+    fi
   fi
 fi
 
@@ -567,7 +624,36 @@ if [ "$STRUCT" = 1 ]; then
   fi
   echo ""
 
-  # 5. baselines for the re-count -------------------------------------------
+  # 5. state-claim staleness: re-verify candidates --------------------------
+  # Reference integrity is gated; claim CURRENCY is not gated anywhere, so a
+  # doc can be arbitrarily wrong about the state of the world and stay green
+  # indefinitely. Deliberately NO dating: mtime and git-log dating both
+  # re-import the back-fill skew the land-reports remedy warns about, and the
+  # human reading the list judges staleness better than either.
+  echo "## state-claim staleness — re-verify candidates"
+  SC=""; SC_N=0
+  if [ -n "$TRACKED_DOCS" ]; then
+    while IFS= read -r g; do
+      [ -f "$g" ] || continue
+      case "$g" in "$REFD"/*) continue ;; esac
+      while IFS= read -r hit; do
+        [ -n "$hit" ] || continue
+        SC_N=$((SC_N + 1)); SC="$SC  $g:$hit
+"
+      done < <(grep -nE 'NOT landed|LAND owed|pending|TODO' "$g" 2>/dev/null || true)
+    done <<< "$TRACKED_DOCS"
+  fi
+  echo "  $SC_N line(s) asserting state, outside the reference tier"
+  [ -z "$SC" ] || printf '%s' "$SC"
+  echo "   Each is a CANDIDATE to re-verify, never a defect on its own: a gate can"
+  echo "   check that a path resolves, never that a claim is still true. One stale"
+  echo "   \"NOT landed (LAND owed)\" line made three dead branches look like a live"
+  echo "   blocker and cost a full triage campaign to disprove."
+  echo "   Kin: campaign-land's verify-on-read rule and the false-OPEN census"
+  echo "   already cover the state-DOC half of this class."
+  echo ""
+
+  # 6. baselines for the re-count -------------------------------------------
   echo "## baselines (this run) — paste into the cleanup campaign's state doc"
   echo "  | item | count / bytes |"
   echo "  |---|---|"
@@ -577,6 +663,12 @@ if [ "$STRUCT" = 1 ]; then
   echo "  | docs corpus (tracked .md) | $((H1 + H2 + H3 + H4)) file(s) |"
   echo "  | docs at/over 64KB | $H4 |"
   echo "  Counts and byte sizes only, by construction — re-run this mode to compare."
+  echo ""
+  echo "## before you commit the executed work-list"
+  echo "  The executed list is a DELIVERABLE, not bookkeeping: run"
+  echo "  review-to-convergence on it before committing. A docs-only cleanup on a"
+  echo "  docs-only trunk never reaches campaign.sh's land die-gate, so this is the"
+  echo "  only review it gets — and a field run confirmed the error mass is real."
   echo ""
 fi
 
