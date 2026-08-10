@@ -28,7 +28,7 @@ for probe in engage_grep.sh mutation_run.sh provenance_block.sh; do
   # every probe carries its own failure path
   [ "$(rc bash "$P/$probe" --self-test)" = 0 ] || fail "$probe --self-test did not pass"
   # ...and a usage line naming itself
-  bash "$P/$probe" --help 2>&1 | grep -q "$probe" || fail "$probe --help does not name itself"
+  grep -q "$probe" <<<"$(bash "$P/$probe" --help 2>&1)" || fail "$probe --help does not name itself"
   # SMALL: these are assets projects copy in, not a framework
   n="$(wc -l < "$P/$probe")"
   [ "$n" -le 120 ] || fail "$probe is $n lines (target <=120)"
@@ -102,9 +102,11 @@ ARM='signflip|sed -i s/GOOD/BAD/ impl.txt|sed -i s/BAD/GOOD/ impl.txt'
 # `probe | grep`. Under `set -o pipefail` that pipe is a race: `grep -q` exits
 # on the matching line, the probe's NEXT line then writes to a closed pipe and
 # dies 141, and pipefail promotes 141 to the pipeline status — so the assertion
-# reports failure while the string it looked for was present. Observed at ~7.5%
-# here, on whichever probe emits a trailing line (mutation_run's not-a-git-tree
-# NOTE, provenance_block's second field line).
+# reports failure while the string it looked for was present. Observed
+# intermittently on the release host (3/40); the rate is environment-dependent
+# and another reviewer's box saw 0/500, so absence of the symptom is not
+# evidence the shape is safe. It bites on whichever probe emits a trailing line
+# (mutation_run's not-a-git-tree NOTE, provenance_block's second field line).
 grep -q '1 tried / 1 caught' <<<"$(bash "$M" --check "$CHK" --arm "$ARM")" \
   || fail "mutation_run summary does not report tried/caught counts"
 grep -q 'no-op control ok' <<<"$(bash "$M" --check "$CHK" --arm "$ARM")" \

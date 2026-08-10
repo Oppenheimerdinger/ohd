@@ -419,6 +419,31 @@ out="$("$FAKE_ASSETS/checkup.sh" .)"
 grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "a scaffolded bypass escaped the sub-count by dropping its status line"
 grep -q "nostatus.md" <<<"$out" || fail "bypass row does not name the status-less doc"
 rm docs/campaigns/nostatus.md
+# 9g-iii) real reports write the named cell MID-CELL, after the evidence text —
+#         '| … | CHANGELOG updated, backlog closed; reference: … |'. Requiring
+#         the token to OPEN the cell silenced this row entirely on the two
+#         genuine reports in the plugin's own repo, so the marker anchors on the
+#         table LINE. A mid-cell report with its cells filled and no 'sanity:'
+#         is a genuine bypass and must still count.
+cat > docs/campaigns/midcell.md <<'EOF'
+# campaign: midcell
+- status: LANDED (2026-08-06)
+- result / verdict: LANDS — merged as PR #52
+## land report
+| phase | ran? | evidence |
+|---|---|---|
+| 4 docs same-land | yes | CHANGELOG updated, backlog #9 closed; reference: nothing to graduate — one-liner |
+| 6 distill + hygiene | yes | memory distilled; verification: promoted to tests/test_y.py |
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "a mid-cell-authored bypass was not counted (marker demands cell-initial?)"
+grep -q "midcell.md" <<<"$out"            || fail "bypass row does not name the mid-cell doc"
+# ...and the same authoring style WITH sanity: is compliant, not a bypass
+sed -i 's/memory distilled;/memory distilled; sanity: no findings;/' docs/campaigns/midcell.md
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "ritual-bypass | OK" <<<"$out"    || fail "a compliant mid-cell report was counted as a bypass"
+grep -q "1 scaffolded land report" <<<"$out" || fail "compliant mid-cell report missing from the denominator"
+rm docs/campaigns/midcell.md
 
 # 10) plugin-cache staleness: versioned cache layout with a newer sibling → STALE
 CACHE="$TMP/cache/ohd"; mkdir -p "$CACHE/1.0.0/assets" "$CACHE/1.0.0/.claude-plugin" "$CACHE/9.9.9"
