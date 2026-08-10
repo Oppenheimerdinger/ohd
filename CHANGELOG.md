@@ -48,7 +48,7 @@ than something this release closes.
 - `review-to-convergence`: the severity terminal and its confirmation-round
   carve-out; a sweep rule (fix the claim, not the cited line); a content hash
   in the `@<sha>` slot for non-tree deliverables; a `gate / check` reviewer row
-  carrying the eight-axis ladder; a cross-cutting verification-validity rule
+  carrying the nine-axis ladder; a cross-cutting verification-validity rule
   (name the parameter you vary, assert the precondition, run once degraded, and
   never count rows that cannot fail); and reviewer-brief tree hygiene. Net +8
   lines, the cap this release set itself.
