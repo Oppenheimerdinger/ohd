@@ -349,12 +349,13 @@ has_verdict() {
   grep -qiE "$VERDICT_LABEL_RE" "$1" 2>/dev/null || grep -qE "$VERDICT_BARE_RE" "$1" 2>/dev/null
 }
 
-# "this doc carries a land-report artifact" — ONE definition for its two
-# consumers (the land-reports gap test asks for its absence, the ritual-bypass
-# sub-count asks for its presence), so the two cannot drift apart. The TABLE
-# test stays deliberately LOOSE here, unlike campaign.sh's gate: tightening it
-# to the full scaffold header was measured to false-flag genuine hand-written
-# reports whose tables use other columns.
+# "this doc carries a land-report artifact" — used by the land-reports gap
+# test, which asks for its ABSENCE. Single consumer: the ritual-bypass
+# sub-count used to call it too, but that row now scopes on the scaffold
+# marker instead, since a land-report artifact says nothing about which era
+# wrote it. The TABLE test stays deliberately LOOSE here, unlike campaign.sh's
+# gate: tightening it to the full scaffold header was measured to false-flag
+# genuine hand-written reports whose tables use other columns.
 has_land_report() {
   grep -qiE '^[[:space:]]*\|[[:space:]]*phase[[:space:]]*\|' "$1" 2>/dev/null \
     || grep -qiE '^##[[:space:]]*([0-9]+\.?[[:space:]]*)?land[- ]report' "$1" 2>/dev/null
@@ -438,6 +439,13 @@ if [ -d "$SD" ]; then
     # position was never the fix. Only a v0.7.0+ `--report` run emits the
     # comment marker, so it is the one thing a report the scaffold did not
     # write cannot contain.
+    # ACCEPTED TRADE, disclosed in the row text: scoping on a line the author
+    # can delete means deleting it removes the report from BOTH the count and
+    # the named list, while the land gate still passes — measured, `1 of 2`
+    # becomes `OK | 1`. This row is MARKER-scoped, not ritual-scoped, and says
+    # so. The era boundary is real and nothing weaker draws it, so the trade is
+    # taken rather than hidden; C1's honesty precedent is that a detector
+    # states what it cannot see.
     if grep -qF 'ohd:land-report-scaffold' "$d" 2>/dev/null; then
       BYP_TOT=$((BYP_TOT + 1))
       REGION="$(land_report_region "$d")"
@@ -504,9 +512,9 @@ if [ -d "$SD" ]; then
     report "land-reports" "OK" "every landed state doc carries its land-report table"
   fi
   if [ "$BYP_N" -gt 0 ]; then
-    report "ritual-bypass" "$BYP_N of $BYP_TOT" "scaffold-written land report(s) leaving a named cell at its bare prompt or carrying no \`sanity:\` in the land-report section: ${BYP}— ADVISORY, not a gate: those cells are what campaign-land Phase 4/6 attest, and a prompt with nothing after it reads as silent rather than attested. Honest false negative: a bypasser who fills the cells with plausible text reads clean"
+    report "ritual-bypass" "$BYP_N of $BYP_TOT" "scaffold-written land report(s) leaving a named cell at its bare prompt or carrying no \`sanity:\` in the land-report section: ${BYP}— ADVISORY, not a gate: those cells are what campaign-land Phase 4/6 attest, and a prompt with nothing after it reads as silent rather than attested. The denominator counts reports carrying the \`ohd:land-report-scaffold\` marker — it is MARKER-scoped, not ritual-scoped. Two honest false negatives: a bypasser who fills the cells with plausible text reads clean, and one who DELETES the marker line drops out of this row entirely while still passing the land gate"
   elif [ "$BYP_TOT" -gt 0 ]; then
-    report "ritual-bypass" "OK" "$BYP_TOT scaffold-written land report(s), every named cell filled"
+    report "ritual-bypass" "OK" "$BYP_TOT scaffold-written land report(s) (those carrying the \`ohd:land-report-scaffold\` marker), every named cell filled — MARKER-scoped, not ritual-scoped: a report whose marker line was deleted is not counted here at all, and still passes the land gate"
   else
     report "ritual-bypass" "0 scaffolded" "no land report here carries the \`ohd:land-report-scaffold\` marker, so this row has nothing to audit yet — SILENT BY SCOPE, not a health claim. The marker is explicit because the named cells cannot date a report: \`reference:\`/\`verification:\` are mandated ritual vocabulary from v0.6.0, so pre-scaffold reports legitimately carry them. Reports written before v0.7.0, by a fork, or by a stale plugin are excluded by construction"
   fi

@@ -300,9 +300,12 @@ field recurrences proved a chat-printed table gates nothing — so:
 
 **The land report lives IN the state doc (`docs/campaigns/<name>.md`), not in
 chat.** Two mechanical contracts on that doc: (1) the scaffold's `## land
-report` heading and `| phase |` header line are LOAD-BEARING — the land gate
-matches them; translate or rewrite row CONTENT freely, keep those two lines
-intact. (2) The state doc is TRUNK-owned — the coordinator commits it at the
+report` heading, its `| phase |` header line, AND its
+`<!-- ohd:land-report-scaffold … -->` comment are LOAD-BEARING — the land gate
+matches the first two and /ohd-checkup's ritual-bypass audit scopes on the
+third; translate or rewrite row CONTENT freely, keep those three lines intact.
+The comment renders as nothing, which is exactly why it gets tidied away —
+don't. (2) The state doc is TRUNK-owned — the coordinator commits it at the
 anchor; the campaign branch must NOT track it (add/add conflict at merge —
 `land` warns if it does; resolve as UNION per Phase 5). Scaffold it with `campaign.sh land <name> --report` (appends the blank
 table); `campaign.sh land` REFUSES to push without it, and Phase-7 cleanup
@@ -311,6 +314,7 @@ that exact row, not a substitute elsewhere in the doc. Fill rows as phases
 complete:
 
 ```
+<!-- ohd:land-report-scaffold v0.7.0 -->
 | phase | ran? | evidence |
 |-------|------|----------|
 | 0 preconditions      | yes/skip | <command or output ref> |
@@ -350,11 +354,15 @@ memory is a soft layer, the script gate is the backstop).
   **Forward-only**: this binds lands from here on; historical reports are
   expected to fail it.
 - **The blank table `campaign.sh land --report` scaffolds now seeds
-  `reference:` (row 4) and `verification:` (row 6)** — fill in after the
-  prompt; a prompt left with nothing after it reads as silent, not attested.
-  `sanity:` is still skill-carried: write it into the row-6 cell by hand. Older
-  scaffolds emit blank cells and carry no prompts at all, so all three are
-  hand-written there.
+  `reference:` (row 4) and `verification:` (row 6), and emits the
+  `<!-- ohd:land-report-scaffold … -->` marker above the table** — fill in
+  after each prompt; a prompt left with nothing after it reads as silent, not
+  attested. `sanity:` is still skill-carried: write it into the row-6 cell by
+  hand. The MARKER, not the prompts, is what dates a report: `reference:` and
+  `verification:` have been mandated ritual vocabulary since v0.6.0, so a
+  report written before this scaffold existed carries them too. A hand-written
+  or older report simply has no marker, and /ohd-checkup's ritual-bypass row
+  passes over it rather than judging it by a contract it never had.
 - **A cell carries the VERDICT plus a pointer** (aim ≤~200 chars; baseline: 155
   cells measured >400 chars, max 2,935) — the supporting ARGUMENT lives in a
   named section of the same state doc that the cell points at. The ~200-char
