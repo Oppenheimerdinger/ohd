@@ -98,9 +98,16 @@ CHK='grep -q GOOD impl.txt'
 ARM='signflip|sed -i s/GOOD/BAD/ impl.txt|sed -i s/BAD/GOOD/ impl.txt'
 [ "$(rc bash "$M" --check "$CHK" --arm "$ARM" --untouched 'grep -q OTHER other.txt')" = 0 ] \
   || fail "mutation_run failed a run whose arm is properly caught"
-bash "$M" --check "$CHK" --arm "$ARM" | grep -q '1 tried / 1 caught' \
+# Assertions on probe OUTPUT capture first and match second, never
+# `probe | grep`. Under `set -o pipefail` that pipe is a race: `grep -q` exits
+# on the matching line, the probe's NEXT line then writes to a closed pipe and
+# dies 141, and pipefail promotes 141 to the pipeline status — so the assertion
+# reports failure while the string it looked for was present. Observed at ~7.5%
+# here, on whichever probe emits a trailing line (mutation_run's not-a-git-tree
+# NOTE, provenance_block's second field line).
+grep -q '1 tried / 1 caught' <<<"$(bash "$M" --check "$CHK" --arm "$ARM")" \
   || fail "mutation_run summary does not report tried/caught counts"
-bash "$M" --check "$CHK" --arm "$ARM" | grep -q 'no-op control ok' \
+grep -q 'no-op control ok' <<<"$(bash "$M" --check "$CHK" --arm "$ARM")" \
   || fail "mutation_run summary does not report the no-op control"
 grep -q GOOD impl.txt || fail "mutation_run left the tree mutated after a clean run"
 # a check that CANNOT fail is the whole point -> DIE, naming the arm
@@ -131,7 +138,7 @@ done
 [ "$(rc timeout 5 bash "$M" --check)" = 2 ] || fail "mutation_run did not exit 2 on a lone valueless --check (124 = it hung)"
 # restore verification is CHECK-SCOPED, so outside a git work tree a restore that
 # leaks a file cannot be seen at all — the probe must SAY so, not imply it looked
-bash "$M" --check "$CHK" --arm "$ARM" | grep -qi 'not a git work tree' \
+grep -qi 'not a git work tree' <<<"$(bash "$M" --check "$CHK" --arm "$ARM")" \
   || fail "outside a git tree, mutation_run does not state that contamination is unverified"
 # ...and inside one, the leak is caught: this arm undoes the mutation the check
 # looks at and still leaves a new file behind, so every gate above stays green
@@ -159,7 +166,7 @@ out="$(bash "$M" --check 'grep -q GOOD impl.txt && touch "log.$(date +%s%N)"' \
 grep -qi 'per-run-unique' <<<"$out" \
   || fail "a per-run-unique check artifact is misreported as a leaked restore"
 rm -f log.*
-bash "$M" --help | grep -qi 'per-run-unique' \
+grep -qi 'per-run-unique' <<<"$(bash "$M" --help)" \
   || fail "--help does not state the no-per-run-unique-files precondition"
 # the same arm without the leak still passes — the check is contamination, not
 # "any git tree makes this fail"
@@ -201,7 +208,7 @@ mkdir -p "$TMP/gitprov" && cd "$TMP/gitprov" && git init -q
 git config user.email smoke@test && git config user.name smoke
 echo one > f.txt && git add -A && git commit -qm base >/dev/null
 echo two > f.txt
-bash "$V" --field backend=fused | grep -qE '^git=[0-9a-f]+-dirty$' \
+grep -qE '^git=[0-9a-f]+-dirty$' <<<"$(bash "$V" --field backend=fused)" \
   || fail "inside a git tree, a dirty work tree is no longer flagged"
 cd "$TMP"
 # valueless flag -> exit 2, under a timeout (see the engage_grep block)
