@@ -320,11 +320,12 @@ memory is a soft layer, the script gate is the backstop).
   goes missing.
   **Forward-only**: this binds lands from here on; historical reports are
   expected to fail it.
-- **The blank table `campaign.sh land --report` scaffolds does not yet carry
-  `reference:` or `verification:`** — that heredoc lives in the lifecycle
-  script, which this release deliberately does not touch. Until it does, these
-  two are skill-carried: write them into the row-4 and row-6 evidence cells by
-  hand. A land report that omits them is not attested, it is silent.
+- **The blank table `campaign.sh land --report` scaffolds now seeds
+  `reference:` (row 4) and `verification:` (row 6)** — fill in after the
+  prompt; a prompt left with nothing after it reads as silent, not attested.
+  `sanity:` is still skill-carried: write it into the row-6 cell by hand. Older
+  scaffolds emit blank cells and carry no prompts at all, so all three are
+  hand-written there.
 - **A cell carries the VERDICT plus a pointer** (aim ≤~200 chars; baseline: 155
   cells measured >400 chars, max 2,935) — the supporting ARGUMENT lives in a
   named section of the same state doc that the cell points at. The ~200-char
