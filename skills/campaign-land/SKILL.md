@@ -22,6 +22,25 @@ commands so the ritual works without it.
   say so explicitly.
 - A trunk merge is consequential: if unsure, surface the land plan to the user
   and get a go before merging.
+- **When the repo defines checks, read them** — `gh pr checks <n>` green, and
+  specifically: the run EXISTS at the PR's head SHA (right after a push, "zero
+  incomplete checks" is answered TRUE by the *previous* commit's completed
+  state); it is green against the CURRENT base (GitHub does not re-run a PR's
+  workflows when the base moves, and `mergeStateStatus` stays quiet about it
+  while `strict:false` — this clause is carried WITHOUT a field witness, on
+  general GitHub behaviour); and a required check binds PRs but NOT an admin's
+  direct push (`enforce_admins:false` prints `Bypassed rule violations …` and
+  lands). **No checks defined → say so and pass** — a fresh project's scaffold
+  ships no CI, and an unconditional clause here would be a permanently red
+  precondition for every new project.
+  ⚠ Ordering, if you are ADDING a required check: land the job first, require
+  it second. `pull_request` runs the BASE's workflow, so requiring a job that
+  exists only on a feature branch leaves every PR permanently BLOCKED with no
+  failing check to point at — the worst possible diagnostic (measured, then
+  reverted).
+- If the diff touches `docs/reference/` or harness-carried docs, run
+  `/ohd-checkup` before landing. It always exits 0, so this is a checklist
+  item, not a gate.
 
 ## Phase 1 — working-tree safety
 
@@ -151,6 +170,11 @@ Living documents drift silently unless updated in the same PR/merge: update
 the campaign state doc (final RESULT / VERDICT / follow-on) and any living map
 the change touches, now — not "later".
 
+**A finding made during REVIEW is promoted onto `- follow-on:` or it is
+invisible here.** The review log is not read at land time, and the item most
+likely to be lost this way is the one only actionable in the minutes AFTER the
+merge ("add this job to the required checks once it lands").
+
 **Present-tense facts GRADUATE in this same land.** A campaign that settled a
 fact, an interface, a gotcha, or an execution route writes it into
 `docs/reference/` now — one line carrying the `file:line` of the test, gate, or
@@ -204,6 +228,11 @@ reads is the one that rots (field: this repo measured 5/5 false-OPEN).
 
 - Record NON-obvious lessons (the gotcha, the why, the measurement) in
   memory/docs — not what git already says.
+- Optional, one line, skippable: did the HARNESS make anything harder this
+  campaign? Put it on a `- friction:` line in the state doc. Land time is when
+  it is freshest and you are already in a reporting posture; the alternative
+  is reconstructing a day of friction from a transcript at the end, which
+  systematically loses the small stuff that was obvious for thirty seconds.
 - **Verification code this campaign WROTE gets a disposition, in this land.**
   The evidence cell carries `verification:` BY NAME, with exactly one of three
   verdicts: `verification: promoted to tests/ — <path>` /
