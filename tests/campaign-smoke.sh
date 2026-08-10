@@ -368,7 +368,9 @@ grep -q "$TMP/wt/t1" <<<"$out" || fail "clean did not name the surviving worktre
 if PATH="/usr/bin:/bin" "$CS" land g1 2>/dev/null; then fail "land pushed without a land-report"; fi
 git ls-remote --exit-code origin g1 >/dev/null 2>&1 && fail "land gate died AFTER pushing"
 PATH="/usr/bin:/bin" "$CS" land g1 --report >/dev/null || fail "land --report failed"
-grep -q '| phase |' docs/campaigns/g1.md || fail "--report did not append the table"
+grep -q '| phase | ran? | evidence |' docs/campaigns/g1.md || fail "--report did not append the table"
+grep -q 'reference:' docs/campaigns/g1.md || fail "--report did not seed the row-4 'reference:' prompt"
+grep -q 'verification:' docs/campaigns/g1.md || fail "--report did not seed the row-6 'verification:' prompt"
 PATH="/usr/bin:/bin" "$CS" land g1 >/dev/null 2>&1 || fail "land refused despite land-report table"
 git ls-remote --exit-code origin g1 >/dev/null 2>&1 || fail "land did not push with table present"
 "$CS" abort g1 --purge >/dev/null
@@ -409,6 +411,41 @@ PATH="/usr/bin:/bin" "$CS" land g5 >/dev/null 2>&1 || fail "land refused despite
 echo '- land-report: TBD' >> docs/campaigns/g6.md
 PATH="/usr/bin:/bin" "$CS" land g6 >/dev/null 2>&1 || fail "land refused a '- land-report:' line"
 "$CS" abort g6 --purge >/dev/null
+
+# a genuine SECOND table using 'phase' as a column name — what a plan, status
+# or measurement table looks like — is not a land report. Line-anchoring alone
+# accepted it; the gate must refuse, and --report must still scaffold past it.
+"$CS" new g7 >/dev/null
+( cd "$TMP/wt/g7" && echo w > g7.txt && git add . && git commit -qm g7 )
+printf '\n## plan\n| phase | what |\n|---|---|\n| 1 | design |\n' >> docs/campaigns/g7.md
+if PATH="/usr/bin:/bin" "$CS" land g7 2>/dev/null; then fail "land accepted a plan table headed '| phase |'"; fi
+git ls-remote --exit-code origin g7 >/dev/null 2>&1 && fail "land gate died AFTER pushing (g7)"
+PATH="/usr/bin:/bin" "$CS" land g7 --report >/dev/null || fail "--report refused: plan-phase table read as an existing land report"
+PATH="/usr/bin:/bin" "$CS" land g7 >/dev/null 2>&1 || fail "land refused despite a real land-report table (g7)"
+"$CS" abort g7 --purge >/dev/null
+
+# numbered heading dialects are in real field use, and their hand-written
+# tables do not use the scaffold's columns — the heading test is what keeps
+# them passing once the table test is anchored on the full scaffold header
+"$CS" new g8 >/dev/null
+( cd "$TMP/wt/g8" && echo w > g8.txt && git add . && git commit -qm g8 )
+printf '\n## 13. Land report\n| phase | item | status |\n|---|---|---|\n| 0 | preconditions | yes |\n' >> docs/campaigns/g8.md
+PATH="/usr/bin:/bin" "$CS" land g8 >/dev/null 2>&1 || fail "land refused a numbered '## 13. Land report' heading"
+"$CS" abort g8 --purge >/dev/null
+
+"$CS" new g9 >/dev/null
+( cd "$TMP/wt/g9" && echo w > g9.txt && git add . && git commit -qm g9 )
+printf '\n## 5. LAND REPORT\n| phase | state | evidence |\n' >> docs/campaigns/g9.md
+PATH="/usr/bin:/bin" "$CS" land g9 >/dev/null 2>&1 || fail "land refused the uppercase numbered '## 5. LAND REPORT'"
+"$CS" abort g9 --purge >/dev/null
+
+# ERE trap guard: with '?' unescaped, 'ran?' makes the 'n' optional — it would
+# match this garbage header and MISS every real one (g1 asserts the other half)
+"$CS" new ga >/dev/null
+( cd "$TMP/wt/ga" && echo w > ga.txt && git add . && git commit -qm ga )
+printf '\n| phase | ra |\n' >> docs/campaigns/ga.md
+if PATH="/usr/bin:/bin" "$CS" land ga 2>/dev/null; then fail "land accepted '| phase | ra |' — the '?' in 'ran?' lost its escape"; fi
+"$CS" abort ga --purge >/dev/null
 
 # LAND_GUARD=0 bypass
 "$CS" new g2 >/dev/null
