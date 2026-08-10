@@ -372,6 +372,53 @@ sed -i 's/sanity: no findings; //' docs/campaigns/bypassed.md
 out="$("$FAKE_ASSETS/checkup.sh" .)"
 grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "missing 'sanity:' not counted as a bypass"
 rm docs/campaigns/nomarker.md docs/campaigns/bypassed.md
+# 9g-i) the marker is C0's scaffold CELL, not the bare words anywhere in the
+#       file. Two witnesses that are NOT bypasses and must not be counted:
+#       a compliant pre-v0.7.0 report recording the same facts as prose
+#       bullets, and an OPEN doc whose validation-gate line merely contains
+#       the word 'verification:'.
+cat > docs/campaigns/precompliant.md <<'EOF'
+# campaign: precompliant
+- status: LANDED (2026-07-01)
+- result / verdict: LANDS — merged as PR #40
+## land report
+| phase | ran? | evidence |
+|---|---|---|
+| 4 docs same-land | yes | updated capabilities.md |
+| 6 distill + hygiene | yes | probe promoted to tests/ |
+
+Notes on this land:
+- reference: updated docs/reference/capabilities.md
+- verification: promoted to tests/test_x.py
+EOF
+cat > docs/campaigns/openval.md <<'EOF'
+# campaign: openval
+- status: OPEN (2026-08-01)
+- validation gate: verification: bench must stay within 2%
+- reference: docs/reference/state.md
+- result / verdict:
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "precompliant.md" <<<"$out" && fail "hand-written pre-v0.7.0 report counted as a ritual bypass"
+grep -q "openval.md" <<<"$out"      && fail "an OPEN doc with no land report counted as a ritual bypass"
+grep -q "^ritual-bypass" <<<"$out"  && fail "bypass row fired with no scaffolded report present"
+rm docs/campaigns/precompliant.md docs/campaigns/openval.md
+# 9g-ii) the sub-count must NOT inherit the land-reports row's post-scaffold
+#        exclusion: deleting the dated status line is the one edit a bypasser
+#        is most likely to make, and it must not buy an escape from the count.
+cat > docs/campaigns/nostatus.md <<'EOF'
+# campaign: nostatus
+- result / verdict: LANDS — merged as PR #51
+## land report
+| phase | ran? | evidence |
+|---|---|---|
+| 4 docs same-land | yes | reference: |
+| 6 distill + hygiene | yes | verification: |
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "a scaffolded bypass escaped the sub-count by dropping its status line"
+grep -q "nostatus.md" <<<"$out" || fail "bypass row does not name the status-less doc"
+rm docs/campaigns/nostatus.md
 
 # 10) plugin-cache staleness: versioned cache layout with a newer sibling → STALE
 CACHE="$TMP/cache/ohd"; mkdir -p "$CACHE/1.0.0/assets" "$CACHE/1.0.0/.claude-plugin" "$CACHE/9.9.9"
@@ -470,6 +517,14 @@ sed -i 's/^# synced-from ohd v.*/# synced-from ohd v0.5.11 (fork)/' tools/campai
 out="$("$FAKE_ASSETS/checkup.sh" .)"
 grep -q "campaign.sh | FORK" <<<"$out"         || fail "restamped fork lost its FORK status"
 grep -q "review and restamp" <<<"$out"         && fail "restamped fork still asked to restamp"
+# M1: a fork stamp on a body that MATCHES the template is IN-SYNC, and --sync
+# there is a no-op — refusing would contradict the IN-SYNC row printed beside it
+sed -i '/a deliberate local divergence/d' tools/campaign.sh
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "campaign.sh | IN-SYNC" <<<"$out"      || fail "fork stamp on a template-identical body is not IN-SYNC"
+out="$("$FAKE_ASSETS/checkup.sh" . --sync)"
+grep -q "FORK-REFUSED" <<<"$out"               && fail "--sync refused a fork stamp whose body already matches the template"
+echo '# a deliberate local divergence' >> tools/campaign.sh
 "$FAKE_ASSETS/checkup.sh" . --sync >/dev/null || true
 sed -i '/a deliberate local divergence/d' tools/campaign.sh
 "$HERE/assets/checkup.sh" . --sync >/dev/null || true
