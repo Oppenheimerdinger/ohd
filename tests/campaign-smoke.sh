@@ -465,6 +465,13 @@ out="$(PATH="$TMP/fakebin:/usr/bin:/bin" "$CS" land gb 2>&1)" || fail "gb land w
 grep -qE "repo debt: [0-9]+ remote branch\(es\) never offered as a PR" <<<"$out" \
   || fail "debt line missing or malformed with gh present"
 grep -q "repo debt: 0 " <<<"$out" && fail "debt count did not see gb-never-offered"
+# a PR list that hit the fetch limit would silently inflate the count (every
+# head whose PR fell off the end reads as never-offered) — must go unverifiable
+printf '#!/bin/sh\nif [ "$1" = pr ] && [ "$2" = list ]; then i=0; while [ $i -lt 1000 ]; do echo "b$i"; i=$((i+1)); done; else exit 0; fi\n' > "$TMP/fakebin/gh"
+chmod +x "$TMP/fakebin/gh"
+out="$(PATH="$TMP/fakebin:/usr/bin:/bin" "$CS" land gb 2>&1)" || fail "gb land with truncated PR list failed"
+grep -q "repo debt: unverifiable (PR list hit the 1000 fetch limit)" <<<"$out" \
+  || fail "a truncated PR list produced a number instead of 'unverifiable'"
 "$CS" abort gb --purge >/dev/null
 git update-ref -d refs/remotes/origin/gb-had-a-pr
 git update-ref -d refs/remotes/origin/gb-never-offered

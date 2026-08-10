@@ -25,7 +25,7 @@ Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial 
 2. Dispatch an **independent** reviewer (fresh context; reviewer ≠ author).
 3. Fix Critical/Important; log Minor. A false claim is fixed by sweeping every restatement of it, not the one line the reviewer happened to cite.
 4. Re-review → step 2.
-5. A round returning **zero Critical and zero Important**, every residual disposed ⟹ done. Not before.
+5. A round returning **zero Critical and zero Important**, every residual disposed ⟹ done — or, when the loop restarted on a replaced artifact, that round plus the one sanctioned confirmation round on the frozen hash (below). Not before.
 
 **Violating the letter of this rule violates the spirit.** Do not stop at one pass; the last round must come back C0 I0 with every residual disposed.
 

@@ -210,6 +210,11 @@ report_debt() {
   local prs cutoff never=0 old=0 ts ref
   prs="$(gh pr list --state all --limit 1000 --json headRefName -q '.[].headRefName' 2>/dev/null)" \
     || { echo "repo debt: unverifiable (gh pr list failed)"; return 0; }
+  # A truncated PR list silently INFLATES the count: every head whose PR fell
+  # off the end reads as never-offered. Same rule as the missing-gh case — say
+  # unverifiable rather than print a number that is wrong in a plausible way.
+  [ "$(printf '%s\n' "$prs" | grep -c .)" -lt 1000 ] \
+    || { echo "repo debt: unverifiable (PR list hit the 1000 fetch limit)"; return 0; }
   cutoff=$(( $(date +%s) - 30*86400 ))
   while read -r ts ref; do
     [ -n "$ref" ] || continue
