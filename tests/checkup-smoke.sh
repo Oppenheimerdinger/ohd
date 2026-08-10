@@ -326,124 +326,82 @@ grep -q "MERGE date" <<<"$out"        || fail "GAPS remedy does not name the PR 
 grep -q 'git log -1 -- <doc>' <<<"$out" || fail "GAPS remedy does not warn off the back-fill-skewed derivation"
 rm docs/campaigns/prescaffold.md docs/campaigns/postscaffold.md
 
-# 9g) C1 ritual-bypass sub-count, self-scoped on the scaffold's named-cell
-#     prompts. A report with no prompts at all is PRE-v0.7.0 and excluded —
-#     that exclusion is what stops every fork-lagged consumer false-flagging.
-cat > docs/campaigns/nomarker.md <<'EOF'
-# campaign: nomarker
-- status: LANDED (2026-08-02)
-- result / verdict: LANDS — merged
-## land report
-| phase | ran? | evidence |
-|---|---|---|
-| 4 docs same-land | yes | done |
-EOF
-out="$("$FAKE_ASSETS/checkup.sh" .)"
-grep -q "^ritual-bypass" <<<"$out" && fail "a report with no scaffold prompts entered the bypass count"
-# a scaffolded-but-unfilled report is the bypass signal
-cat > docs/campaigns/bypassed.md <<'EOF'
-# campaign: bypassed
-- status: LANDED (2026-08-03)
-- result / verdict: LANDS — merged
-## land report
-| phase | ran? | evidence |
-|---|---|---|
-| 4 docs same-land | yes | reference: |
-| 6 distill + hygiene | yes | verification: |
-EOF
-out="$("$FAKE_ASSETS/checkup.sh" .)"
-grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "named cells left at their bare prompts not counted"
-grep -q "bypassed.md" <<<"$out"            || fail "bypass row does not name the doc"
-# filling the cells (and adding sanity:) clears it
-cat > docs/campaigns/bypassed.md <<'EOF'
-# campaign: bypassed
-- status: LANDED (2026-08-03)
-- result / verdict: LANDS — merged
-## land report
-| phase | ran? | evidence |
-|---|---|---|
-| 4 docs same-land | yes | reference: nothing to graduate — one-line fix |
-| 6 distill + hygiene | yes | sanity: no findings; verification: re-ran the suite, green |
-EOF
-out="$("$FAKE_ASSETS/checkup.sh" .)"
-grep -q "ritual-bypass | OK" <<<"$out" || fail "filled named cells still counted as a bypass"
-# a filled report that never names sanity: is still a bypass
-sed -i 's/sanity: no findings; //' docs/campaigns/bypassed.md
-out="$("$FAKE_ASSETS/checkup.sh" .)"
-grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "missing 'sanity:' not counted as a bypass"
-rm docs/campaigns/nomarker.md docs/campaigns/bypassed.md
-# 9g-i) the marker is C0's scaffold CELL, not the bare words anywhere in the
-#       file. Two witnesses that are NOT bypasses and must not be counted:
-#       a compliant pre-v0.7.0 report recording the same facts as prose
-#       bullets, and an OPEN doc whose validation-gate line merely contains
-#       the word 'verification:'.
-cat > docs/campaigns/precompliant.md <<'EOF'
-# campaign: precompliant
-- status: LANDED (2026-07-01)
+# 9g) C1 ritual-bypass sub-count, scoped by an EXPLICIT scaffold marker.
+#     The named-cell TOKENS cannot date a report: `reference:`/`verification:`
+#     are mandated ritual vocabulary from v0.6.0, so a pre-scaffold report
+#     legitimately carries them (both real reports in this repo do, written
+#     four days before the scaffold existed). No anchor position fixes that —
+#     only a literal the scaffold alone emits can. Five cases:
+
+# (i) THE REAL FORK-LAG SHAPE: a pre-v0.7.0 report with the tokens written
+#     mid-cell, no marker, no `sanity:`. It is compliant for its era and MUST
+#     NOT be counted — this is the regression token-scoping made reachable.
+cat > docs/campaigns/forklag.md <<'EOF'
+# campaign: forklag
+- status: LANDED (2026-08-06)
 - result / verdict: LANDS — merged as PR #40
 ## land report
 | phase | ran? | evidence |
 |---|---|---|
-| 4 docs same-land | yes | updated capabilities.md |
-| 6 distill + hygiene | yes | probe promoted to tests/ |
-
-Notes on this land:
-- reference: updated docs/reference/capabilities.md
-- verification: promoted to tests/test_x.py
-EOF
-cat > docs/campaigns/openval.md <<'EOF'
-# campaign: openval
-- status: OPEN (2026-08-01)
-- validation gate: verification: bench must stay within 2%
-- reference: docs/reference/state.md
-- result / verdict:
+| 4 docs same-land | yes | CHANGELOG updated, backlog #9 closed; reference: nothing to graduate |
+| 6 distill + hygiene | yes | memory distilled; verification: promoted to tests/test_x.py |
 EOF
 out="$("$FAKE_ASSETS/checkup.sh" .)"
-grep -q "precompliant.md" <<<"$out" && fail "hand-written pre-v0.7.0 report counted as a ritual bypass"
-grep -q "openval.md" <<<"$out"      && fail "an OPEN doc with no land report counted as a ritual bypass"
-grep -q "^ritual-bypass" <<<"$out"  && fail "bypass row fired with no scaffolded report present"
-rm docs/campaigns/precompliant.md docs/campaigns/openval.md
-# 9g-ii) the sub-count must NOT inherit the land-reports row's post-scaffold
-#        exclusion: deleting the dated status line is the one edit a bypasser
-#        is most likely to make, and it must not buy an escape from the count.
-cat > docs/campaigns/nostatus.md <<'EOF'
-# campaign: nostatus
-- result / verdict: LANDS — merged as PR #51
+grep -q "forklag.md" <<<"$out" && fail "(i) a pre-scaffold report with era-vocabulary tokens was counted as a bypass"
+grep -q "ritual-bypass | 0 scaffolded" <<<"$out" || fail "(i) empty denominator not reported explicitly"
+
+# (ii) marker present, cells still at their BARE PROMPTS → counted
+cat > docs/campaigns/barescaffold.md <<'EOF'
+# campaign: barescaffold
+- status: LANDED (2026-08-11)
+- result / verdict: LANDS — merged as PR #50
 ## land report
+<!-- ohd:land-report-scaffold v0.7.0 -->
 | phase | ran? | evidence |
 |---|---|---|
 | 4 docs same-land | yes | reference: |
 | 6 distill + hygiene | yes | verification: |
 EOF
 out="$("$FAKE_ASSETS/checkup.sh" .)"
-grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "a scaffolded bypass escaped the sub-count by dropping its status line"
-grep -q "nostatus.md" <<<"$out" || fail "bypass row does not name the status-less doc"
-rm docs/campaigns/nostatus.md
-# 9g-iii) real reports write the named cell MID-CELL, after the evidence text —
-#         '| … | CHANGELOG updated, backlog closed; reference: … |'. Requiring
-#         the token to OPEN the cell silenced this row entirely on the two
-#         genuine reports in the plugin's own repo, so the marker anchors on the
-#         table LINE. A mid-cell report with its cells filled and no 'sanity:'
-#         is a genuine bypass and must still count.
+grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "(ii) a marked scaffold left at bare prompts was not counted"
+grep -q "barescaffold.md" <<<"$out"        || fail "(ii) bypass row does not name the bare-prompt doc"
+rm docs/campaigns/barescaffold.md
+
+# (iii) marker present, cells FILLED mid-cell, `sanity:` absent → counted
 cat > docs/campaigns/midcell.md <<'EOF'
 # campaign: midcell
-- status: LANDED (2026-08-06)
-- result / verdict: LANDS — merged as PR #52
+- status: LANDED (2026-08-11)
+- result / verdict: LANDS — merged as PR #51
 ## land report
+<!-- ohd:land-report-scaffold v0.7.0 -->
 | phase | ran? | evidence |
 |---|---|---|
-| 4 docs same-land | yes | CHANGELOG updated, backlog #9 closed; reference: nothing to graduate — one-liner |
+| 4 docs same-land | yes | CHANGELOG updated; reference: nothing to graduate — one-liner |
 | 6 distill + hygiene | yes | memory distilled; verification: promoted to tests/test_y.py |
 EOF
 out="$("$FAKE_ASSETS/checkup.sh" .)"
-grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "a mid-cell-authored bypass was not counted (marker demands cell-initial?)"
-grep -q "midcell.md" <<<"$out"            || fail "bypass row does not name the mid-cell doc"
-# ...and the same authoring style WITH sanity: is compliant, not a bypass
+grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "(iii) a marked report with no sanity: was not counted"
+grep -q "midcell.md" <<<"$out"             || fail "(iii) bypass row does not name the mid-cell doc"
+
+# (iv) marker present, everything filled INCLUDING sanity: → OK, and counted
+#      in the denominator
 sed -i 's/memory distilled;/memory distilled; sanity: no findings;/' docs/campaigns/midcell.md
 out="$("$FAKE_ASSETS/checkup.sh" .)"
-grep -q "ritual-bypass | OK" <<<"$out"    || fail "a compliant mid-cell report was counted as a bypass"
-grep -q "1 scaffolded land report" <<<"$out" || fail "compliant mid-cell report missing from the denominator"
-rm docs/campaigns/midcell.md
+grep -q "ritual-bypass | OK" <<<"$out"          || fail "(iv) a fully attested marked report was counted as a bypass"
+grep -q "1 scaffold-written land report" <<<"$out" || fail "(iv) attested report missing from the denominator"
+
+# (v) the content checks read the LAND-REPORT REGION, not the whole file: a
+#     `sanity:` in unrelated prose elsewhere must not attest the land report
+sed -i 's/ sanity: no findings;//' docs/campaigns/midcell.md
+cat >> docs/campaigns/midcell.md <<'EOF'
+
+## appendix
+- sanity: this line is prose in a different section and attests nothing
+EOF
+out="$("$FAKE_ASSETS/checkup.sh" .)"
+grep -q "ritual-bypass | 1 of 1" <<<"$out" || fail "(v) a sanity: outside the land-report section satisfied the check"
+rm docs/campaigns/midcell.md docs/campaigns/forklag.md
+
 
 # 10) plugin-cache staleness: versioned cache layout with a newer sibling → STALE
 CACHE="$TMP/cache/ohd"; mkdir -p "$CACHE/1.0.0/assets" "$CACHE/1.0.0/.claude-plugin" "$CACHE/9.9.9"

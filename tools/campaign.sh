@@ -142,6 +142,7 @@ cmd_land() {
 Scope: land ritual only (branch→trunk mechanics and gates) — a green table is
 NOT a claim the work is correct (validation gate, external) or enabled by
 default (that is exactly the 2.5 row, no more).
+<!-- ohd:land-report-scaffold v0.7.0 -->
 | phase | ran? | evidence |
 |-------|------|----------|
 | 0 preconditions      | | |

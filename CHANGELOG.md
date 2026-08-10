@@ -26,7 +26,11 @@ than something this release closes.
   both directions. The die message was rewritten in the same edit, since it
   described the old patterns to exactly the person just refused.
 - `campaign.sh land --report` seeds the Phase-4 and Phase-6 evidence cells with
-  the literal prompts `reference:` and `verification:` (backlog #13).
+  the literal prompts `reference:` and `verification:`, and emits an explicit
+  era marker `<!-- ohd:land-report-scaffold v0.7.0 -->` above the table
+  (backlog #13). The marker, not the prompts, is what dates a report: the
+  prompts have been mandated ritual vocabulary since v0.6.0, so reports
+  written before the scaffold existed legitimately carry them.
 - `campaign.sh land` prints a report-only repo-debt line: branches never
   offered as a PR, computed as a set difference over one `gh pr list` call —
   never by ancestry, which counts squash-merged work as debt. No `gh` prints
