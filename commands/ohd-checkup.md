@@ -23,6 +23,12 @@ given, else the current directory; it must be a git repo root.
   yourself**, and never run it as part of a routine checkup the user asked for.
   The baselines live in the OUTPUT: offer to paste them into the cleanup
   campaign's state doc, since nothing is stamped on disk.
+  It also lists **state-claim staleness** candidates — lines asserting state
+  outside the reference tier — as re-verify prompts, counted and listed with no
+  dating (the human judges staleness; mtime and git-log both mislead).
+  **The EXECUTED work-list is a deliverable**: run `review-to-convergence` on
+  it before committing. A docs-only cleanup on a docs-only trunk never reaches
+  campaign.sh's land die-gate, so that pass is the only review it gets.
 
 The probes' rule — agent-facing failure is exit-code-shaped, not log-shaped —
 is canonical in `assets/probes/engage_grep.sh` and

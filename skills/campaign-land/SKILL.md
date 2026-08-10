@@ -22,6 +22,25 @@ commands so the ritual works without it.
   say so explicitly.
 - A trunk merge is consequential: if unsure, surface the land plan to the user
   and get a go before merging.
+- **When the repo defines checks, read them** — `gh pr checks <n>` green, and
+  specifically: the run EXISTS at the PR's head SHA (right after a push, "zero
+  incomplete checks" is answered TRUE by the *previous* commit's completed
+  state); it is green against the CURRENT base (GitHub does not re-run a PR's
+  workflows when the base moves, and `mergeStateStatus` stays quiet about it
+  while `strict:false` — this clause is carried WITHOUT a field witness, on
+  general GitHub behaviour); and a required check binds PRs but NOT an admin's
+  direct push (`enforce_admins:false` prints `Bypassed rule violations …` and
+  lands). **No checks defined → say so and pass** — a fresh project's scaffold
+  ships no CI, and an unconditional clause here would be a permanently red
+  precondition for every new project.
+  ⚠ Ordering, if you are ADDING a required check: land the job first, require
+  it second. `pull_request` runs the BASE's workflow, so requiring a job that
+  exists only on a feature branch leaves every PR permanently BLOCKED with no
+  failing check to point at — the worst possible diagnostic (measured, then
+  reverted).
+- If the diff touches `docs/reference/` or harness-carried docs, run
+  `/ohd-checkup` before landing. It always exits 0, so this is a checklist
+  item, not a gate.
 
 ## Phase 1 — working-tree safety
 
@@ -101,20 +120,23 @@ The log lines follow review-to-convergence's format — reviewer and reviewed
 SHA per round, findings and their disposition — flattened into the cell while
 it fits, terminal round line plus a pointer to the named log section when it
 does not; that skill owns the format, this one only says the cell carries it.
-It ends either in a round that came back CLEAN or with every residual finding
-carrying an explicit ruling recorded in this doc (r2c supplies that rule — a
-ruling is its recorded disposition, and a finding closed by the author's own
-fiat is not one). Shape:
+It ends in a round returning zero Critical and zero Important, every residual
+finding carrying an explicit ruling recorded in this doc (r2c supplies that
+rule — a ruling is its recorded disposition, a Critical or Important is never a
+residual, and a finding closed by the author's own fiat is not one). Shape:
 
 ```
-| 3 quality gate | yes | round 1: 1× code-review:code-review PR#16 @a1b2c3d → 2 findings → fixed; round 2: 1× review subagent (bugs lens) @e4f5a6b → clean. simplifier: not needed — diff is one guard clause |
+| 3 quality gate | yes | round 1: 1× code-review:code-review PR#16 @a1b2c3d → 2 findings → fixed; round 2: 1× review subagent (bugs lens) @e4f5a6b → C0 I0. simplifier: not needed — diff is one guard clause |
 ```
 
-- A first round that finds nothing IS a complete log — one line. Rounds exist
-  because findings do.
+- A first round that returns C0 I0 IS a complete log — one line. Rounds exist
+  because Critical and Important findings do.
 - Round N+1 reviews a DIFFERENT tree than round N: re-reviewing the same SHA is
   not a round, it is the same round reported twice. Its scope is the FIX diff,
-  not a fresh full pass.
+  not a fresh full pass. ONE exception, and it is r2c's: after that skill's
+  moving-target stop fires and the loop restarts on the replaced artifact, the
+  artifact's first terminal-candidate round gets one confirmation round on the
+  frozen SHA, fresh reviewer mandatory.
 - **No scaling by diff size.** "Small diff, one finding, obviously fixed" is
   exactly the shape of the regression this rule exists for. A one-line fix gets
   a second look at the fixed SHA like everything else.
@@ -147,6 +169,11 @@ report row's evidence cell (`mutations: N tried / caught / no-op control ok`)
 Living documents drift silently unless updated in the same PR/merge: update
 the campaign state doc (final RESULT / VERDICT / follow-on) and any living map
 the change touches, now — not "later".
+
+**A finding made during REVIEW is promoted onto `- follow-on:` or it is
+invisible here.** The review log is not read at land time, and the item most
+likely to be lost this way is the one only actionable in the minutes AFTER the
+merge ("add this job to the required checks once it lands").
 
 **Present-tense facts GRADUATE in this same land.** A campaign that settled a
 fact, an interface, a gotcha, or an execution route writes it into
@@ -201,6 +228,11 @@ reads is the one that rots (field: this repo measured 5/5 false-OPEN).
 
 - Record NON-obvious lessons (the gotcha, the why, the measurement) in
   memory/docs — not what git already says.
+- Optional, one line, skippable: did the HARNESS make anything harder this
+  campaign? Put it on a `- friction:` line in the state doc. Land time is when
+  it is freshest and you are already in a reporting posture; the alternative
+  is reconstructing a day of friction from a transcript at the end, which
+  systematically loses the small stuff that was obvious for thirty seconds.
 - **Verification code this campaign WROTE gets a disposition, in this land.**
   The evidence cell carries `verification:` BY NAME, with exactly one of three
   verdicts: `verification: promoted to tests/ — <path>` /
@@ -268,9 +300,12 @@ field recurrences proved a chat-printed table gates nothing — so:
 
 **The land report lives IN the state doc (`docs/campaigns/<name>.md`), not in
 chat.** Two mechanical contracts on that doc: (1) the scaffold's `## land
-report` heading and `| phase |` header line are LOAD-BEARING — the land gate
-matches them; translate or rewrite row CONTENT freely, keep those two lines
-intact. (2) The state doc is TRUNK-owned — the coordinator commits it at the
+report` heading, its `| phase |` header line, AND its
+`<!-- ohd:land-report-scaffold … -->` comment are LOAD-BEARING — the land gate
+matches the first two and /ohd-checkup's ritual-bypass audit scopes on the
+third; translate or rewrite row CONTENT freely, keep those three lines intact.
+The comment renders as nothing, which is exactly why it gets tidied away —
+don't. (2) The state doc is TRUNK-owned — the coordinator commits it at the
 anchor; the campaign branch must NOT track it (add/add conflict at merge —
 `land` warns if it does; resolve as UNION per Phase 5). Scaffold it with `campaign.sh land <name> --report` (appends the blank
 table); `campaign.sh land` REFUSES to push without it, and Phase-7 cleanup
@@ -279,6 +314,7 @@ that exact row, not a substitute elsewhere in the doc. Fill rows as phases
 complete:
 
 ```
+<!-- ohd:land-report-scaffold v0.7.0 -->
 | phase | ran? | evidence |
 |-------|------|----------|
 | 0 preconditions      | yes/skip | <command or output ref> |
@@ -306,7 +342,7 @@ memory is a soft layer, the script gate is the backstop).
 - **Three rows have NAMED contents, not free-form evidence** (all are Phase
   rules above, repeated here because this table is what actually gets filled):
   row 3 carries the convergence log — per round, the reviewer and the SHA it
-  reviewed, ending clean or with every residual ruled on, or, past ~2 rounds,
+  reviewed, ending C0 I0 with every residual ruled on, or, past ~2 rounds,
   the terminal round line plus the pointer to the named log section (the
   overflow rule below) — plus `simplifier:` with a reason when it says
   `not needed`; row 4 carries `reference:` with the graduated file or the
@@ -317,11 +353,16 @@ memory is a soft layer, the script gate is the backstop).
   goes missing.
   **Forward-only**: this binds lands from here on; historical reports are
   expected to fail it.
-- **The blank table `campaign.sh land --report` scaffolds does not yet carry
-  `reference:` or `verification:`** — that heredoc lives in the lifecycle
-  script, which this release deliberately does not touch. Until it does, these
-  two are skill-carried: write them into the row-4 and row-6 evidence cells by
-  hand. A land report that omits them is not attested, it is silent.
+- **The blank table `campaign.sh land --report` scaffolds now seeds
+  `reference:` (row 4) and `verification:` (row 6), and emits the
+  `<!-- ohd:land-report-scaffold … -->` marker above the table** — fill in
+  after each prompt; a prompt left with nothing after it reads as silent, not
+  attested. `sanity:` is still skill-carried: write it into the row-6 cell by
+  hand. The MARKER, not the prompts, is what dates a report: `reference:` and
+  `verification:` have been mandated ritual vocabulary since v0.6.0, so a
+  report written before this scaffold existed carries them too. A hand-written
+  or older report simply has no marker, and /ohd-checkup's ritual-bypass row
+  passes over it rather than judging it by a contract it never had.
 - **A cell carries the VERDICT plus a pointer** (aim ≤~200 chars; baseline: 155
   cells measured >400 chars, max 2,935) — the supporting ARGUMENT lives in a
   named section of the same state doc that the cell points at. The ~200-char
