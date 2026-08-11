@@ -7,6 +7,19 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 fail() { echo "SMOKE FAIL: $*" >&2; exit 1; }
 
+# ---- self-hosting parity: tools/campaign.sh IS assets/campaign.sh -----------
+# This repo runs the lifecycle it ships, so the copy it runs and the template it
+# publishes must not diverge — a fix made in one and not the other ships a
+# template nobody is dogfooding. Provenance stamps are the only legal
+# difference (an instantiated copy records where and when it came from).
+# Lived in the GitHub workflow until v0.7.1 retired it; it is a repo invariant,
+# not a CI service, so it belongs in the suite that gates the release.
+if [ -f "$HERE/tools/campaign.sh" ]; then
+  diff <(grep -vE '^# (instantiated|synced-from)' "$HERE/tools/campaign.sh") \
+       <(grep -vE '^# (instantiated|synced-from)' "$HERE/assets/campaign.sh") \
+    || fail "tools/campaign.sh has drifted from assets/campaign.sh (differences above; provenance lines are exempt)"
+fi
+
 # throwaway origin + clone
 git init -q --bare "$TMP/origin.git"
 git clone -q "$TMP/origin.git" "$TMP/repo"
