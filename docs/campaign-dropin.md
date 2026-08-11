@@ -51,6 +51,15 @@ skill → `land <name>` (push + PR — REFUSES without the land-report;
 `abort <name>` (keeps the remote branch unless `--purge`). `list` shows open
 campaigns so none go stale silently.
 
+**Local gates only is the DEFAULT model here — CI is opt-in**, which is already
+what this scaffold does (nothing it installs defines a check), and it is opt-in
+rather than merely absent because a red suite on a long workflow can burn a free
+Actions tier in days and leave every land bypassing a check that can no longer
+go green (measured — issue #31). If a project adopts CI and later retires it,
+declare that with one line — `- ci: retired (<date> — <reason>)` in CLAUDE.md or
+`docs/reference/conventions.md` — and campaign-land's Phase 0 attests the skip
+instead of re-deriving the story every land.
+
 ## Adopting an EXISTING project (full harness, not just the lifecycle)
 
 The steps above give an existing repo the campaign lifecycle. To get the FULL
