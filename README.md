@@ -66,8 +66,10 @@ the old plugin installed, remove it to avoid double registration:
   v0.1 works without it. For ordinary work,
   persistence-loop plugins are optional — way-of-working routes to built-in
   `/loop`/schedule first. An AUTONOMOUS (unattended-completion) mandate,
-  however, requires a completion loop: **ralph-loop** (official marketplace)
-  is the recommended vehicle; oh-my-claudecode's ralph also qualifies.
+  however, requires a completion loop: **oh-my-claudecode**'s `ralph` is the
+  vehicle the autonomous-mandate skill arms. It is a large install and the
+  user's own call; without it the mandate degrades to `/loop`, which has no
+  stop-hook persistence and no completion contract.
   `/ohd-setup` checks the dependencies above.
 
 ## Uninstall / rollback

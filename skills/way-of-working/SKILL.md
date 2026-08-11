@@ -84,7 +84,7 @@ edit; the boundary:
 | Shell/filesystem INVESTIGATION — enumerating, measuring, censusing, grepping across a tree (a measured session spent 66% of its coordinator tool calls on Bash) | a read-only sweep subagent | `Explore` is the named vehicle — it reads excerpts, not whole files; model tier is an explicit lever (a mechanical sweep does not need the top model) |
 | Bulk writing (docs, reports, large generated text) | a writer/executor subagent | Agent tool (oh-my-claudecode's tiered `writer`/`executor` roster, when installed) |
 | Separable hard reasoning | fresh agent with a verified brief | force-multiplier 1, escalating to `deep-solve` |
-| Must-complete long-running work | a persistence loop (independent evaluator judges termination — below) | `/loop` / schedule / ralph |
+| Must-complete long-running work | a persistence loop (independent evaluator judges termination — below) | `/loop` / schedule / oh-my-claudecode's ralph |
 | Independent parallelizable tasks | a subagent fleet, dispatched in one message | superpowers:dispatching-parallel-agents |
 
 Row 1's disqualifiers are a FLOOR, not a factor to be weighed: work that writes
@@ -157,14 +157,16 @@ field observation behind this rule.
 |---|---|
 | Recurring run / polling | built-in `/loop` (zero install, self-pacing) |
 | Scheduled / cron | built-in `schedule` |
-| "Keep going until done" in-session | the official **ralph-loop** plugin (installed by /ohd-setup); oh-my-claudecode's ralph also works — heavier, with a known keyword-misfire history |
+| "Keep going until done" in-session | oh-my-claudecode's **ralph** (offered by /ohd-setup) — a large install with a known keyword-misfire history, and the vehicle `autonomous-mandate` arms. Absent it, `/loop` is the honest fallback: no stop-hook persistence, no completion contract |
 
 **An autonomous mandate means a loop, FIRST.** When the user hands over
 unattended completion ("자율로 완수해", "run this to the end while I'm
 away"), the session's FIRST action is to set up the persistence loop it
 will run under (pick from the table above — for must-complete work that is
-the official ralph-loop plugin, or oh-my-claudecode's ralph) before
-touching the work itself.
+oh-my-claudecode's ralph) before touching the work itself. Arming it is not
+the same as invoking it: a model-invoked ralph skill does not put the loop in
+the armed state, so the mandate skill writes that state explicitly and then
+PROBES for the iteration banner before trusting it.
 A bare session under an autonomous mandate dies silently at its first
 promise-ending turn — three field occurrences, and no prose reminder has
 ever prevented one. The user can verify compliance at a glance: the first
