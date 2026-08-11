@@ -819,4 +819,266 @@ grep -q "## solidation" <<<"$out"           && fail "default mode enumerated sol
 grep -q "structure work-list" <<<"$out"     && fail "default mode ran the work-list generator"
 grep -q "^structure | " <<<"$out"           || fail "default mode lost its one-line structure pointer"
 
+# 16) CI-coherence row (issue #31). REPORT-ONLY and exit-0 under every path,
+#     which is the contract the row is most likely to break: it is the only
+#     network call this script makes.
+#     The `gh` here is a STUB whose output shapes were measured from gh 2.90.0
+#     against a real repository (404 body + stderr line, `[]` rulesets, the
+#     workflow-list JSON). A stub proves the BRANCHING — which signal
+#     combination produces which verdict — and deliberately does not claim to
+#     verify the API contract; the live run for that is recorded in the
+#     campaign's land report.
+mkdir -p "$TMP/bin" "$TMP/empty-bin"
+cat > "$TMP/bin/gh" <<'GHSTUB'
+#!/usr/bin/env bash
+# stub gh — driven by STUB_* env vars; shapes copied from real gh output.
+# ARG-AWARE and BRANCH-AWARE deliberately: a stub that answers every call shape
+# identically cannot witness the older-gh fallback, a path-encoding bug, or a
+# failed call, because to it those are the same call.
+BR="${STUB_BR:-main}"
+case "$1" in
+  "repo")
+    if [ "${STUB_AUTH:-ok}" = dead ]; then
+      printf 'gh: To get started with GitHub CLI, please run: gh auth login\n' >&2
+      exit 4
+    fi
+    printf 'acme/widget %s\n' "$BR"; exit 0 ;;
+  "workflow")
+    if printf '%s ' "$@" | grep -q -- '--json'; then
+      if [ "${STUB_WF_NOJSON:-0}" = 1 ]; then
+        printf 'unknown flag: --json\n' >&2; exit 1   # an older gh
+      fi
+      printf '%s\n' "${STUB_WF:-[]}"
+    else
+      # real `gh workflow list` without --all prints ACTIVE rows only, as TSV
+      printf '%s' "${STUB_WF:-[]}" \
+        | grep -o '"name":"[^"]*","state":"active"' \
+        | sed 's/"name":"\([^"]*\)".*/\1\tactive\t1/'
+    fi
+    exit 0 ;;
+  "api")
+    # A branch name containing '/' must arrive PERCENT-ENCODED. Unencoded it
+    # addresses a different path, and GitHub answers 404 "Branch not found" —
+    # a body that is NOT "Branch not protected" and must not be read as one.
+    case "$BR" in
+      */*)
+        enc="$(printf '%s' "$BR" | sed 's|/|%2F|g')"
+        case "$2" in
+          *"$enc"*) : ;;
+          *) printf '%s' '{"message":"Branch not found","status":"404"}'
+             printf 'gh: Branch not found (HTTP 404)\n' >&2; exit 1 ;;
+        esac ;;
+    esac
+    case "$2" in
+      */protection)
+        if [ "${STUB_BRANCH_GONE:-0}" = 1 ]; then
+          # the branch `gh repo view` named is not there any more (renamed, or
+          # a race). A 404 whose body is "Branch not found", NOT "not protected".
+          printf '%s' '{"message":"Branch not found","status":"404"}'
+          printf 'gh: Branch not found (HTTP 404)\n' >&2; exit 1
+        fi
+        case "${STUB_PROT:-404}" in
+          404) printf '%s' '{"message":"Branch not protected","status":"404"}'
+               printf 'gh: Branch not protected (HTTP 404)\n' >&2; exit 1 ;;
+          403) printf '%s' '{"message":"Resource not accessible","status":"403"}'
+               printf 'gh: Resource not accessible (HTTP 403)\n' >&2; exit 1 ;;
+          none) printf '%s' '{"required_status_checks":{"strict":false,"contexts":[]}}'; exit 0 ;;
+          *)    printf '%s' '{"required_status_checks":{"strict":false,"contexts":["tests"]}}'; exit 0 ;;
+        esac ;;
+      */rules/*)
+        if [ "${STUB_RULES_FAIL:-0}" = 1 ]; then
+          # what a timeout kill or a network blip looks like: no body, non-zero
+          printf 'gh: connection timed out\n' >&2; exit 1
+        fi
+        printf '%s\n' "${STUB_RULES:-[]}"; exit 0 ;;
+    esac ;;
+esac
+exit 0
+GHSTUB
+chmod +x "$TMP/bin/gh"
+WF_ACTIVE='[{"name":"tests","state":"active"}]'
+WF_OFF='[{"name":"tests","state":"disabled_manually"}]'
+RULES_CHK='[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"tests"}]}}]'
+DECL='- ci: retired (2026-08-11 — owner directive; release gate is the local suite)'
+
+newrepo "$TMP/ci"
+git remote add origin https://github.com/acme/widget.git
+
+ci_run() {  # $1=expected status (or ABSENT); runs with the stub gh on PATH
+  local want="$1" out rc
+  set +e
+  out="$(PATH="$TMP/bin:$PATH" "$CK" . 2>&1)"; rc=$?
+  set -e
+  [ "$rc" = 0 ] || fail "ci-coherence path '$want' broke checkup's exit-0 contract (rc=$rc)"
+  if [ "$want" = ABSENT ]; then
+    grep -q "^ci-coherence | " <<<"$out" && fail "ci-coherence row fired with nothing to be coherent about"
+  else
+    grep -q "^ci-coherence | $want" <<<"$out" \
+      || fail "expected ci-coherence $want, got: $(grep '^ci-coherence' <<<"$out" || echo '(no row)')"
+  fi
+  printf '%s' "$out"
+}
+
+# 16a) neither declaration nor workflows dir → NO ROW (silence by scope)
+ci_run ABSENT >/dev/null
+
+# 16b) workflows present, no declaration, unprotected branch, no rulesets →
+#      CONSISTENT (CI simply in use — this is the plugin repo's own pre-state)
+mkdir -p .github/workflows && printf 'name: t\n' > .github/workflows/test.yml
+out="$(STUB_WF="$WF_ACTIVE" ci_run CONSISTENT)"
+grep -q "1 active workflow" <<<"$out" || fail "consistent row does not say what it measured"
+
+# 16c) gh ABSENT → MANUAL-CHECK, never silence and never a failure.
+#      Blanking PATH would take git with it and test nothing, so build a PATH
+#      that drops ONLY gh: any directory providing a gh is replaced by a shim
+#      holding symlinks to everything in it EXCEPT gh (gh and git share a
+#      directory on plenty of machines).
+NOGH="$TMP/nogh"; mkdir -p "$NOGH"; NOGH_PATH=""
+IFS=: read -ra PATH_DIRS <<< "$PATH"
+for d in "${PATH_DIRS[@]}"; do
+  [ -n "$d" ] && [ -d "$d" ] || continue
+  if [ -x "$d/gh" ]; then
+    for e in "$d"/*; do
+      [ -e "$e" ] && [ "$(basename "$e")" != gh ] || continue
+      ln -sf "$e" "$NOGH/" 2>/dev/null || true
+    done
+  else
+    NOGH_PATH="${NOGH_PATH:+$NOGH_PATH:}$d"
+  fi
+done
+NOGH_PATH="$NOGH:$NOGH_PATH"
+PATH="$NOGH_PATH" command -v gh >/dev/null 2>&1 && fail "gh-absent fixture still resolves gh"
+PATH="$NOGH_PATH" command -v git >/dev/null 2>&1 || fail "gh-absent fixture lost git (fixture defect, not a checkup bug)"
+set +e
+out="$(PATH="$NOGH_PATH" "$CK" . 2>&1)"; rc=$?
+set -e
+[ "$rc" = 0 ] || fail "gh-absent path broke exit 0 (rc=$rc)"
+grep -q "^ci-coherence | MANUAL-CHECK" <<<"$out" || fail "gh absent did not report MANUAL-CHECK"
+grep -q "gh CLI not installed" <<<"$out" || fail "MANUAL-CHECK row does not say WHY it could not read"
+
+# 16d) non-GitHub origin → MANUAL-CHECK (this row only knows GitHub)
+git remote set-url origin git@internal-host:team/proj.git
+out="$(STUB_WF="$WF_ACTIVE" ci_run MANUAL-CHECK)"
+grep -qi "not a GitHub remote" <<<"$out" || fail "non-GitHub origin gave the wrong MANUAL-CHECK reason"
+git remote set-url origin https://github.com/acme/widget.git
+
+# 16e) declaration + a workflow still ACTIVE → DRIFT, carrying the #31 remedy.
+#      The declaration is read from CLAUDE.md here...
+printf '# proj\n\n## Facts\n\n%s\n' "$DECL" > CLAUDE.md
+out="$(STUB_WF="$WF_ACTIVE" ci_run DRIFT)"
+grep -q "workflow disable" <<<"$out"  || fail "DRIFT row carries no retirement checklist"
+grep -q "ci: retired (2026-08-11" <<<"$out" || fail "DRIFT row does not cite the declaration it contradicts"
+# ...and the whole declaration, not a truncated prefix: both consumers quote the
+# MATCHED LINE, so a declaration that wraps cites itself half-said (found by
+# dogfooding this row on the plugin's own CLAUDE.md)
+grep -q "release gate is the local suite)" <<<"$out" || fail "DRIFT row truncated the declaration it quotes"
+# the row must name the half that is ACTUALLY left over. Nothing is bound here,
+# so claiming a blocked merge would be a false alarm in the commonest shape.
+grep -qi "blocks every merge" <<<"$out" && fail "DRIFT row claims a blocking check with none bound"
+grep -qi "runs on every push" <<<"$out" || fail "DRIFT row does not name the active-workflow half"
+
+# 16f) ...and from docs/reference/conventions.md — EITHER file counts (1a)
+rm CLAUDE.md && mkdir -p docs/reference
+printf '# conventions\n\n%s\n' "$DECL" > docs/reference/conventions.md
+STUB_WF="$WF_ACTIVE" ci_run DRIFT >/dev/null
+
+# 16g) declaration + everything off → CONSISTENT
+out="$(STUB_WF="$WF_OFF" ci_run CONSISTENT)"
+grep -q "0 active workflow" <<<"$out" || fail "consistent-with-declaration row miscounted disabled workflows"
+
+# 16h) declaration + workflows off but a required check STILL BOUND via branch
+#      protection → DRIFT. This is the half-retirement that made every land
+#      reach for --admin (issue #31).
+out="$(STUB_WF="$WF_OFF" STUB_PROT=200 ci_run DRIFT)"
+grep -q "required check" <<<"$out" || fail "protection-bound check not counted"
+grep -qi "blocks every merge" <<<"$out" || fail "DRIFT row does not name the blocked-merge consequence when a check IS bound"
+grep -qi "runs on every push" <<<"$out" && fail "DRIFT row claims an active workflow with none active"
+
+# 16i) the RULESETS half is load-bearing, not redundant: nothing runs, branch
+#      protection is 404-clean, and the block lives in a ruleset. Reading only
+#      the protection endpoint calls this repo retired-and-clean.
+rm -rf docs/reference
+out="$(STUB_WF="$WF_OFF" STUB_RULES="$RULES_CHK" ci_run DRIFT)"
+grep -qi "reverse half-retirement" <<<"$out" || fail "ruleset-bound check with no declaration not caught"
+grep -q "rulesets" <<<"$out" || fail "DRIFT row does not name the ruleset as the source"
+
+# 16j) 403 on the protection half → MANUAL-CHECK for that half only, and the
+#      row must SAY it is not a coherence verdict rather than implying one
+out="$(STUB_WF="$WF_OFF" STUB_PROT=403 ci_run MANUAL-CHECK)"
+grep -q "403" <<<"$out" || fail "403 row does not name the status it hit"
+grep -qi "not a coherence verdict" <<<"$out" || fail "403 row overstates what it knows"
+
+# 16k) the RULESETS half must be able to say it is BLIND. A timeout kill or a
+#      network blip returns nothing, which is byte-identical to a genuine `[]`
+#      — so an unflagged failure reads as "no checks bound" and the row calls a
+#      possibly half-retired repo CONSISTENT. The protection half already
+#      degrades to MANUAL-CHECK; this half must mirror it.
+out="$(STUB_WF="$WF_OFF" STUB_RULES_FAIL=1 ci_run MANUAL-CHECK)"
+grep -qi "ruleset" <<<"$out" || fail "blind rulesets half is not named in the row"
+grep -qi "not a coherence verdict" <<<"$out" || fail "blind-rulesets row overstates what it knows"
+
+# 16l) a default branch containing '/' (`feat/x`) must be percent-encoded into
+#      the API path. Unencoded it addresses a different path and GitHub answers
+#      404 "Branch not found" — which the protection arm would otherwise read as
+#      "Branch not protected", i.e. coherent-empty. A repo whose default branch
+#      has a slash would silently never have its required checks read.
+out="$(STUB_BR=feat/x STUB_WF="$WF_OFF" STUB_PROT=200 ci_run DRIFT)"
+grep -qi "reverse half-retirement" <<<"$out" || fail "slash-named default branch: required checks went unread"
+
+# 16m) the RULES call needs that encoding independently of the protection call
+#       — they are two separate interpolations, and the case above would still
+#       pass if only the first were fixed. Here the block lives ONLY in a
+#       ruleset: encoded, the row sees it and reports DRIFT via rulesets;
+#       unencoded, the call 404s, the half goes blind, and the row degrades to
+#       MANUAL-CHECK. Discriminating in both directions is the point.
+out="$(STUB_BR=feat/x STUB_WF="$WF_OFF" STUB_RULES="$RULES_CHK" ci_run DRIFT)"
+grep -q "via rulesets" <<<"$out" || fail "slash-named default branch: the ruleset-bound check went unread"
+
+# 16n) "Branch not found" is a FAILED read, not an empty protection set. Both
+#      are 404s, so the arm order matters: read as "not protected" it reports a
+#      repo whose checks were never read as coherent-empty.
+out="$(STUB_WF="$WF_OFF" STUB_BRANCH_GONE=1 ci_run MANUAL-CHECK)"
+grep -qi "could not resolve the branch" <<<"$out" || fail "'Branch not found' was read as 'not protected'"
+
+# 16o) auth dead → MANUAL-CHECK. The third named degradation had no coverage.
+out="$(STUB_AUTH=dead STUB_WF="$WF_ACTIVE" ci_run MANUAL-CHECK)"
+grep -qi "could not read this repository" <<<"$out" || fail "dead auth gave the wrong MANUAL-CHECK reason"
+
+# 16p) an older gh without `--json` on `workflow list`: the fallback path must
+#      execute and reach the same count, or the fallback is decoration.
+out="$(STUB_WF="$WF_ACTIVE" STUB_WF_NOJSON=1 ci_run CONSISTENT)"
+grep -q "1 active workflow" <<<"$out" || fail "older-gh fallback miscounted active workflows"
+
+# 16q) declaration present but NO workflows dir → the row still fires (the
+#      declaration alone is a reason to check) and reads CONSISTENT
+rm -rf .github
+printf '# proj\n\n%s\n' "$DECL" > CLAUDE.md
+STUB_WF="$WF_OFF" ci_run CONSISTENT >/dev/null
+cd "$TMP/proj"
+
+# 17) the `ci: retired` declaration is a LOCK-STEP across three surfaces, and
+#     nothing but a test holds it: campaign-land Phase 0 greps it as prose (no
+#     script reads that skill), checkup.sh greps it in code, and this repo
+#     declares it about itself. A regex changed in one place and not the others
+#     fails SILENTLY — Phase 0 simply stops finding declarations and every land
+#     quietly falls back to a different branch.
+CI_RE='\^\[\[:space:\]\]\*-\[\[:space:\]\]\*ci:\[\[:space:\]\]\*retired'
+grep -qE "$CI_RE" "$HERE/assets/checkup.sh" \
+  || fail "checkup.sh no longer greps the canonical ci-retired form"
+grep -qE "$CI_RE" "$HERE/skills/campaign-land/SKILL.md" \
+  || fail "campaign-land Phase 0 documents a DIFFERENT ci-retired grep than checkup.sh runs"
+for f in "$HERE/assets/checkup.sh" "$HERE/skills/campaign-land/SKILL.md"; do
+  grep -q 'docs/reference/conventions.md' "$f" || fail "$(basename "$f") lost the second declaration location (1a: either file counts)"
+done
+# ...and the plugin's own declaration must satisfy the form it publishes. It
+# must also be ONE physical line: both consumers quote the MATCHED LINE, so a
+# wrapped declaration cites itself truncated (measured, 2026-08-11).
+OWN="$(grep -E '^[[:space:]]*-[[:space:]]*ci:[[:space:]]*retired' "$HERE/CLAUDE.md" || true)"
+[ -n "$OWN" ] || fail "this repo declares CI retired nowhere its own Phase 0 can find it"
+[ "$(printf '%s\n' "$OWN" | wc -l | tr -d ' ')" = 1 ] || fail "more than one ci-retired declaration"
+case "$OWN" in
+  *')') : ;;
+  *) fail "the declaration does not end in ')' — it wrapped, and both consumers will quote it truncated: $OWN" ;;
+esac
+
 echo "CHECKUP-SMOKE PASS"

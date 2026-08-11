@@ -66,8 +66,10 @@ the old plugin installed, remove it to avoid double registration:
   v0.1 works without it. For ordinary work,
   persistence-loop plugins are optional — way-of-working routes to built-in
   `/loop`/schedule first. An AUTONOMOUS (unattended-completion) mandate,
-  however, requires a completion loop: **ralph-loop** (official marketplace)
-  is the recommended vehicle; oh-my-claudecode's ralph also qualifies.
+  however, requires a completion loop: **oh-my-claudecode**'s `ralph` is the
+  vehicle the autonomous-mandate skill arms. It is a large install and the
+  user's own call; without it the mandate degrades to `/loop`, which has no
+  stop-hook persistence and no completion contract.
   `/ohd-setup` checks the dependencies above.
 
 ## Uninstall / rollback
@@ -84,7 +86,17 @@ live version, remove the local marketplace and re-add
 
 ## Test
 
-    node --test tests/*.test.mjs
+The full suite — all five, and the four smoke suites are where `campaign.sh`,
+the scaffolder, checkup and the probes are actually exercised:
+
+    node --test tests/*.test.mjs     # not the directory form
+    bash tests/campaign-smoke.sh
+    bash tests/new-project-smoke.sh
+    bash tests/checkup-smoke.sh
+    bash tests/probes-smoke.sh
+
+There is no CI: this suite, run locally, is the release gate (see CLAUDE.md
+§RELEASING, which also names the hermetic re-run).
 
 ## Changelog
 

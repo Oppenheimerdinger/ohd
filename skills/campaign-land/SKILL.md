@@ -22,7 +22,36 @@ commands so the ritual works without it.
   say so explicitly.
 - A trunk merge is consequential: if unsure, surface the land plan to the user
   and get a go before merging.
-- **When the repo defines checks, read them** — `gh pr checks <n>` green, and
+- **The CI precondition has THREE branches. Read the project's declaration
+  first, then take exactly one.** The declaration is one grep-stable line, in
+  EITHER of two files — either counts:
+
+  ```bash
+  grep -nE '^[[:space:]]*-[[:space:]]*ci:[[:space:]]*retired' \
+       CLAUDE.md docs/reference/conventions.md 2>/dev/null
+  ```
+
+  The canonical form is `- ci: retired (<date> — <reason>)`. Nothing in
+  `campaign.sh` reads it: this precondition is prose, and the script never
+  gates on checks.
+
+  **Branch 1 — declaration present → ATTESTED SKIP.** Quote the matched line
+  VERBATIM in the Phase-0 evidence cell; the citation is the attestation, and
+  a cell saying "CI retired" without it attests nothing. This is what ends the
+  per-land re-derivation the retirement was supposed to buy.
+  ⚠ **Half-retired is the trap**: a project can retire the workflows and leave
+  a REQUIRED CHECK bound to the branch, and that leftover still blocks the
+  merge at Phase 5 — with no run that can ever turn it green. Surface it here
+  rather than discovering it at merge time, and point at `/ohd-checkup`'s
+  CI-coherence row, which is the thing that actually measures both halves.
+  **An attested skip is never a license to reach for `--admin`.** Silent
+  bypassing is exactly the field incident this whole path exists to end (every
+  land bypassed, the reason re-narrated per land, nothing recorded). If a
+  leftover check blocks the merge, the fix is to unbind it — an owner action,
+  named in the checkup row's remedy — not to route around it unrecorded.
+
+  **Branch 2 — checks defined, no declaration → read them.** `gh pr checks <n>`
+  green, and
   specifically: the run EXISTS at the PR's head SHA (right after a push, "zero
   incomplete checks" is answered TRUE by the *previous* commit's completed
   state); it is green against the CURRENT base (GitHub does not re-run a PR's
@@ -30,14 +59,18 @@ commands so the ritual works without it.
   while `strict:false` — this clause is carried WITHOUT a field witness, on
   general GitHub behaviour); and a required check binds PRs but NOT an admin's
   direct push (`enforce_admins:false` prints `Bypassed rule violations …` and
-  lands). **No checks defined → say so and pass** — a fresh project's scaffold
-  ships no CI, and an unconditional clause here would be a permanently red
-  precondition for every new project.
+  lands).
   ⚠ Ordering, if you are ADDING a required check: land the job first, require
   it second. `pull_request` runs the BASE's workflow, so requiring a job that
   exists only on a feature branch leaves every PR permanently BLOCKED with no
   failing check to point at — the worst possible diagnostic (measured, then
   reverted).
+
+  **Branch 3 — neither → say so and pass.** A fresh project's scaffold
+  ships no CI, and an unconditional clause here would be a permanently red
+  precondition for every new project. Local-gate-only is a legitimate model,
+  not a gap to apologise for; the difference between this branch and branch 1
+  is only that nobody has had to DECLARE anything yet.
 - If the diff touches `docs/reference/` or harness-carried docs, run
   `/ohd-checkup` before landing. It always exits 0, so this is a checklist
   item, not a gate.
@@ -233,6 +266,15 @@ reads is the one that rots (field: this repo measured 5/5 false-OPEN).
   it is freshest and you are already in a reporting posture; the alternative
   is reconstructing a day of friction from a transcript at the end, which
   systematically loses the small stuff that was obvious for thirty seconds.
+  Friction that belongs to the PLUGIN rather than this project also goes
+  upstream to its tracker — and that tracker is PUBLIC, so anonymize while
+  writing: internal project / company / machine / repo / person names become
+  placeholders (`umbrella-proj`, `gpubox`), internal paths become
+  `<repo>/path/to/thing`, and the plugin's own `file:line` stays VERBATIM
+  (public already, and the part that makes the report actionable).
+  Issue templates do not render for `gh issue create --title/--body`, so this
+  line and way-of-working's collaboration section are the two plugin surfaces
+  that reach an agent session with the rule.
 - **Verification code this campaign WROTE gets a disposition, in this land.**
   The evidence cell carries `verification:` BY NAME, with exactly one of three
   verdicts: `verification: promoted to tests/ — <path>` /
@@ -317,7 +359,7 @@ complete:
 <!-- ohd:land-report-scaffold v0.7.0 -->
 | phase | ran? | evidence |
 |-------|------|----------|
-| 0 preconditions      | yes/skip | <command or output ref> |
+| 0 preconditions      | yes/skip | <command or output ref>; on branch 1, the `- ci: retired (…)` line quoted VERBATIM |
 | 0.5 plan recorded    | yes/skip | ... |
 | 1 working-tree safety| yes/skip | ... |
 | 2 re-validation      | yes/skip | ... |
@@ -339,8 +381,12 @@ memory is a soft layer, the script gate is the backstop).
 - `evidence` must reference something that actually happened this land — a
   command you ran, an output you saw, a diff/commit hash. An empty or vague
   evidence cell means the phase DID NOT HAPPEN — go run it.
-- **Three rows have NAMED contents, not free-form evidence** (all are Phase
+- **Four rows have NAMED contents, not free-form evidence** (all are Phase
   rules above, repeated here because this table is what actually gets filled):
+  row 0, when the project declares CI retired, carries that declaration line
+  QUOTED VERBATIM — the citation IS the attestation, and a cell that merely
+  says "CI retired" attests nothing and rebuilds the per-land re-derivation
+  the declaration exists to end;
   row 3 carries the convergence log — per round, the reviewer and the SHA it
   reviewed, ending C0 I0 with every residual ruled on, or, past ~2 rounds,
   the terminal round line plus the pointer to the named log section (the
@@ -358,7 +404,10 @@ memory is a soft layer, the script gate is the backstop).
   `<!-- ohd:land-report-scaffold … -->` marker above the table** — fill in
   after each prompt; a prompt left with nothing after it reads as silent, not
   attested. `sanity:` is still skill-carried: write it into the row-6 cell by
-  hand. The MARKER, not the prompts, is what dates a report: `reference:` and
+  hand, and so is row 0's verbatim declaration — the scaffold seeds row 0
+  empty, because that citation is owed only on the branch where a declaration
+  exists, and a prompt seeded into every land would read as owed by all of
+  them. The MARKER, not the prompts, is what dates a report: `reference:` and
   `verification:` have been mandated ritual vocabulary since v0.6.0, so a
   report written before this scaffold existed carries them too. A hand-written
   or older report simply has no marker, and /ohd-checkup's ritual-bypass row

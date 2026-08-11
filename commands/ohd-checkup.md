@@ -1,5 +1,5 @@
 ---
-description: Harness doctor for an existing project — 하네스 점검/정비/채택. Detects drift between the project and the ohd harness (campaign.sh template, trunk hook, state dir, CLAUDE.md wiring, plugin dependencies, landed docs missing their land-report, stale plugin cache), reports a fix table, and repairs per-item on approval. Also the adoption path for projects that never had the harness, and `structure` generates the corpus cleanup work-list.
+description: Harness doctor for an existing project — 하네스 점검/정비/채택. Detects drift between the project and the ohd harness (campaign.sh template, trunk hook, state dir, CLAUDE.md wiring, plugin dependencies, landed docs missing their land-report, stale plugin cache, CI-retirement coherence), reports a fix table, and repairs per-item on approval. Also the adoption path for projects that never had the harness, and `structure` generates the corpus cleanup work-list.
 argument-hint: "[project-root] [structure]"
 ---
 
@@ -9,10 +9,28 @@ given, else the current directory; it must be a git repo root.
 ## Two modes, one command
 
 - **Default** — the fast drift doctor, run as often as you like. Its rows are
-  COUNTS AND GATES only (template drift, hook stamp, byte budget, pointer
-  resolution, false-OPEN count), all cheap and none action-proposing. A count
-  is a POINTER, not an audit: a default run must never nag a project into
+  COUNTS AND GATES (template drift, hook stamp, byte budget, pointer
+  resolution, false-OPEN count), all cheap, local and none action-proposing. A
+  count is a POINTER, not an audit: a default run must never nag a project into
   structural work. It ends with ONE summary line naming the other mode.
+  **ONE row is carved out of that description and it is worth knowing before
+  you run this on a metered link: `ci-coherence`.** It is the only row that
+  touches the NETWORK (four `gh` calls, five if an older `gh` needs the
+  workflow-list fallback), and the only one that hands back a REMEDY — the
+  three-step #31 retirement checklist. It stays report-only and changes no
+  state; disable/unbind are owner actions. It is GUARDED twice over: it fires
+  only when the project declares `ci: retired` or has a `.github/workflows/`
+  directory, so most projects never see it at all, and every failure mode (no
+  `gh`, dead auth, non-GitHub origin, an unreadable half) degrades to a
+  MANUAL-CHECK row rather than a stall or a wrong verdict.
+  **Timeout, stated honestly**: each call is bounded by `OHD_CI_TIMEOUT`
+  (seconds, default 8) — but ONLY where a `timeout` or `gtimeout` binary
+  exists. Stock macOS ships NEITHER, and there the calls run unbounded under
+  `gh`'s own timeouts. So the worst case is ~40s where a timeout binary is
+  present (five bounded calls — the probe and the fallback are sequential, not
+  alternatives) and unbounded where it is not; on a slow or captive network, set
+  `OHD_CI_TIMEOUT` low or run somewhere the binary exists rather than assuming
+  the row cannot hang.
 - **`structure`** — `/ohd-checkup structure` (or `/ohd-checkup <root> structure`)
   passes `--structure` to the script. This is the opt-in WORK-LIST GENERATOR:
   solidation candidates, the orphan-verification census with its allowlist,

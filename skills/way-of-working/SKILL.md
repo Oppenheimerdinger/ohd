@@ -84,7 +84,7 @@ edit; the boundary:
 | Shell/filesystem INVESTIGATION — enumerating, measuring, censusing, grepping across a tree (a measured session spent 66% of its coordinator tool calls on Bash) | a read-only sweep subagent | `Explore` is the named vehicle — it reads excerpts, not whole files; model tier is an explicit lever (a mechanical sweep does not need the top model) |
 | Bulk writing (docs, reports, large generated text) | a writer/executor subagent | Agent tool (oh-my-claudecode's tiered `writer`/`executor` roster, when installed) |
 | Separable hard reasoning | fresh agent with a verified brief | force-multiplier 1, escalating to `deep-solve` |
-| Must-complete long-running work | a persistence loop (independent evaluator judges termination — below) | `/loop` / schedule / ralph |
+| Must-complete long-running work | a persistence loop (independent evaluator judges termination — below) | `/loop` / schedule / oh-my-claudecode's ralph |
 | Independent parallelizable tasks | a subagent fleet, dispatched in one message | superpowers:dispatching-parallel-agents |
 
 Row 1's disqualifiers are a FLOOR, not a factor to be weighed: work that writes
@@ -157,14 +157,16 @@ field observation behind this rule.
 |---|---|
 | Recurring run / polling | built-in `/loop` (zero install, self-pacing) |
 | Scheduled / cron | built-in `schedule` |
-| "Keep going until done" in-session | the official **ralph-loop** plugin (installed by /ohd-setup); oh-my-claudecode's ralph also works — heavier, with a known keyword-misfire history |
+| "Keep going until done" in-session | oh-my-claudecode's **ralph** (offered by /ohd-setup) — a large install with a known keyword-misfire history, and the vehicle `autonomous-mandate` arms. Absent it, `/loop` is the honest fallback: no stop-hook persistence, no completion contract |
 
 **An autonomous mandate means a loop, FIRST.** When the user hands over
 unattended completion ("자율로 완수해", "run this to the end while I'm
 away"), the session's FIRST action is to set up the persistence loop it
 will run under (pick from the table above — for must-complete work that is
-the official ralph-loop plugin, or oh-my-claudecode's ralph) before
-touching the work itself.
+oh-my-claudecode's ralph) before touching the work itself. Arming it is not
+the same as invoking it: a model-invoked ralph skill does not put the loop in
+the armed state, so the mandate skill writes that state explicitly and then
+PROBES for the iteration banner before trusting it.
 A bare session under an autonomous mandate dies silently at its first
 promise-ending turn — three field occurrences, and no prose reminder has
 ever prevented one. The user can verify compliance at a glance: the first
@@ -183,8 +185,13 @@ that quote to the loop's own state/notes file — chat scrolls away, and loops
 are exactly the workloads that outlive the attention span of whoever started
 them. No quoted verdict = the loop is not done — "the evaluator would agree"
 is the looping session grading itself with extra steps — and so is
-DELETING the loop's state file (a looping session never cancels its own
-loop; cancellation is the user's).
+DELETING the loop's state file. Mid-flight ABORT is the user's, always: a
+session that stops a loop it has not finished is grading itself through a side
+door. The ONE exit a session may take is the COMPLETION exit — running the
+loop's own cancel command AFTER the evaluator's verdict is banked verbatim
+(`ohd:autonomous-mandate` step 3 owns the order). The banked verdict is the
+entire difference between the two; without one, cancelling IS the unverdicted
+promise.
 
 If ralph (or similar) is used: ① mentioning the word in a design conversation
 can auto-register its state — a status question is not a task; cancel misfired
@@ -211,6 +218,19 @@ autonomous loop always gets a termination condition and an iteration cap.
   that should have fired didn't — file a backlog entry naming that missing
   trigger in the project's `docs/backlog.md` in the same pass (campaign-land
   Phase 6's discipline); the metric is corrections-per-week, read per project.
+- **Harness friction goes UPSTREAM — anonymized at the keystroke.** When the
+  friction is the HARNESS's rather than this project's (a gate that misfired, a
+  skill that misrouted, a ritual that cost more than it returned), file it on
+  the plugin's own tracker; a project backlog entry about a plugin defect is
+  read by nobody who can fix it. **That tracker is PUBLIC, so scrub as you
+  write, not as a later pass**: internal project / company / machine / repo /
+  person names become placeholders (`umbrella-proj`, `pkg-proj`, `gpubox`),
+  internal paths become `<repo>/path/to/thing`, and the plugin's own
+  `file:line` stays VERBATIM — it is public already and it is what makes the
+  report actionable. Scrubbing costs a report nothing: the mechanism is the
+  useful half and it survives intact. This rule lives HERE, on the line that
+  tells you to file, because the repo's issue templates never render for
+  `gh issue create --title/--body` — which is how a session files.
 - **The coordinator seat does not solve inline.** A long-lived anchor
   session's job is orchestration; minutes-long inline reasoning there is a
   solver's job in the wrong seat — write the brief and hand it to a fresh

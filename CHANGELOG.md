@@ -1,3 +1,99 @@
+## v0.7.1 (2026-08-11)
+
+BEHAVIOR-CHANGE: an autonomous mandate's loop is now oh-my-claudecode's ralph, armed by an explicit state write and then PROBED for the iteration banner before the session trusts it — invoking the ralph skill does not arm the loop, and the official ralph-loop plugin is no longer wired anywhere.
+
+BEHAVIOR-CHANGE: `campaign-land` Phase 0 honors a `- ci: retired (<date> — <reason>)` declaration in CLAUDE.md or docs/reference/conventions.md as an attested skip, quoted verbatim into the evidence cell — with the half-retired warning that a leftover required check still blocks the merge, and that an attested skip is never a license to bypass silently.
+
+Two field cases drive this release: issue #31 (a repo whose CI was retired with
+no way to say so, leaving every land re-deriving the story and reaching for
+`--admin`), and a mechanism review of the loop the autonomous mandate had been
+launching.
+
+### Loops ride OMC ralph
+
+- `autonomous-mandate`'s launch step is rewritten around the finding that a
+  model-invoked ralph Skill does NOT arm the loop — only the user-prompt
+  keyword detector writes arming state. The skill now writes that state itself
+  (never with `awaiting_confirmation`, which exists to gate keyword-armed state
+  and would suppress the stop hook), invokes the ralph Skill so the PRD
+  machinery loads with the done-contract as its acceptance criteria, and then
+  verifies the banner. The probe IS the contract: every way arming can fail
+  fails silently into a session that reads as autonomous and is not.
+- The completion exit is the session running OMC's cancel — legitimate only
+  behind a banked verdict (PRD stories pass, reviewer signs off against the
+  ORIGINAL mandate and ohd's two mandatory questions, verdict quoted verbatim
+  into the state doc, then cancel). Cancelling without one is named for what it
+  is: the unverdicted promise reached through a different door.
+- Honest cap semantics: OMC does not stop at `max_iterations`, it extends it.
+  The cap bounds cost; the evaluator's verdict is the only terminator.
+- The official ralph-loop tier is removed from the roster, the routing table,
+  README and USAGE-ko. It is NOT uninstalled and no suggestion to uninstall it
+  ships: it collides with nothing, and uninstalling under a still-running old
+  mandate would kill that loop silently. Backlog #9 and #10 are restamped
+  rather than deleted — #9's verification marked historical, #10's no-throttle
+  note re-pointed at the vehicle now in use, including the one thing that is
+  worse there (the cap extends, so it is not the backstop it looks like).
+
+### 'CI retired' is now first-class (issue #31)
+
+- One canonical, grep-stable declaration: `- ci: retired (<date> — <reason>)`,
+  valid in either CLAUDE.md or `docs/reference/conventions.md`. Keep it on ONE
+  physical line — both consumers quote the matched line, so a wrapped
+  declaration cites itself truncated (measured while dogfooding this).
+- `campaign-land` Phase 0 takes exactly one of three branches: attested skip,
+  the v0.7.0 check clauses (unchanged, now scoped inside their own branch), or
+  the no-checks pass. Public consumers who DO run checks lose nothing.
+- `/ohd-checkup` gains a report-only `ci-coherence` row — this script's only
+  network call, fired only when there is something to be coherent about. It
+  reads three signals, because two of them lie: the declaration says what the
+  project intends, `gh workflow list` what still runs, branch protection AND
+  rulesets what still blocks. Rulesets are not redundant: checks bound there
+  are invisible to the protection endpoint, which is also the endpoint that can
+  403. EITHER half can go blind — a 403 or an unresolvable branch on one, a
+  timeout or non-200 on the other — and a blind half degrades the row to
+  MANUAL-CHECK rather than to a verdict, because an unreadable half is
+  indistinguishable from an empty one and must never be reported as coherence.
+  No `gh`, dead auth, or a non-GitHub origin all give MANUAL-CHECK too.
+  Exit stays 0 on every path, and state changes remain owner actions: the row
+  hands over the #31 checklist and stops.
+- `docs/campaign-dropin.md` names local-gate-only as the DEFAULT model, with
+  #31's cost warning — a red suite on a long workflow can burn a free tier in
+  days and leave every land bypassing a check that can no longer go green.
+
+### This repo drops GitHub Actions
+
+Maintainer-facing, so it ships as ordinary prose rather than a third
+BEHAVIOR-CHANGE line. The workflow is deleted and the local suite is the
+release gate. In order, deliberately: the tools/assets parity guard moved into
+`campaign-smoke` FIRST, then §RELEASING was rewritten to name the FULL gate
+(the node tests AND all four smoke suites — until now the smokes ran only in
+CI while the documented ritual named just the first line), then the file went.
+A new named §RELEASING step runs that gate hermetically
+(`env HOME="$(mktemp -d)" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null`),
+reproducing the no-global-git-identity machine CI uniquely provided.
+
+**What removing CI does NOT replace, stated plainly.** Two things are simply
+gone. (1) **Per-push automation.** A local gate runs when someone runs it, and
+this repo's own record is the argument against assuming someone will: five
+unreviewed releases shipped on 2026-07-28 through exactly this kind of ritual
+rationalization ("micro release", "docs only"), which is why §RELEASING's
+verification tier is mechanical rather than a judgment call. Ritual discipline
+is now load-bearing where a runner used to be indifferent. (2) **Node-version
+diversity.** The workflow pinned Node 22 on a clean ubuntu image; the local
+gate tests exactly one Node, on one machine, with one plugin cache. The
+hermetic step is a mitigation for the config-isolation class only — it is not
+an equivalence claim, and nothing here replaces either loss.
+
+### Riders
+
+- `.github/ISSUE_TEMPLATE` ships with the anonymization rule, and — because
+  templates never render for `gh issue create --title/--body`, which is how
+  agent sessions file — the same rule now rides the plugin-shipped lines that
+  tell a session to file harness feedback upstream (way-of-working's
+  collaboration section, campaign-land's friction line). Internal names become
+  placeholders; the plugin's own `file:line` stays verbatim. The template alone
+  would have prevented none of the three leaks that motivated this.
+
 ## v0.7.0 (2026-08-10)
 
 BEHAVIOR-CHANGE: `campaign.sh land` now REFUSES a state doc whose only `| phase |` table is a plan, status or measurement table — the gate anchors on the full scaffold header `| phase | ran? |` and accepts numbered land-report headings (`## 13. Land report`), so docs that passed vacuously before will now be refused until they carry a real land report.

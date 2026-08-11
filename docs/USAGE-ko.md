@@ -10,7 +10,7 @@ ohd(=oppenheimerdinger의 약칭)는 연구·개발용 Claude Code 하네스 플
 - `way-of-working` — 어떤 도구를 언제 쓸지의 라우터 (생산/검증/리뷰/루프)
 - `campaign-land` / `campaign-status` — worktree 캠페인 land 의식과 squash-안전 병합 판정 (+ `assets/campaign.sh` 드롭인: docs/campaign-dropin.md)
 - `/ohd-new-project` — 새 연구 프로젝트 스캐폴더 (인터뷰 주도: 캠페인 라이프사이클·보호 트렁크·머신×환경 매트릭스·외부코드 hosts)
-- (스킬) `autonomous-mandate` — "자율진행"/"자율로 완수해" 순간 자동 발화: 공식 ralph-loop 세팅이 첫 행동 (맨몸 자율 세션의 침묵 정지 방지)
+- (스킬) `autonomous-mandate` — "자율진행"/"자율로 완수해" 순간 자동 발화: oh-my-claudecode의 `ralph` 무장이 첫 행동 — 상태를 명시적으로 기입한 뒤 반복 배너로 무장 여부를 확인 (스킬 호출만으로는 루프가 걸리지 않음). OMC가 없으면 내장 `/loop`으로 정직하게 강등 (맨몸 자율 세션의 침묵 정지 방지)
 - `/ohd-checkup` — 기존 프로젝트 하네스 점검·정비 (campaign.sh 드리프트 재동기화 + CLAUDE.md 배선 — 채택 경로 겸용; 플러그인 업데이트 후 각 프로젝트에서 한 번씩)
 - `review-to-convergence` — 완성된 산출물을 Critical/Important 0까지 검증
 - `claude-md-sanity` — CLAUDE.md/메모리 드리프트 감사
