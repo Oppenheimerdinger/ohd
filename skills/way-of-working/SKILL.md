@@ -185,8 +185,13 @@ that quote to the loop's own state/notes file — chat scrolls away, and loops
 are exactly the workloads that outlive the attention span of whoever started
 them. No quoted verdict = the loop is not done — "the evaluator would agree"
 is the looping session grading itself with extra steps — and so is
-DELETING the loop's state file (a looping session never cancels its own
-loop; cancellation is the user's).
+DELETING the loop's state file. Mid-flight ABORT is the user's, always: a
+session that stops a loop it has not finished is grading itself through a side
+door. The ONE exit a session may take is the COMPLETION exit — running the
+loop's own cancel command AFTER the evaluator's verdict is banked verbatim
+(`ohd:autonomous-mandate` step 3 owns the order). The banked verdict is the
+entire difference between the two; without one, cancelling IS the unverdicted
+promise.
 
 If ralph (or similar) is used: ① mentioning the word in a design conversation
 can auto-register its state — a status question is not a task; cancel misfired
