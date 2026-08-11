@@ -1,0 +1,46 @@
+name: Harness feedback
+description: A gate that misfired, a skill that misrouted, a ritual that cost more than it returned
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before you paste anything: scrub internal names.**
+
+        Issues here are public. The useful part of a field report is the
+        MECHANISM — which gate fired, what it read, what it should have read —
+        and that part survives anonymization intact.
+
+        - Internal project, company, machine, repo and person names →
+          placeholders (`umbrella-proj`, `pkg-proj`, `gpubox`, `internal-host`).
+          Keep the placeholder consistent within one report so the story still
+          follows.
+        - Paths under an internal tree → `<repo>/path/to/thing`.
+        - **The plugin's own `file:line` stays VERBATIM** — `skills/campaign-land/SKILL.md:47`
+          is what makes a report actionable, and it is public already.
+        - Numbers, error text and command output are usually safe once names are
+          out; read them once anyway, since output is where a hostname hides.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The mechanism, not the story. Which surface, what it did, what you expected.
+      placeholder: |
+        /ohd-checkup's <row> reported <X> on a repo where <Y> was true.
+        Expected <Z> because <the rule as you read it>.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Command + output, or the plugin file:line the behaviour comes from. Scrubbed per the rule above.
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: ohd version
+      description: "`claude plugin list`, or the version in the row you are quoting"
+    validations:
+      required: false

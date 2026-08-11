@@ -1,0 +1,11 @@
+# Blank issues are OFF so the anonymization rule in harness-feedback.yml
+# actually renders before someone pastes a field report. That rule is the
+# whole point of shipping a template: three internal-name leaks reached this
+# public repo through issues, and a rule nobody sees prevents none of them.
+#
+# HONEST LIMIT: this covers WEB filers only. Templates do not render for
+# `gh issue create --title/--body`, which is how agent sessions file — the
+# plugin-shipped filing lines (way-of-working's collaboration section,
+# campaign-land's friction line) carry the same rule for that path, and they
+# are the surface that would have caught all three leaks.
+blank_issues_enabled: false
