@@ -971,4 +971,29 @@ printf '# proj\n\n%s\n' "$DECL" > CLAUDE.md
 STUB_WF="$WF_OFF" ci_run CONSISTENT >/dev/null
 cd "$TMP/proj"
 
+# 17) the `ci: retired` declaration is a LOCK-STEP across three surfaces, and
+#     nothing but a test holds it: campaign-land Phase 0 greps it as prose (no
+#     script reads that skill), checkup.sh greps it in code, and this repo
+#     declares it about itself. A regex changed in one place and not the others
+#     fails SILENTLY — Phase 0 simply stops finding declarations and every land
+#     quietly falls back to a different branch.
+CI_RE='\^\[\[:space:\]\]\*-\[\[:space:\]\]\*ci:\[\[:space:\]\]\*retired'
+grep -qE "$CI_RE" "$HERE/assets/checkup.sh" \
+  || fail "checkup.sh no longer greps the canonical ci-retired form"
+grep -qE "$CI_RE" "$HERE/skills/campaign-land/SKILL.md" \
+  || fail "campaign-land Phase 0 documents a DIFFERENT ci-retired grep than checkup.sh runs"
+for f in "$HERE/assets/checkup.sh" "$HERE/skills/campaign-land/SKILL.md"; do
+  grep -q 'docs/reference/conventions.md' "$f" || fail "$(basename "$f") lost the second declaration location (1a: either file counts)"
+done
+# ...and the plugin's own declaration must satisfy the form it publishes. It
+# must also be ONE physical line: both consumers quote the MATCHED LINE, so a
+# wrapped declaration cites itself truncated (measured, 2026-08-11).
+OWN="$(grep -E '^[[:space:]]*-[[:space:]]*ci:[[:space:]]*retired' "$HERE/CLAUDE.md" || true)"
+[ -n "$OWN" ] || fail "this repo declares CI retired nowhere its own Phase 0 can find it"
+[ "$(printf '%s\n' "$OWN" | wc -l | tr -d ' ')" = 1 ] || fail "more than one ci-retired declaration"
+case "$OWN" in
+  *')') : ;;
+  *) fail "the declaration does not end in ')' — it wrapped, and both consumers will quote it truncated: $OWN" ;;
+esac
+
 echo "CHECKUP-SMOKE PASS"
