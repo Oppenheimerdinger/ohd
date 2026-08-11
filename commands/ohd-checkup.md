@@ -26,8 +26,9 @@ given, else the current directory; it must be a git repo root.
   **Timeout, stated honestly**: each call is bounded by `OHD_CI_TIMEOUT`
   (seconds, default 8) — but ONLY where a `timeout` or `gtimeout` binary
   exists. Stock macOS ships NEITHER, and there the calls run unbounded under
-  `gh`'s own timeouts. So the worst case is ~32s where a timeout binary is
-  present and unbounded where it is not; on a slow or captive network, set
+  `gh`'s own timeouts. So the worst case is ~40s where a timeout binary is
+  present (five bounded calls — the probe and the fallback are sequential, not
+  alternatives) and unbounded where it is not; on a slow or captive network, set
   `OHD_CI_TIMEOUT` low or run somewhere the binary exists rather than assuming
   the row cannot hang.
 - **`structure`** — `/ohd-checkup structure` (or `/ohd-checkup <root> structure`)

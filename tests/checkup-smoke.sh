@@ -1008,7 +1008,7 @@ out="$(STUB_WF="$WF_OFF" STUB_PROT=403 ci_run MANUAL-CHECK)"
 grep -q "403" <<<"$out" || fail "403 row does not name the status it hit"
 grep -qi "not a coherence verdict" <<<"$out" || fail "403 row overstates what it knows"
 
-# 16l) the RULESETS half must be able to say it is BLIND. A timeout kill or a
+# 16k) the RULESETS half must be able to say it is BLIND. A timeout kill or a
 #      network blip returns nothing, which is byte-identical to a genuine `[]`
 #      — so an unflagged failure reads as "no checks bound" and the row calls a
 #      possibly half-retired repo CONSISTENT. The protection half already
@@ -1017,7 +1017,7 @@ out="$(STUB_WF="$WF_OFF" STUB_RULES_FAIL=1 ci_run MANUAL-CHECK)"
 grep -qi "ruleset" <<<"$out" || fail "blind rulesets half is not named in the row"
 grep -qi "not a coherence verdict" <<<"$out" || fail "blind-rulesets row overstates what it knows"
 
-# 16m) a default branch containing '/' (`feat/x`) must be percent-encoded into
+# 16l) a default branch containing '/' (`feat/x`) must be percent-encoded into
 #      the API path. Unencoded it addresses a different path and GitHub answers
 #      404 "Branch not found" — which the protection arm would otherwise read as
 #      "Branch not protected", i.e. coherent-empty. A repo whose default branch
@@ -1025,22 +1025,31 @@ grep -qi "not a coherence verdict" <<<"$out" || fail "blind-rulesets row oversta
 out="$(STUB_BR=feat/x STUB_WF="$WF_OFF" STUB_PROT=200 ci_run DRIFT)"
 grep -qi "reverse half-retirement" <<<"$out" || fail "slash-named default branch: required checks went unread"
 
-# 16p) "Branch not found" is a FAILED read, not an empty protection set. Both
+# 16m) the RULES call needs that encoding independently of the protection call
+#       — they are two separate interpolations, and the case above would still
+#       pass if only the first were fixed. Here the block lives ONLY in a
+#       ruleset: encoded, the row sees it and reports DRIFT via rulesets;
+#       unencoded, the call 404s, the half goes blind, and the row degrades to
+#       MANUAL-CHECK. Discriminating in both directions is the point.
+out="$(STUB_BR=feat/x STUB_WF="$WF_OFF" STUB_RULES="$RULES_CHK" ci_run DRIFT)"
+grep -q "via rulesets" <<<"$out" || fail "slash-named default branch: the ruleset-bound check went unread"
+
+# 16n) "Branch not found" is a FAILED read, not an empty protection set. Both
 #      are 404s, so the arm order matters: read as "not protected" it reports a
 #      repo whose checks were never read as coherent-empty.
 out="$(STUB_WF="$WF_OFF" STUB_BRANCH_GONE=1 ci_run MANUAL-CHECK)"
 grep -qi "could not resolve the branch" <<<"$out" || fail "'Branch not found' was read as 'not protected'"
 
-# 16n) auth dead → MANUAL-CHECK. The third named degradation had no coverage.
+# 16o) auth dead → MANUAL-CHECK. The third named degradation had no coverage.
 out="$(STUB_AUTH=dead STUB_WF="$WF_ACTIVE" ci_run MANUAL-CHECK)"
 grep -qi "could not read this repository" <<<"$out" || fail "dead auth gave the wrong MANUAL-CHECK reason"
 
-# 16o) an older gh without `--json` on `workflow list`: the fallback path must
+# 16p) an older gh without `--json` on `workflow list`: the fallback path must
 #      execute and reach the same count, or the fallback is decoration.
 out="$(STUB_WF="$WF_ACTIVE" STUB_WF_NOJSON=1 ci_run CONSISTENT)"
 grep -q "1 active workflow" <<<"$out" || fail "older-gh fallback miscounted active workflows"
 
-# 16k) declaration present but NO workflows dir → the row still fires (the
+# 16q) declaration present but NO workflows dir → the row still fires (the
 #      declaration alone is a reason to check) and reads CONSISTENT
 rm -rf .github
 printf '# proj\n\n%s\n' "$DECL" > CLAUDE.md
