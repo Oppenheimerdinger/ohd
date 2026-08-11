@@ -22,7 +22,36 @@ commands so the ritual works without it.
   say so explicitly.
 - A trunk merge is consequential: if unsure, surface the land plan to the user
   and get a go before merging.
-- **When the repo defines checks, read them** — `gh pr checks <n>` green, and
+- **The CI precondition has THREE branches. Read the project's declaration
+  first, then take exactly one.** The declaration is one grep-stable line, in
+  EITHER of two files — either counts:
+
+  ```bash
+  grep -nE '^[[:space:]]*-[[:space:]]*ci:[[:space:]]*retired' \
+       CLAUDE.md docs/reference/conventions.md 2>/dev/null
+  ```
+
+  The canonical form is `- ci: retired (<date> — <reason>)`. Nothing in
+  `campaign.sh` reads it: this precondition is prose, and the script never
+  gates on checks.
+
+  **Branch 1 — declaration present → ATTESTED SKIP.** Quote the matched line
+  VERBATIM in the Phase-0 evidence cell; the citation is the attestation, and
+  a cell saying "CI retired" without it attests nothing. This is what ends the
+  per-land re-derivation the retirement was supposed to buy.
+  ⚠ **Half-retired is the trap**: a project can retire the workflows and leave
+  a REQUIRED CHECK bound to the branch, and that leftover still blocks the
+  merge at Phase 5 — with no run that can ever turn it green. Surface it here
+  rather than discovering it at merge time, and point at `/ohd-checkup`'s
+  CI-coherence row, which is the thing that actually measures both halves.
+  **An attested skip is never a license to reach for `--admin`.** Silent
+  bypassing is exactly the field incident this whole path exists to end (every
+  land bypassed, the reason re-narrated per land, nothing recorded). If a
+  leftover check blocks the merge, the fix is to unbind it — an owner action,
+  named in the checkup row's remedy — not to route around it unrecorded.
+
+  **Branch 2 — checks defined, no declaration → read them.** `gh pr checks <n>`
+  green, and
   specifically: the run EXISTS at the PR's head SHA (right after a push, "zero
   incomplete checks" is answered TRUE by the *previous* commit's completed
   state); it is green against the CURRENT base (GitHub does not re-run a PR's
@@ -30,14 +59,18 @@ commands so the ritual works without it.
   while `strict:false` — this clause is carried WITHOUT a field witness, on
   general GitHub behaviour); and a required check binds PRs but NOT an admin's
   direct push (`enforce_admins:false` prints `Bypassed rule violations …` and
-  lands). **No checks defined → say so and pass** — a fresh project's scaffold
-  ships no CI, and an unconditional clause here would be a permanently red
-  precondition for every new project.
+  lands).
   ⚠ Ordering, if you are ADDING a required check: land the job first, require
   it second. `pull_request` runs the BASE's workflow, so requiring a job that
   exists only on a feature branch leaves every PR permanently BLOCKED with no
   failing check to point at — the worst possible diagnostic (measured, then
   reverted).
+
+  **Branch 3 — neither → say so and pass.** A fresh project's scaffold
+  ships no CI, and an unconditional clause here would be a permanently red
+  precondition for every new project. Local-gate-only is a legitimate model,
+  not a gap to apologise for; the difference between this branch and branch 1
+  is only that nobody has had to DECLARE anything yet.
 - If the diff touches `docs/reference/` or harness-carried docs, run
   `/ohd-checkup` before landing. It always exits 0, so this is a checklist
   item, not a gate.
