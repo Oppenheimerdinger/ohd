@@ -924,6 +924,14 @@ printf '# proj\n\n## Facts\n\n%s\n' "$DECL" > CLAUDE.md
 out="$(STUB_WF="$WF_ACTIVE" ci_run DRIFT)"
 grep -q "workflow disable" <<<"$out"  || fail "DRIFT row carries no retirement checklist"
 grep -q "ci: retired (2026-08-11" <<<"$out" || fail "DRIFT row does not cite the declaration it contradicts"
+# ...and the whole declaration, not a truncated prefix: both consumers quote the
+# MATCHED LINE, so a declaration that wraps cites itself half-said (found by
+# dogfooding this row on the plugin's own CLAUDE.md)
+grep -q "release gate is the local suite)" <<<"$out" || fail "DRIFT row truncated the declaration it quotes"
+# the row must name the half that is ACTUALLY left over. Nothing is bound here,
+# so claiming a blocked merge would be a false alarm in the commonest shape.
+grep -qi "blocks every merge" <<<"$out" && fail "DRIFT row claims a blocking check with none bound"
+grep -qi "runs on every push" <<<"$out" || fail "DRIFT row does not name the active-workflow half"
 
 # 16f) ...and from docs/reference/conventions.md — EITHER file counts (1a)
 rm CLAUDE.md && mkdir -p docs/reference
@@ -939,6 +947,8 @@ grep -q "0 active workflow" <<<"$out" || fail "consistent-with-declaration row m
 #      reach for --admin (issue #31).
 out="$(STUB_WF="$WF_OFF" STUB_PROT=200 ci_run DRIFT)"
 grep -q "required check" <<<"$out" || fail "protection-bound check not counted"
+grep -qi "blocks every merge" <<<"$out" || fail "DRIFT row does not name the blocked-merge consequence when a check IS bound"
+grep -qi "runs on every push" <<<"$out" && fail "DRIFT row claims an active workflow with none active"
 
 # 16i) the RULESETS half is load-bearing, not redundant: nothing runs, branch
 #      protection is 404-clean, and the block lives in a ruleset. Reading only

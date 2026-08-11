@@ -278,7 +278,14 @@ if [ -n "$CI_DECL" ] || [ -d .github/workflows ]; then
     CI_SEEN="$CI_WF_N active workflow(s), $CI_CHK_N required check(s)${CI_CHK_SRC:+ via $CI_CHK_SRC}"
     [ "$CI_PROT_BLIND" = 0 ] || CI_SEEN="$CI_SEEN; branch-protection read returned 403 — that half is UNREAD, rulesets half is not"
     if [ -n "$CI_DECL" ] && { [ "$CI_WF_N" != 0 ] || [ "$CI_CHK_N" != 0 ]; }; then
-      report "ci-coherence" "DRIFT" "CI is declared retired but $CI_SEEN. A leftover required check blocks every merge with no run that can turn it green, which is what makes lands reach for --admin — $CI_FIX. $CI_DECL_TXT"
+      # WHICH half is left over decides the consequence, so the row says only
+      # the true one: an unbound-but-running workflow costs minutes, a bound
+      # check with nothing to run it blocks the merge outright. Naming both
+      # unconditionally is how a report trains its reader to skim it.
+      CI_WHY=""
+      [ "$CI_CHK_N" = 0 ] || CI_WHY="$CI_WHY A required check with no run that can turn it green blocks every merge, which is what makes lands reach for --admin."
+      [ "$CI_WF_N" = 0 ] || CI_WHY="$CI_WHY An active workflow still runs on every push — the cost half of the retirement, and the half that burns a free tier."
+      report "ci-coherence" "DRIFT" "CI is declared retired but $CI_SEEN.$CI_WHY $CI_FIX. $CI_DECL_TXT"
     elif [ -z "$CI_DECL" ] && [ "$CI_WF_N" = 0 ] && [ "$CI_CHK_N" != 0 ]; then
       report "ci-coherence" "DRIFT" "the reverse half-retirement: $CI_SEEN — nothing runs, yet the check still blocks. Either re-enable the workflow or unbind the check; if CI is retired here, declare it (\`- ci: retired (<date> — <reason>)\` in CLAUDE.md or docs/reference/conventions.md) so campaign-land Phase 0 can attest the skip — $CI_FIX"
     elif [ "$CI_PROT_BLIND" = 1 ]; then
