@@ -266,6 +266,14 @@ reads is the one that rots (field: this repo measured 5/5 false-OPEN).
   it is freshest and you are already in a reporting posture; the alternative
   is reconstructing a day of friction from a transcript at the end, which
   systematically loses the small stuff that was obvious for thirty seconds.
+  Friction that belongs to the PLUGIN rather than this project also goes
+  upstream to its tracker — and that tracker is PUBLIC, so anonymize while
+  writing: internal project / company / machine / repo / person names become
+  placeholders (`umbrella-proj`, `gpubox`), internal paths become
+  `<repo>/path/to/thing`, and the plugin's own `file:line` stays VERBATIM
+  (public already, and the part that makes the report actionable).
+  Issue templates do not render for `gh issue create --title/--body`, so this
+  line is the only place the rule reaches an agent session.
 - **Verification code this campaign WROTE gets a disposition, in this land.**
   The evidence cell carries `verification:` BY NAME, with exactly one of three
   verdicts: `verification: promoted to tests/ — <path>` /

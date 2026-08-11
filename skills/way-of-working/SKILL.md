@@ -213,6 +213,19 @@ autonomous loop always gets a termination condition and an iteration cap.
   that should have fired didn't — file a backlog entry naming that missing
   trigger in the project's `docs/backlog.md` in the same pass (campaign-land
   Phase 6's discipline); the metric is corrections-per-week, read per project.
+- **Harness friction goes UPSTREAM — anonymized at the keystroke.** When the
+  friction is the HARNESS's rather than this project's (a gate that misfired, a
+  skill that misrouted, a ritual that cost more than it returned), file it on
+  the plugin's own tracker; a project backlog entry about a plugin defect is
+  read by nobody who can fix it. **That tracker is PUBLIC, so scrub as you
+  write, not as a later pass**: internal project / company / machine / repo /
+  person names become placeholders (`umbrella-proj`, `pkg-proj`, `gpubox`),
+  internal paths become `<repo>/path/to/thing`, and the plugin's own
+  `file:line` stays VERBATIM — it is public already and it is what makes the
+  report actionable. Scrubbing costs a report nothing: the mechanism is the
+  useful half and it survives intact. This rule lives HERE, on the line that
+  tells you to file, because the repo's issue templates never render for
+  `gh issue create --title/--body` — which is how a session files.
 - **The coordinator seat does not solve inline.** A long-lived anchor
   session's job is orchestration; minutes-long inline reasoning there is a
   solver's job in the wrong seat — write the brief and hand it to a fresh
