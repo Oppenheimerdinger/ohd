@@ -87,16 +87,32 @@ technically open today (JSON decision:block form, per the correction
 above); what keeps this deferred is the research verdict against phrase
 heuristics, not the upstream bug.
 
+RESTAMPED v0.7.1 (2026-08-11): the field verification quoted above was of the
+official ralph-loop plugin, which v0.7.1 unwired — read it as HISTORICAL. The
+finding it carries is unchanged and now re-witnessed on the vehicle ohd
+actually uses: oh-my-claudecode's ralph stop hook blocks with the JSON
+`decision: block` form, not exit code 2. Nothing here is reopened; only the
+witness is renamed.
+
 ## 10. Context exhaustion under a session-locked loop — OPEN (residual of PR #8)
 
 Step 6 reframes empty iterations as missing dispatches but does not slow
-the loop: the ralph-loop stop hook has no throttle, and when the critical
+the loop: the stop hook has no throttle, and when the critical
 path is truly gated on one agent's wall-clock, short status turns burn
 context (named, unsolved). Known levers: auto-compaction (session persists,
 the hook's session-id lock holds) and checkpoint+fresh-session — but the
 loop is session-id-locked, so a fresh session needs a re-arm trigger nobody
 has designed for an unattended run. Revisit on field evidence of a loop
 dying of context exhaustion. (2026-07-31)
+
+RESTAMPED v0.7.1 (2026-08-11): the no-throttle mechanism note was written
+against the official ralph-loop plugin; it now describes oh-my-claudecode's
+ralph, this harness's vehicle, where it holds identically — the stop hook
+blocks on EVERY Stop while `iteration < max_iterations`, so the loop re-fires
+as fast as turns end. One thing gets WORSE under the new vehicle and is
+recorded here rather than discovered in the field: reaching the cap does not
+stop the loop, it extends the cap, so the iteration cap is not the backstop
+against this failure that a reader might assume. Still OPEN, same levers.
 
 ## 11. `clean`'s scaffold anchor refuses docs it cannot see a verdict in — CARRIED (v0.5.22)
 
