@@ -819,4 +819,146 @@ grep -q "## solidation" <<<"$out"           && fail "default mode enumerated sol
 grep -q "structure work-list" <<<"$out"     && fail "default mode ran the work-list generator"
 grep -q "^structure | " <<<"$out"           || fail "default mode lost its one-line structure pointer"
 
+# 16) CI-coherence row (issue #31). REPORT-ONLY and exit-0 under every path,
+#     which is the contract the row is most likely to break: it is the only
+#     network call this script makes.
+#     The `gh` here is a STUB whose output shapes were measured from gh 2.90.0
+#     against a real repository (404 body + stderr line, `[]` rulesets, the
+#     workflow-list JSON). A stub proves the BRANCHING — which signal
+#     combination produces which verdict — and deliberately does not claim to
+#     verify the API contract; the live run for that is recorded in the
+#     campaign's land report.
+mkdir -p "$TMP/bin" "$TMP/empty-bin"
+cat > "$TMP/bin/gh" <<'GHSTUB'
+#!/usr/bin/env bash
+# stub gh — driven by STUB_* env vars; shapes copied from real gh output
+case "$1" in
+  "repo")     printf 'acme/widget main\n'; exit 0 ;;
+  "workflow") printf '%s\n' "${STUB_WF:-[]}"; exit 0 ;;
+  "api")
+    case "$2" in
+      */protection)
+        case "${STUB_PROT:-404}" in
+          404) printf '%s' '{"message":"Branch not protected","status":"404"}'
+               printf 'gh: Branch not protected (HTTP 404)\n' >&2; exit 1 ;;
+          403) printf '%s' '{"message":"Resource not accessible","status":"403"}'
+               printf 'gh: Resource not accessible (HTTP 403)\n' >&2; exit 1 ;;
+          none) printf '%s' '{"required_status_checks":{"strict":false,"contexts":[]}}'; exit 0 ;;
+          *)    printf '%s' '{"required_status_checks":{"strict":false,"contexts":["tests"]}}'; exit 0 ;;
+        esac ;;
+      */rules/*) printf '%s\n' "${STUB_RULES:-[]}"; exit 0 ;;
+    esac ;;
+esac
+exit 0
+GHSTUB
+chmod +x "$TMP/bin/gh"
+WF_ACTIVE='[{"name":"tests","state":"active"}]'
+WF_OFF='[{"name":"tests","state":"disabled_manually"}]'
+RULES_CHK='[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"tests"}]}}]'
+DECL='- ci: retired (2026-08-11 — owner directive; release gate is the local suite)'
+
+newrepo "$TMP/ci"
+git remote add origin https://github.com/acme/widget.git
+
+ci_run() {  # $1=expected status (or ABSENT); runs with the stub gh on PATH
+  local want="$1" out rc
+  set +e
+  out="$(PATH="$TMP/bin:$PATH" "$CK" . 2>&1)"; rc=$?
+  set -e
+  [ "$rc" = 0 ] || fail "ci-coherence path '$want' broke checkup's exit-0 contract (rc=$rc)"
+  if [ "$want" = ABSENT ]; then
+    grep -q "^ci-coherence | " <<<"$out" && fail "ci-coherence row fired with nothing to be coherent about"
+  else
+    grep -q "^ci-coherence | $want" <<<"$out" \
+      || fail "expected ci-coherence $want, got: $(grep '^ci-coherence' <<<"$out" || echo '(no row)')"
+  fi
+  printf '%s' "$out"
+}
+
+# 16a) neither declaration nor workflows dir → NO ROW (silence by scope)
+ci_run ABSENT >/dev/null
+
+# 16b) workflows present, no declaration, unprotected branch, no rulesets →
+#      CONSISTENT (CI simply in use — this is the plugin repo's own pre-state)
+mkdir -p .github/workflows && printf 'name: t\n' > .github/workflows/test.yml
+out="$(STUB_WF="$WF_ACTIVE" ci_run CONSISTENT)"
+grep -q "1 active workflow" <<<"$out" || fail "consistent row does not say what it measured"
+
+# 16c) gh ABSENT → MANUAL-CHECK, never silence and never a failure.
+#      Blanking PATH would take git with it and test nothing, so build a PATH
+#      that drops ONLY gh: any directory providing a gh is replaced by a shim
+#      holding symlinks to everything in it EXCEPT gh (gh and git share a
+#      directory on plenty of machines).
+NOGH="$TMP/nogh"; mkdir -p "$NOGH"; NOGH_PATH=""
+IFS=: read -ra PATH_DIRS <<< "$PATH"
+for d in "${PATH_DIRS[@]}"; do
+  [ -n "$d" ] && [ -d "$d" ] || continue
+  if [ -x "$d/gh" ]; then
+    for e in "$d"/*; do
+      [ -e "$e" ] && [ "$(basename "$e")" != gh ] || continue
+      ln -sf "$e" "$NOGH/" 2>/dev/null || true
+    done
+  else
+    NOGH_PATH="${NOGH_PATH:+$NOGH_PATH:}$d"
+  fi
+done
+NOGH_PATH="$NOGH:$NOGH_PATH"
+PATH="$NOGH_PATH" command -v gh >/dev/null 2>&1 && fail "gh-absent fixture still resolves gh"
+PATH="$NOGH_PATH" command -v git >/dev/null 2>&1 || fail "gh-absent fixture lost git (fixture defect, not a checkup bug)"
+set +e
+out="$(PATH="$NOGH_PATH" "$CK" . 2>&1)"; rc=$?
+set -e
+[ "$rc" = 0 ] || fail "gh-absent path broke exit 0 (rc=$rc)"
+grep -q "^ci-coherence | MANUAL-CHECK" <<<"$out" || fail "gh absent did not report MANUAL-CHECK"
+grep -q "gh CLI not installed" <<<"$out" || fail "MANUAL-CHECK row does not say WHY it could not read"
+
+# 16d) non-GitHub origin → MANUAL-CHECK (this row only knows GitHub)
+git remote set-url origin git@internal-host:team/proj.git
+out="$(STUB_WF="$WF_ACTIVE" ci_run MANUAL-CHECK)"
+grep -qi "not a GitHub remote" <<<"$out" || fail "non-GitHub origin gave the wrong MANUAL-CHECK reason"
+git remote set-url origin https://github.com/acme/widget.git
+
+# 16e) declaration + a workflow still ACTIVE → DRIFT, carrying the #31 remedy.
+#      The declaration is read from CLAUDE.md here...
+printf '# proj\n\n## Facts\n\n%s\n' "$DECL" > CLAUDE.md
+out="$(STUB_WF="$WF_ACTIVE" ci_run DRIFT)"
+grep -q "workflow disable" <<<"$out"  || fail "DRIFT row carries no retirement checklist"
+grep -q "ci: retired (2026-08-11" <<<"$out" || fail "DRIFT row does not cite the declaration it contradicts"
+
+# 16f) ...and from docs/reference/conventions.md — EITHER file counts (1a)
+rm CLAUDE.md && mkdir -p docs/reference
+printf '# conventions\n\n%s\n' "$DECL" > docs/reference/conventions.md
+STUB_WF="$WF_ACTIVE" ci_run DRIFT >/dev/null
+
+# 16g) declaration + everything off → CONSISTENT
+out="$(STUB_WF="$WF_OFF" ci_run CONSISTENT)"
+grep -q "0 active workflow" <<<"$out" || fail "consistent-with-declaration row miscounted disabled workflows"
+
+# 16h) declaration + workflows off but a required check STILL BOUND via branch
+#      protection → DRIFT. This is the half-retirement that made every land
+#      reach for --admin (issue #31).
+out="$(STUB_WF="$WF_OFF" STUB_PROT=200 ci_run DRIFT)"
+grep -q "required check" <<<"$out" || fail "protection-bound check not counted"
+
+# 16i) the RULESETS half is load-bearing, not redundant: nothing runs, branch
+#      protection is 404-clean, and the block lives in a ruleset. Reading only
+#      the protection endpoint calls this repo retired-and-clean.
+rm -rf docs/reference
+out="$(STUB_WF="$WF_OFF" STUB_RULES="$RULES_CHK" ci_run DRIFT)"
+grep -qi "reverse half-retirement" <<<"$out" || fail "ruleset-bound check with no declaration not caught"
+grep -q "rulesets" <<<"$out" || fail "DRIFT row does not name the ruleset as the source"
+
+# 16j) 403 on the protection half → MANUAL-CHECK for that half only, and the
+#      row must SAY it is not a coherence verdict rather than implying one
+out="$(STUB_WF="$WF_OFF" STUB_PROT=403 ci_run MANUAL-CHECK)"
+grep -q "403" <<<"$out" || fail "403 row does not name the status it hit"
+grep -qi "not a coherence verdict" <<<"$out" || fail "403 row overstates what it knows"
+
+# 16k) declaration present but NO workflows dir → the row still fires (the
+#      declaration alone is a reason to check) and reads CONSISTENT
+rm -rf .github
+printf '# proj\n\n%s\n' "$DECL" > CLAUDE.md
+STUB_WF="$WF_OFF" ci_run CONSISTENT >/dev/null
+cd "$TMP/proj"
+
 echo "CHECKUP-SMOKE PASS"
