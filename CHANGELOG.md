@@ -49,8 +49,11 @@ launching.
   project intends, `gh workflow list` what still runs, branch protection AND
   rulesets what still blocks. Rulesets are not redundant: checks bound there
   are invisible to the protection endpoint, which is also the endpoint that can
-  403 — so a 403 blinds one half and the row says it is not a coherence
-  verdict. No `gh`, dead auth, or a non-GitHub origin all give MANUAL-CHECK.
+  403. EITHER half can go blind — a 403 or an unresolvable branch on one, a
+  timeout or non-200 on the other — and a blind half degrades the row to
+  MANUAL-CHECK rather than to a verdict, because an unreadable half is
+  indistinguishable from an empty one and must never be reported as coherence.
+  No `gh`, dead auth, or a non-GitHub origin all give MANUAL-CHECK too.
   Exit stays 0 on every path, and state changes remain owner actions: the row
   hands over the #31 checklist and stops.
 - `docs/campaign-dropin.md` names local-gate-only as the DEFAULT model, with

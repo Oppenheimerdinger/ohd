@@ -222,8 +222,11 @@ fi
 # The rulesets endpoint is not redundant with branch protection. Checks bound
 # via a RULESET are invisible to `branches/<b>/protection`, and — measured —
 # `rules/branches/<b>` stays readable with a plain token where the protection
-# endpoint can 403. It is the call that cannot go blind, which is why a 403 on
-# the protection half degrades only that half.
+# endpoint can 403. It is the call that cannot 403 — but it can still FAIL
+# (timeout, network, a non-200 answer), so it carries its own blind flag; see
+# CI_RULES_BLIND below. Neither half is trusted to be readable: a 403 on the
+# protection half degrades only that half, and either half going blind
+# degrades the row to MANUAL-CHECK rather than to a verdict.
 CI_DECL="$(grep -hE '^[[:space:]]*-[[:space:]]*ci:[[:space:]]*retired' CLAUDE.md docs/reference/conventions.md 2>/dev/null | head -1 || true)"
 if [ -n "$CI_DECL" ] || [ -d .github/workflows ]; then
   CI_TO="$(command -v timeout 2>/dev/null || command -v gtimeout 2>/dev/null || true)"
