@@ -242,6 +242,12 @@ if [ -n "$CI_DECL" ] || [ -d .github/workflows ]; then
     report "ci-coherence" "MANUAL-CHECK" "gh could not read this repository (expired auth, no network, or no access) — \`gh auth status\` first, then re-run; nothing about CI state is claimed here"
   else
     CI_NWO="${CI_REPO%% *}"; CI_BR="${CI_REPO##* }"
+    # A default branch may contain '/' (`feat/x`). Unencoded, that slash
+    # addresses a DIFFERENT API path and GitHub answers 404 "Branch not found"
+    # — which the protection arm below would read as "Branch not protected",
+    # i.e. coherent-empty. Such a repo would silently never have its required
+    # checks read at all, which is the failure this row exists to catch.
+    CI_BR_ENC="$(printf '%s' "$CI_BR" | sed 's|/|%2F|g')"
     # --- half 1: does anything still RUN? ---
     # `gh workflow list` without --all is active-only by construction, which is
     # the fallback's whole safety: an older gh missing --json still answers the
@@ -253,9 +259,14 @@ if [ -n "$CI_DECL" ] || [ -d .github/workflows ]; then
     fi
     [ -n "$CI_WF_N" ] || CI_WF_N=0
     # --- half 2: does anything still BLOCK? ---
-    CI_PROT="$(ci_gh api "repos/$CI_NWO/branches/$CI_BR/protection" 2>&1 || true)"
+    CI_PROT="$(ci_gh api "repos/$CI_NWO/branches/$CI_BR_ENC/protection" 2>&1 || true)"
     CI_PROT_BLIND=0; CI_CHK_N=0; CI_CHK_SRC=""
     case "$CI_PROT" in
+      *"Branch not found"*)
+        # ALSO a 404, and it must be tested BEFORE the 404 arm: "not found" is
+        # a failed read, "not protected" is a successful read of an empty
+        # protection set. Collapsing them reports blindness as coherence.
+        CI_PROT_BLIND=1 ;;
       *"HTTP 403"*|*'"status":"403"'*)
         CI_PROT_BLIND=1 ;;
       *"HTTP 404"*|*'"status":"404"'*|*"Branch not protected"*)
@@ -268,15 +279,27 @@ if [ -n "$CI_DECL" ] || [ -d .github/workflows ]; then
           [ "$CI_CHK_N" = 0 ] || CI_CHK_SRC="branch protection"
         fi ;;
     esac
-    CI_RULES="$(ci_gh api "repos/$CI_NWO/rules/branches/$CI_BR" 2>/dev/null || true)"
-    CI_RULE_N="$(printf '%s' "$CI_RULES" | grep -o '"context":"[^"]*"' | wc -l | tr -d ' ' || true)"
-    [ -n "$CI_RULE_N" ] || CI_RULE_N=0
+    # The rulesets half needs the SAME blind flag as the protection half. A
+    # timeout kill, a network blip or any non-200 answer yields no body, which
+    # is byte-identical to a genuine `[]` — so an unflagged failure reads as
+    # "nothing bound" and the row calls a possibly half-retired repo coherent.
+    # This is the endpoint that cannot 403, not the endpoint that cannot fail.
+    CI_RULES_BLIND=0; CI_RULE_N=0
+    if CI_RULES="$(ci_gh api "repos/$CI_NWO/rules/branches/$CI_BR_ENC" 2>/dev/null)" && [ -n "$CI_RULES" ]; then
+      CI_RULE_N="$(printf '%s' "$CI_RULES" | grep -o '"context":"[^"]*"' | wc -l | tr -d ' ' || true)"
+      [ -n "$CI_RULE_N" ] || CI_RULE_N=0
+    else
+      CI_RULES_BLIND=1
+    fi
     if [ "$CI_RULE_N" != 0 ]; then
       CI_CHK_N=$((CI_CHK_N + CI_RULE_N))
       CI_CHK_SRC="${CI_CHK_SRC:+$CI_CHK_SRC + }rulesets"
     fi
+    CI_BLIND=""
+    [ "$CI_PROT_BLIND" = 0 ] || CI_BLIND="branch-protection read returned 403 or could not resolve the branch"
+    [ "$CI_RULES_BLIND" = 0 ] || CI_BLIND="${CI_BLIND:+$CI_BLIND; }rulesets read FAILED (timeout, network, or a non-200 answer)"
     CI_SEEN="$CI_WF_N active workflow(s), $CI_CHK_N required check(s)${CI_CHK_SRC:+ via $CI_CHK_SRC}"
-    [ "$CI_PROT_BLIND" = 0 ] || CI_SEEN="$CI_SEEN; branch-protection read returned 403 — that half is UNREAD, rulesets half is not"
+    [ -z "$CI_BLIND" ] || CI_SEEN="$CI_SEEN; $CI_BLIND — that half is UNREAD"
     if [ -n "$CI_DECL" ] && { [ "$CI_WF_N" != 0 ] || [ "$CI_CHK_N" != 0 ]; }; then
       # WHICH half is left over decides the consequence, so the row says only
       # the true one: an unbound-but-running workflow costs minutes, a bound
@@ -288,8 +311,8 @@ if [ -n "$CI_DECL" ] || [ -d .github/workflows ]; then
       report "ci-coherence" "DRIFT" "CI is declared retired but $CI_SEEN.$CI_WHY $CI_FIX. $CI_DECL_TXT"
     elif [ -z "$CI_DECL" ] && [ "$CI_WF_N" = 0 ] && [ "$CI_CHK_N" != 0 ]; then
       report "ci-coherence" "DRIFT" "the reverse half-retirement: $CI_SEEN — nothing runs, yet the check still blocks. Either re-enable the workflow or unbind the check; if CI is retired here, declare it (\`- ci: retired (<date> — <reason>)\` in CLAUDE.md or docs/reference/conventions.md) so campaign-land Phase 0 can attest the skip — $CI_FIX"
-    elif [ "$CI_PROT_BLIND" = 1 ]; then
-      report "ci-coherence" "MANUAL-CHECK" "$CI_SEEN — nothing so far contradicts the project's CI state, but the protection half was unreadable, so this is not a coherence verdict; read it with a token that can, or check the branch's settings by hand"
+    elif [ -n "$CI_BLIND" ]; then
+      report "ci-coherence" "MANUAL-CHECK" "$CI_SEEN — nothing so far contradicts the project's CI state, but a half was unreadable, so this is NOT a coherence verdict; re-run, read it with a token that can, or check the branch's settings by hand"
     elif [ -n "$CI_DECL" ]; then
       report "ci-coherence" "CONSISTENT" "declared retired and nothing contradicts it: $CI_SEEN. $CI_DECL_TXT"
     elif [ "$CI_WF_N" != 0 ]; then

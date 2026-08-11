@@ -831,13 +831,52 @@ grep -q "^structure | " <<<"$out"           || fail "default mode lost its one-l
 mkdir -p "$TMP/bin" "$TMP/empty-bin"
 cat > "$TMP/bin/gh" <<'GHSTUB'
 #!/usr/bin/env bash
-# stub gh — driven by STUB_* env vars; shapes copied from real gh output
+# stub gh — driven by STUB_* env vars; shapes copied from real gh output.
+# ARG-AWARE and BRANCH-AWARE deliberately: a stub that answers every call shape
+# identically cannot witness the older-gh fallback, a path-encoding bug, or a
+# failed call, because to it those are the same call.
+BR="${STUB_BR:-main}"
 case "$1" in
-  "repo")     printf 'acme/widget main\n'; exit 0 ;;
-  "workflow") printf '%s\n' "${STUB_WF:-[]}"; exit 0 ;;
+  "repo")
+    if [ "${STUB_AUTH:-ok}" = dead ]; then
+      printf 'gh: To get started with GitHub CLI, please run: gh auth login\n' >&2
+      exit 4
+    fi
+    printf 'acme/widget %s\n' "$BR"; exit 0 ;;
+  "workflow")
+    if printf '%s ' "$@" | grep -q -- '--json'; then
+      if [ "${STUB_WF_NOJSON:-0}" = 1 ]; then
+        printf 'unknown flag: --json\n' >&2; exit 1   # an older gh
+      fi
+      printf '%s\n' "${STUB_WF:-[]}"
+    else
+      # real `gh workflow list` without --all prints ACTIVE rows only, as TSV
+      printf '%s' "${STUB_WF:-[]}" \
+        | grep -o '"name":"[^"]*","state":"active"' \
+        | sed 's/"name":"\([^"]*\)".*/\1\tactive\t1/'
+    fi
+    exit 0 ;;
   "api")
+    # A branch name containing '/' must arrive PERCENT-ENCODED. Unencoded it
+    # addresses a different path, and GitHub answers 404 "Branch not found" —
+    # a body that is NOT "Branch not protected" and must not be read as one.
+    case "$BR" in
+      */*)
+        enc="$(printf '%s' "$BR" | sed 's|/|%2F|g')"
+        case "$2" in
+          *"$enc"*) : ;;
+          *) printf '%s' '{"message":"Branch not found","status":"404"}'
+             printf 'gh: Branch not found (HTTP 404)\n' >&2; exit 1 ;;
+        esac ;;
+    esac
     case "$2" in
       */protection)
+        if [ "${STUB_BRANCH_GONE:-0}" = 1 ]; then
+          # the branch `gh repo view` named is not there any more (renamed, or
+          # a race). A 404 whose body is "Branch not found", NOT "not protected".
+          printf '%s' '{"message":"Branch not found","status":"404"}'
+          printf 'gh: Branch not found (HTTP 404)\n' >&2; exit 1
+        fi
         case "${STUB_PROT:-404}" in
           404) printf '%s' '{"message":"Branch not protected","status":"404"}'
                printf 'gh: Branch not protected (HTTP 404)\n' >&2; exit 1 ;;
@@ -846,7 +885,12 @@ case "$1" in
           none) printf '%s' '{"required_status_checks":{"strict":false,"contexts":[]}}'; exit 0 ;;
           *)    printf '%s' '{"required_status_checks":{"strict":false,"contexts":["tests"]}}'; exit 0 ;;
         esac ;;
-      */rules/*) printf '%s\n' "${STUB_RULES:-[]}"; exit 0 ;;
+      */rules/*)
+        if [ "${STUB_RULES_FAIL:-0}" = 1 ]; then
+          # what a timeout kill or a network blip looks like: no body, non-zero
+          printf 'gh: connection timed out\n' >&2; exit 1
+        fi
+        printf '%s\n' "${STUB_RULES:-[]}"; exit 0 ;;
     esac ;;
 esac
 exit 0
@@ -963,6 +1007,38 @@ grep -q "rulesets" <<<"$out" || fail "DRIFT row does not name the ruleset as the
 out="$(STUB_WF="$WF_OFF" STUB_PROT=403 ci_run MANUAL-CHECK)"
 grep -q "403" <<<"$out" || fail "403 row does not name the status it hit"
 grep -qi "not a coherence verdict" <<<"$out" || fail "403 row overstates what it knows"
+
+# 16l) the RULESETS half must be able to say it is BLIND. A timeout kill or a
+#      network blip returns nothing, which is byte-identical to a genuine `[]`
+#      — so an unflagged failure reads as "no checks bound" and the row calls a
+#      possibly half-retired repo CONSISTENT. The protection half already
+#      degrades to MANUAL-CHECK; this half must mirror it.
+out="$(STUB_WF="$WF_OFF" STUB_RULES_FAIL=1 ci_run MANUAL-CHECK)"
+grep -qi "ruleset" <<<"$out" || fail "blind rulesets half is not named in the row"
+grep -qi "not a coherence verdict" <<<"$out" || fail "blind-rulesets row overstates what it knows"
+
+# 16m) a default branch containing '/' (`feat/x`) must be percent-encoded into
+#      the API path. Unencoded it addresses a different path and GitHub answers
+#      404 "Branch not found" — which the protection arm would otherwise read as
+#      "Branch not protected", i.e. coherent-empty. A repo whose default branch
+#      has a slash would silently never have its required checks read.
+out="$(STUB_BR=feat/x STUB_WF="$WF_OFF" STUB_PROT=200 ci_run DRIFT)"
+grep -qi "reverse half-retirement" <<<"$out" || fail "slash-named default branch: required checks went unread"
+
+# 16p) "Branch not found" is a FAILED read, not an empty protection set. Both
+#      are 404s, so the arm order matters: read as "not protected" it reports a
+#      repo whose checks were never read as coherent-empty.
+out="$(STUB_WF="$WF_OFF" STUB_BRANCH_GONE=1 ci_run MANUAL-CHECK)"
+grep -qi "could not resolve the branch" <<<"$out" || fail "'Branch not found' was read as 'not protected'"
+
+# 16n) auth dead → MANUAL-CHECK. The third named degradation had no coverage.
+out="$(STUB_AUTH=dead STUB_WF="$WF_ACTIVE" ci_run MANUAL-CHECK)"
+grep -qi "could not read this repository" <<<"$out" || fail "dead auth gave the wrong MANUAL-CHECK reason"
+
+# 16o) an older gh without `--json` on `workflow list`: the fallback path must
+#      execute and reach the same count, or the fallback is decoration.
+out="$(STUB_WF="$WF_ACTIVE" STUB_WF_NOJSON=1 ci_run CONSISTENT)"
+grep -q "1 active workflow" <<<"$out" || fail "older-gh fallback miscounted active workflows"
 
 # 16k) declaration present but NO workflows dir → the row still fires (the
 #      declaration alone is a reason to check) and reads CONSISTENT
