@@ -273,7 +273,8 @@ reads is the one that rots (field: this repo measured 5/5 false-OPEN).
   `<repo>/path/to/thing`, and the plugin's own `file:line` stays VERBATIM
   (public already, and the part that makes the report actionable).
   Issue templates do not render for `gh issue create --title/--body`, so this
-  line is the only place the rule reaches an agent session.
+  line and way-of-working's collaboration section are the two plugin surfaces
+  that reach an agent session with the rule.
 - **Verification code this campaign WROTE gets a disposition, in this land.**
   The evidence cell carries `verification:` BY NAME, with exactly one of three
   verdicts: `verification: promoted to tests/ — <path>` /
@@ -358,7 +359,7 @@ complete:
 <!-- ohd:land-report-scaffold v0.7.0 -->
 | phase | ran? | evidence |
 |-------|------|----------|
-| 0 preconditions      | yes/skip | <command or output ref> |
+| 0 preconditions      | yes/skip | <command or output ref>; on branch 1, the `- ci: retired (…)` line quoted VERBATIM |
 | 0.5 plan recorded    | yes/skip | ... |
 | 1 working-tree safety| yes/skip | ... |
 | 2 re-validation      | yes/skip | ... |
@@ -380,8 +381,12 @@ memory is a soft layer, the script gate is the backstop).
 - `evidence` must reference something that actually happened this land — a
   command you ran, an output you saw, a diff/commit hash. An empty or vague
   evidence cell means the phase DID NOT HAPPEN — go run it.
-- **Three rows have NAMED contents, not free-form evidence** (all are Phase
+- **Four rows have NAMED contents, not free-form evidence** (all are Phase
   rules above, repeated here because this table is what actually gets filled):
+  row 0, when the project declares CI retired, carries that declaration line
+  QUOTED VERBATIM — the citation IS the attestation, and a cell that merely
+  says "CI retired" attests nothing and rebuilds the per-land re-derivation
+  the declaration exists to end;
   row 3 carries the convergence log — per round, the reviewer and the SHA it
   reviewed, ending C0 I0 with every residual ruled on, or, past ~2 rounds,
   the terminal round line plus the pointer to the named log section (the
@@ -399,7 +404,10 @@ memory is a soft layer, the script gate is the backstop).
   `<!-- ohd:land-report-scaffold … -->` marker above the table** — fill in
   after each prompt; a prompt left with nothing after it reads as silent, not
   attested. `sanity:` is still skill-carried: write it into the row-6 cell by
-  hand. The MARKER, not the prompts, is what dates a report: `reference:` and
+  hand, and so is row 0's verbatim declaration — the scaffold seeds row 0
+  empty, because that citation is owed only on the branch where a declaration
+  exists, and a prompt seeded into every land would read as owed by all of
+  them. The MARKER, not the prompts, is what dates a report: `reference:` and
   `verification:` have been mandated ritual vocabulary since v0.6.0, so a
   report written before this scaffold existed carries them too. A hand-written
   or older report simply has no marker, and /ohd-checkup's ritual-bypass row
