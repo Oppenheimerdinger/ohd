@@ -107,6 +107,13 @@ branch→PR→`code-review:code-review`→merge.
 
 ## Conventions
 
+- ci: retired (2026-08-11 — owner directive; release gate is the local hermetic suite)
+  <!-- The declaration campaign-land Phase 0 greps (skill 1a form). Kept on ONE
+       physical line against this file's usual wrap: both consumers quote the
+       MATCHED LINE verbatim, so a wrapped declaration cites itself truncated
+       (measured — the first draft of this line did exactly that). Until the
+       workflow is disabled server-side, /ohd-checkup's ci-coherence row
+       correctly reports DRIFT against this line — that is the row working. -->
 - Skill description budget ~50 words. Korean trigger phrases are a feature —
   include them.
 - Generic-word commands take the `ohd-` prefix (first case: `/ohd-setup`) to
