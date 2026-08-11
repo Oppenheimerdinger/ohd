@@ -2,15 +2,40 @@
 
 Public Claude Code harness plugin. Development happens on `main` directly
 (dedicated repo, trunk hook intentionally skipped); the repo self-hosts its
-own lifecycle via `tools/campaign.sh` (drift-guarded against the template in
-CI). Larger changes go branch→PR→`code-review:code-review`→merge.
+own lifecycle via `tools/campaign.sh` (drift-guarded against the template by
+`tests/campaign-smoke.sh`). Larger changes go
+branch→PR→`code-review:code-review`→merge.
 
 ## RELEASING (version-gated cache — the #1 trap)
 
 1. Bump `version` in `.claude-plugin/plugin.json`. Content changes DO NOT
    reach installed copies without a bump.
-2. `node --test tests/*.test.mjs` → all pass. NEVER `node --test tests/`
-   (directory form fails on some Node versions).
+2. **The FULL local gate — every line, all green.** This list is the release
+   gate; running only the first line is not a partial gate, it is a different
+   and much weaker one (the four smoke suites are where campaign.sh, the
+   scaffolder, checkup and the probes are actually exercised, and until v0.7.1
+   they ran only in CI while this step named just the node tests):
+
+       node --test tests/*.test.mjs     # NEVER the directory form
+       bash tests/campaign-smoke.sh     # incl. tools/ vs assets/ parity
+       bash tests/new-project-smoke.sh
+       bash tests/checkup-smoke.sh
+       bash tests/probes-smoke.sh
+
+   `node --test tests/` (directory form) fails on some Node versions — use the
+   glob.
+2a. **Re-run the whole gate HERMETICALLY** — a named step, because no doc
+   named it before and an unwritten habit is not a gate:
+
+       env HOME="$(mktemp -d)" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null \
+         <every command in step 2>
+
+   This reproduces the one thing the retired CI runner uniquely provided: a
+   machine with NO global git identity and no `$HOME` state. The smokes set
+   repo-local identity themselves, so a fixture that silently depended on the
+   maintainer's global config passes locally and fails for everyone else.
+   Verified equivalent for that class only — it does NOT reproduce a clean
+   OS, a different Node, or an empty plugin cache.
 2b. Verification tier is MECHANICAL, not judgment ("micro release" is not an
    exemption — that rationalization shipped five unreviewed releases on
    2026-07-28): diff touches `skills/`, `commands/`, or `assets/` → run

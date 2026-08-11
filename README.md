@@ -86,7 +86,17 @@ live version, remove the local marketplace and re-add
 
 ## Test
 
-    node --test tests/*.test.mjs
+The full suite — all five, and the four smoke suites are where `campaign.sh`,
+the scaffolder, checkup and the probes are actually exercised:
+
+    node --test tests/*.test.mjs     # not the directory form
+    bash tests/campaign-smoke.sh
+    bash tests/new-project-smoke.sh
+    bash tests/checkup-smoke.sh
+    bash tests/probes-smoke.sh
+
+There is no CI: this suite, run locally, is the release gate (see CLAUDE.md
+§RELEASING, which also names the hermetic re-run).
 
 ## Changelog
 
