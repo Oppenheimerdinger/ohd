@@ -622,6 +622,82 @@ grep -q "reference | STALE" <<<"$out"     || fail "try-both resolution swallowed
 grep -q "adr/absent.md" <<<"$out"         || fail "STALE detail does not name the dead adopter-shaped pointer"
 cp "$TMP/conv.bak" docs/reference/conventions.md
 
+# --- the combined placeholder/pointer extractor (#33 A1, #35 A2, #36 A3) ---
+# One battery, because the three fixes share one loop and a fix for any of them
+# can break the others: every rule below is asserted in BOTH directions
+# (counted / not counted, dead-flagged / not flagged).
+cp docs/reference/conventions.md "$TMP/conv.a.bak"
+# each case runs against the SAME base tier plus one appended line, so a case
+# cannot inherit the previous one's line
+refline() { cp "$TMP/conv.a.bak" docs/reference/conventions.md
+  printf '%s\n' "$1" >> docs/reference/conventions.md; "$CK" .; }
+phcount() { cat docs/reference/*.md | grep -c '(example)' || true; }
+
+# A1 (#33): the placeholder count is about the TOKEN, not the line shape — the
+# scaffold's own Route map table row is not a list item and went uncounted.
+cp "$TMP/conv.a.bak" docs/reference/conventions.md
+EXP="$(phcount)"
+out="$("$CK" .)"
+grep -q "$EXP placeholder line(s)" <<<"$out" || fail "A1: placeholder count != the (example) lines actually present (non-list lines invisible)"
+# ...and the count is the (example) token, not a list-item census: a non-list
+# line WITHOUT the token must not move it, a non-list line WITH it must.
+out="$(refline '| filled row | routes | canonical | `src/nowhere.py` |')"
+grep -q "$EXP placeholder line(s)" <<<"$out" || fail "A1: a filled (non-(example)) table row counted as a placeholder"
+out="$(refline '| (example) conv | fused / loop | fused | `probes/engage_grep.sh` |')"
+grep -q "$((EXP + 1)) placeholder line(s)" <<<"$out" || fail "A1: an (example) TABLE row still not counted"
+
+# A2 (#35): the canonical CI declaration is a declaration, not an anchored
+# claim — its natural reason names the command that replaced CI, in backticks.
+out="$(refline '- ci: retired (2026-08-11 — Actions disabled at the repo level; verification is worktree-local `uv run pytest`) — this line is the canonical declaration and `campaign-land` Phase 0 quotes it verbatim.')"
+grep -q "reference | OK" <<<"$out" || fail "A2: the ci-retired declaration line still parsed for pointers"
+# ...exemption is the DECLARATION's, not a blanket one: an ordinary line in the
+# same position with a dead path-shaped pointer must still flag.
+out="$(refline '- the sync path is generated — `tools/gone_decl.py`')"
+grep -q "reference | STALE" <<<"$out" || fail "A2: declaration exemption leaked onto ordinary lines"
+grep -q "tools/gone_decl.py" <<<"$out" || fail "A2: STALE detail does not name the dead pointer"
+# A2 shape rule: only PATH-SHAPED tokens are pointers (contains '/', or ends in
+# an all-alpha dot-extension). Extensionless bare names go silent — fail-open,
+# accepted — and a version string is not a path.
+out="$(refline '- reviews run to convergence — the loop is `uv run pytest`, dispatched by `review-to-convergence`')"
+grep -q "reference | OK" <<<"$out" || fail "A2: a backticked command/skill name read as a dead path"
+out="$(refline '- the pin moved with the release — `v0.7.1`')"
+grep -q "reference | OK" <<<"$out" || fail "A2: a version string read as a dead path"
+# ...and the shape rule must not silence the shapes the tier actually uses:
+out="$(refline '- the writer is generated — `tools/absent_shape.py`')"
+grep -q "reference | STALE" <<<"$out" || fail "A2: shape rule silenced a dead slash-bearing path"
+out="$(refline '- the registry lives beside this — `absent_shape.md`')"
+grep -q "reference | STALE" <<<"$out" || fail "A2: shape rule silenced a dead bare name with an all-alpha extension"
+
+# A3 (#36) cause 1: pytest node-ids. `path.py::test` is the format law's own
+# canonical anchor shape and every one of them was reported dead.
+out="$(refline '- the boot site stays unhelped — `src/nowhere.py::test_no_unhelped_boot_site`')"
+grep -q "reference | OK" <<<"$out" || fail "A3: live pointer with a ::node-id suffix reported dead"
+out="$(refline '- the boot site stays unhelped — `src/absent_node.py::test_x`')"
+grep -q "reference | STALE" <<<"$out" || fail "A3: node-id strip swallowed a genuinely dead file"
+grep -q "src/absent_node.py" <<<"$out" || fail "A3: STALE detail does not name the node-id pointer's FILE"
+# A3 cause 2: one pointer per line was checked, so a companion pointer went
+# unchecked — 21 of them across 12 lines in the motivating measurement.
+out="$(refline '- rows are sorted by key — `src/nowhere.py:57`, cross-checked by `src/absent_second.py`')"
+grep -q "reference | STALE" <<<"$out" || fail "A3: the SECOND pointer on a line is still unchecked"
+grep -q "src/absent_second.py" <<<"$out" || fail "A3: STALE detail does not name the second pointer"
+# ...pointer ZONE = the tail after the FIRST ' — ', so a rationale clause
+# between two separators IS gated...
+out="$(refline '- a fact — the rationale lives in `src/absent_mid.py` — `src/nowhere.py`')"
+grep -q "reference | STALE" <<<"$out" || fail "A3: a pointer between the first and last separator went unchecked"
+grep -q "src/absent_mid.py" <<<"$out" || fail "A3: STALE detail does not name the mid-zone pointer"
+# ...and the CLAIM half is not: naming a removed file is what a gotcha line is
+# FOR, and whole-line iteration would flag every one of them.
+out="$(refline '- the `src/deleted_shim.py` fallback is gone — `src/nowhere.py`')"
+grep -q "reference | OK" <<<"$out" || fail "A3: a claim-half token naming a removed file was flagged dead"
+# A3 recommended: `#anchor` suffixes are part of the citation, not the path.
+echo x > docs/backlog_fixture.md
+out="$(refline '- the deviation is logged — `docs/backlog_fixture.md#17`')"
+grep -q "reference | OK" <<<"$out" || fail "A3: an #anchor suffix made a live pointer read dead"
+out="$(refline '- the deviation is logged — `docs/absent_anchor.md#17`')"
+grep -q "reference | STALE" <<<"$out" || fail "A3: anchor strip swallowed a genuinely dead pointer"
+rm -f docs/backlog_fixture.md
+cp "$TMP/conv.a.bak" docs/reference/conventions.md
+
 # --- campaigns: OPEN count vs verdict-filled count (the false-OPEN census) ---
 cat > docs/campaigns/c1.md <<'EOF'
 # campaign: c1

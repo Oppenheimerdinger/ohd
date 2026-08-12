@@ -374,9 +374,10 @@ fi
 # ---- reference tier: existence + pointer resolution + dated-claim expiry ----
 # A rotted catalog MISDIRECTS, which is worse than no catalog — these two gates
 # are what make the tier safe to trust, so they are constitutive, not advisory.
-# Only backticked pointers in the format law's position (after the LAST ' — ')
-# are resolved; a prose bullet with no pointer is left alone rather than
-# guessed at, and `(example)` scaffold lines are counted, never gated.
+# EVERY backticked path-shaped token in the format law's pointer zone (the tail
+# after the FIRST ' — ') is resolved; a prose bullet with no pointer is left
+# alone rather than guessed at, and `(example)` scaffold lines are counted,
+# never gated.
 REFD="docs/reference"
 if [ ! -d "$REFD" ]; then
   report "reference" "MISSING" "no $REFD/ — the orientation tier (capabilities+gotchas / conventions+invariants+routes / state registry) is where settled facts live so sessions look them up instead of re-deriving; \`/ohd-checkup structure\` offers the scaffold"
@@ -391,26 +392,63 @@ else
     # `read` with a non-zero status, and that line — the one most likely to be
     # freshly appended — went ungated.
     while IFS= read -r line || [ -n "$line" ]; do
+      # A placeholder is a TOKEN, not a line shape, so this test runs before the
+      # list-item filter: the scaffold's Route map TABLE row is not a list item
+      # and went uncounted — and that is the one table whose whole job is to be
+      # executable truth. STATED CAVEAT: the scaffold's instruction PROSE also
+      # carries `(example)`, so a filled tier reads placeholders>0 until the
+      # instruction line itself is deleted. That is correct — deleting the
+      # scaffold's instructions when done IS the finish line — and it is said
+      # out loud so the total is not read as "rows left to fill".
+      case "$line" in *'(example)'*) REF_PH=$((REF_PH + 1)); continue ;; esac
       case "$line" in
         [-*]" "*|"  "[-*]" "*) : ;;
         *) continue ;;
       esac
-      case "$line" in *'(example)'*) REF_PH=$((REF_PH + 1)); continue ;; esac
       case "$line" in
+        # `- ci: retired (<date> — <reason>)` is campaign-land's canonical
+        # declaration and this tier is one of the two homes it may live in. It
+        # is a declaration, not an anchored claim, and a natural reason names
+        # the deleted workflow FILE or the command that replaced CI — both
+        # path-shaped, neither resolvable. Not redundant with the shape rule
+        # below, which the FILE form would sail straight through.
+        *'ci: retired'*) : ;;
         *' — '*)
-          ptr="${line##* — }"
-          case "$ptr" in
-            *'`'*)
-              p="${ptr#*\`}"; p="${p%%\`*}"; p="${p%%:[0-9]*}"
-              # Try BOTH resolutions — root-relative (the format law's dominant
-              # shape, and the passing majority) and relative to the reference
-              # file itself. Adopters write bare names and `../` shapes, which
-              # resolved dead under root-only. Strictly permissive on purpose:
-              # pure dir-relative would break every currently-passing pointer.
-              [ -z "$p" ] || [ -e "$p" ] || [ -e "$(dirname "$f")/$p" ] \
-                || REF_DEAD="$REF_DEAD$p "
-              ;;
-          esac ;;
+          # The pointer ZONE is the tail after the FIRST ' — ', and EVERY
+          # backticked path-shaped token in it is resolved. Tail rather than
+          # just-after-the-LAST-separator because companion pointers (a
+          # rationale link, a second test) went unchecked one per line — 21 of
+          # them across 12 lines in the field, which is how 5 genuinely dead
+          # pointers rode through behind a first one that resolved. Zone rather
+          # than whole line because naming a REMOVED file is exactly what a
+          # gotcha's claim half is for.
+          rest="${line#* — }"
+          while :; do
+            case "$rest" in *'`'*'`'*) : ;; *) break ;; esac
+            rest="${rest#*\`}"; p="${rest%%\`*}"; rest="${rest#*\`}"
+            # `::node-id` FIRST (pytest's canonical anchor form, and the format
+            # law's own encouraged shape), then `:line`, then `#anchor`: all
+            # three are parts of the CITATION, not of the path.
+            p="${p%%::*}"; p="${p%%:[0-9]*}"; p="${p%%#*}"
+            # Only path-shaped tokens are pointers — contains `/`, or ends in
+            # an all-alpha dot-extension. Prose ending in a backticked
+            # identifier (a skill name, a command, a version string) is not a
+            # claim about a file. Fail-open by construction: an extensionless
+            # bare name now goes unchecked, the accepted cost of not reporting
+            # `uv run pytest` as a rotted doc pointer.
+            case "$p" in
+              */*) : ;;
+              *.*) case "${p##*.}" in ""|*[!a-zA-Z]*) continue ;; esac ;;
+              *) continue ;;
+            esac
+            # Try BOTH resolutions — root-relative (the format law's dominant
+            # shape, and the passing majority) and relative to the reference
+            # file itself. Adopters write bare names and `../` shapes, which
+            # resolved dead under root-only. Strictly permissive on purpose:
+            # pure dir-relative would break every currently-passing pointer.
+            [ -e "$p" ] || [ -e "$(dirname "$f")/$p" ] \
+              || REF_DEAD="$REF_DEAD$p "
+          done ;;
       esac
       if [ "$IS_STATE" = 1 ] && [ -n "$REF_CUT" ]; then
         for d in $(printf '%s' "$line" | grep -o 'as of [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' | sed 's/as of //' || true); do
