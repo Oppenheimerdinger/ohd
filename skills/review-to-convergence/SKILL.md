@@ -23,7 +23,7 @@ Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial 
 ## The loop
 1. Produce it (test-first for code).
 2. Dispatch an **independent** reviewer (fresh context; reviewer ≠ author).
-3. Fix Critical/Important; log Minor. A false claim is fixed by sweeping every restatement of it, not the one line the reviewer happened to cite.
+3. Fix Critical/Important; log Minor. A false claim is fixed by sweeping every restatement of it, not the one line the reviewer happened to cite. **The fix wave declares its scope** — the next round's log line names what entered beyond the findings' repairs, and anything additional either carries its one-clause justification there or goes to the follow-on line instead: review-prompted hardening is new code written under fatigue that reviews itself worst (a field run spent rounds 3–7 finding defects exclusively in it, and ended by deleting 81 of its lines).
 4. Re-review → step 2.
 5. A round returning **zero Critical and zero Important**, every residual disposed ⟹ done — or, when the loop restarted on a replaced artifact, that round plus the one sanctioned confirmation round on the frozen hash (below). Not before.
 
@@ -49,8 +49,10 @@ by riding out the terminal round. A residual with none recorded means NOT
 converged: closure by fiat with a log line drawn around it.
 
 **Convergence log (artifact, hand-off blocker):** when declaring done, print
-one line per round — `round N: <reviewers>× <lens> @<sha> → X findings →
-fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ C0 I0` (zero Critical, zero Important) plus each residual's disposition.
+one line per round — `round N: <reviewers>× <lens> @<sha> (fix wave: repairs
+only | +N additional: <one-clause reason>) → X findings →
+fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ C0 I0` (zero Critical, zero Important) plus each residual's disposition. The fix-wave
+token is step 3's declaration, and it is owed from round 2 on (round 1 fixed nothing yet).
 **This is the one format**; other skills point here rather than restate it.
 The lens and reviewer count are part of the log: `C0 I0` from one design-lens
 pass must not relay as the multi-reviewer rigor it wasn't. A fixed-pipeline
