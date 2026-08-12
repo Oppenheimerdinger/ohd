@@ -22,3 +22,7 @@ reason. -->
 - [ ] D1/D2 issue comments (#25 trigger note); D4 at release
 - [ ] version 0.8.0 + CHANGELOG (BEHAVIOR-CHANGE exactly 3: B1/B2/C2)
 - [ ] campaign.sh mirror parity + r2c cap count reported (verify at land)
+
+## convergence log (r2c — this loop dogfoods B1/B2)
+- round 1: plugin-validator (fresh agent, session model) + independent review (fresh agent, session model — a FIRST instance died to a usage limit mid-run and was relaunched with no inheritance; the dead instance's partial output was discarded) @83c89f9 → C0 H2 L7. Fix wave 7409122 (fix wave: repairs only — R1 testpaths literal comparison incl. glob→MANUAL-CHECK, R2 deep-solve format restatement → pure pointer) + 31465f2 (fix wave: +3 additional: mutation-survivors M1/M8 and a witnessless assertion — each with its one-clause justification in the commit). 4 LOWs routed per B1's default: hook retry-message clause, URL/glob token skip, table-row pointer gating, extractor edges → follow-on/backlog at land.
+- gate results quoted at round 1 (for the terminal round's B2 re-run): all five suites PASS plain and hermetic @31465f2; r2c numstat vs merge-base = 12 insertions 3 deletions (net +9, cap ≤ +10); parity OK; release greps clean over added lines.
