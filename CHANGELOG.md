@@ -1,3 +1,68 @@
+## v0.8.0 (2026-08-12)
+
+BEHAVIOR-CHANGE: a fix wave now DECLARES its scope — `review-to-convergence`'s convergence-log line carries `(fix wave: repairs only | +N additional: <one-clause reason>)` from round 2 on, and additional work without a clause routes to the follow-on line instead of riding the round.
+
+BEHAVIOR-CHANGE: the terminal review round's INPUT now includes the convergence log (in a campaign, the filled land-report rows too), and that round re-runs every gate result quoted there, checks each round's `@<sha>` exists and is unshared, and checks that each round line declares its provenance — declaration only, never truth.
+
+BEHAVIOR-CHANGE: `campaign.sh new` gains a lifecycle hook point — after the state-doc write it invokes `tools/campaign-post-create` with the doc path if that in-repo file exists and is executable; absent means no change, and a failing hook is loud while the doc stays.
+
+Two inputs: six field-filed issues from 0.7.0-era sessions (#33–#38, one of
+them a completed five-campaign autonomous mandate), and the observation
+running through all of them that a gate which fails OPEN teaches its reader to
+skip it — after which the guard is gone without anyone deciding to remove it.
+
+### The reference tier's gate stops failing open (#33, #35, #36)
+
+- `(example)` placeholders are counted wherever they sit, not only on list
+  items — the shipped scaffold's own Route map table row was invisible to the
+  count, which is the one table whose job is to be executable truth. Stated
+  caveat: the scaffold's instruction PROSE carries the token too, so a filled
+  tier reads placeholders>0 until that line is deleted. Deleting the scaffold's
+  instructions when done IS the finish line.
+- The canonical `- ci: retired (<date> — <reason>)` declaration is exempt from
+  pointer parsing, and independently, only PATH-SHAPED tokens (containing `/`,
+  or ending in an all-alpha dot-extension) are treated as pointers at all. Both
+  halves ship because neither covers the other: a natural retirement reason
+  names the deleted workflow FILE, which is path-shaped and nonexistent. The
+  accepted cost is stated: an extensionless bare name now goes unchecked.
+- `path.py::test_name` node-ids resolve (the suffix is stripped before the
+  `:line` strip and the shape test), `#anchor` suffixes are stripped, and EVERY
+  backticked path-shaped token in the pointer zone is resolved rather than only
+  the first — 21 companion pointers across 12 lines went unchecked in the
+  measurement that filed this, which is how 5 genuinely dead ones passed. The
+  zone is the tail after the FIRST ` — `, deliberately: whole-line iteration
+  false-flags claim-half tokens naming removed files.
+- One fixture battery across all three, every rule asserted in both directions.
+
+### Ritual shape (#38)
+
+- Fix-wave scope declaration and the terminal attestation pass, above.
+- The pre-registered revert bar is documented in r2c's Scope guard: a NUMERIC
+  trigger committed to the state doc BEFORE the round that could fire it, and
+  the reviewer reports the count EVEN WHEN IT IS ZERO. An OPTIONAL pattern —
+  one field witness is one; trigger to mandate it is a second. The state-doc
+  scaffold prompts for it so the bar lands in the doc rather than in chat.
+- `way-of-working` gains one routing row: a review finding DEFAULTS to a
+  backlog/follow-on line, and promoting it to a campaign requires naming why it
+  cannot wait.
+
+### Census & lifecycle (#34, #37)
+
+- `structure` mode gains a `## runner scope` row: tracked pytest-collectible
+  files (`test_*.py`, `*_test.py`) that fall outside the runner's configured
+  `testpaths`. Section-scoped awk over `[pytest]` / `[tool:pytest]` ini and
+  `[tool.pytest.ini_options]` toml including simple multiline arrays — bash and
+  awk only, no python3. No config or no `testpaths` leaves the row SILENT
+  (pytest collects rootdir-wide, so everything is in scope); a key present but
+  not literally extractable raises MANUAL-CHECK naming the file. The orphan
+  census's scope note now cross-references it honestly: a colocated test dir
+  the runner does not discover is invisible to that census.
+- The post-create hook point, above. The `CAMPAIGN_POST_CREATE` env var the
+  filing issue also proposed is deliberately CUT: an out-of-repo channel (a
+  poisoned `.envrc`, CI env, or shell profile) would make a routine `new` exec
+  an arbitrary binary, while a committed hook is the same trust class as
+  `campaign.sh` itself.
+
 ## v0.7.1 (2026-08-11)
 
 BEHAVIOR-CHANGE: an autonomous mandate's loop is now oh-my-claudecode's ralph, armed by an explicit state write and then PROBED for the iteration banner before the session trusts it — invoking the ralph skill does not arm the loop, and the official ralph-loop plugin is no longer wired anywhere.
