@@ -405,15 +405,31 @@ else
         [-*]" "*|"  "[-*]" "*) : ;;
         *) continue ;;
       esac
+      # `- ci: retired (<date> — <reason>)` is campaign-land's canonical
+      # declaration and this tier is one of the two homes it may live in. It is
+      # a declaration, not an anchored claim, and a natural reason names the
+      # deleted workflow FILE or the command that replaced CI — both
+      # path-shaped, neither resolvable. Not redundant with the shape rule
+      # below, which the FILE form would sail straight through.
+      # Anchored to the declaration SHAPE — the same
+      # `^[[:space:]]*-[[:space:]]*ci:[[:space:]]*retired` the CI row greps
+      # above — and NOT to the token appearing anywhere on the line: a blanket
+      # substring silences dead pointers on any line that merely MENTIONS the
+      # declaration, which is a fail-open sitting inside the fail-open sweep.
+      dcl="$line"
+      while [ "${dcl#[[:space:]]}" != "$dcl" ]; do dcl="${dcl#[[:space:]]}"; done
+      dcl="${dcl#[-*]}"
+      while [ "${dcl#[[:space:]]}" != "$dcl" ]; do dcl="${dcl#[[:space:]]}"; done
+      IS_DECL=0
+      case "$dcl" in
+        ci:*) dcl="${dcl#ci:}"
+              while [ "${dcl#[[:space:]]}" != "$dcl" ]; do dcl="${dcl#[[:space:]]}"; done
+              case "$dcl" in retired*) IS_DECL=1 ;; esac ;;
+      esac
       case "$line" in
-        # `- ci: retired (<date> — <reason>)` is campaign-land's canonical
-        # declaration and this tier is one of the two homes it may live in. It
-        # is a declaration, not an anchored claim, and a natural reason names
-        # the deleted workflow FILE or the command that replaced CI — both
-        # path-shaped, neither resolvable. Not redundant with the shape rule
-        # below, which the FILE form would sail straight through.
-        *'ci: retired'*) : ;;
-        *' — '*)
+        # the exemption skips POINTER PARSING only — a declaration line still
+        # reaches the dated-claim check below, exactly as it did before
+        *' — '*) if [ "$IS_DECL" = 1 ]; then :; else
           # The pointer ZONE is the tail after the FIRST ' — ', and EVERY
           # backticked path-shaped token in it is resolved. Tail rather than
           # just-after-the-LAST-separator because companion pointers (a
@@ -448,7 +464,7 @@ else
             # pure dir-relative would break every currently-passing pointer.
             [ -e "$p" ] || [ -e "$(dirname "$f")/$p" ] \
               || REF_DEAD="$REF_DEAD$p "
-          done ;;
+          done; fi ;;
       esac
       if [ "$IS_STATE" = 1 ] && [ -n "$REF_CUT" ]; then
         for d in $(printf '%s' "$line" | grep -o 'as of [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' | sed 's/as of //' || true); do

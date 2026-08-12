@@ -696,6 +696,12 @@ grep -q "reference | OK" <<<"$out" || fail "A3: an #anchor suffix made a live po
 out="$(refline '- the deviation is logged — `docs/absent_anchor.md#17`')"
 grep -q "reference | STALE" <<<"$out" || fail "A3: anchor strip swallowed a genuinely dead pointer"
 rm -f docs/backlog_fixture.md
+# The declaration exemption is anchored to the declaration SHAPE (campaign-land
+# Phase 0's own grep), not to the token appearing anywhere on the line — a
+# blanket substring is a fail-open sitting inside the fail-open sweep.
+out="$(refline '- the ci: retired declaration lives in CLAUDE.md, not here — `docs/gone_mention.md`')"
+grep -q "reference | STALE" <<<"$out" || fail "A2: a line merely MENTIONING 'ci: retired' silenced its dead pointer"
+grep -q "docs/gone_mention.md" <<<"$out" || fail "A2: STALE detail does not name the mention-line's dead pointer"
 cp "$TMP/conv.a.bak" docs/reference/conventions.md
 
 # --- campaigns: OPEN count vs verdict-filled count (the false-OPEN census) ---
@@ -868,6 +874,9 @@ mkdir -p core/tests tests
 printf 'def test_a():\n    assert 1\n' > core/tests/test_colocated.py
 printf 'def test_c():\n    assert 1\n' > core/tests/other_test.py
 printf 'def test_b():\n    assert 1\n' > tests/test_in_scope.py
+# a name the orphan census's VER_RE DOES match, and pytest does not collect —
+# the witness for "the census's regex never leaks into this row's candidate set"
+printf '#!/bin/sh\necho g\n' > tools/check_gate.sh
 git add -A && git commit -qm fixture-runner-scope
 # section-scoped: these same paths appear in the orphan census in this very
 # output, so a whole-output grep would witness the wrong section
@@ -885,13 +894,18 @@ grep -qi "runner scope" <<<"$out"                || fail "C1: no runner-scope ro
 grep -q "core/tests/test_colocated.py" <<<"$out" || fail "C1: never-collected colocated test not reported"
 grep -q "core/tests/other_test.py" <<<"$out"     || fail "C1: the *_test.py naming form is not treated as a candidate"
 grep -q "tests/test_in_scope.py" <<<"$out"       && fail "C1: a test INSIDE testpaths reported as out of scope"
-grep -q "tools/helper.sh" <<<"$out"              && fail "C1: a shell check censused as a pytest candidate (VER_RE leaked in)"
+grep -q "tools/check_gate.sh" <<<"$(rsec "$out")" && fail "C1: a VER_RE-matching shell check leaked into the pytest candidate set"
 # R1: `./tests` is the directory pytest resolves it to. A literal comparison
 # here does not fail safe — it NAMES a file the runner really does collect.
 printf '[tool.pytest.ini_options]\ntestpaths = ["./tests"]\n' > pyproject.toml
 rs="$(rsec "$("$CK" . --structure)")"
 grep -q "tests/test_in_scope.py" <<<"$rs"        && fail "C1/R1: './tests' compared literally — a COLLECTED file reported as never-collected"
 grep -q "core/tests/test_colocated.py" <<<"$rs"  || fail "C1/R1: './tests' normalisation swallowed a genuinely out-of-scope file"
+# ...the trailing-slash form takes the same normalisation and was never asserted
+printf '[tool.pytest.ini_options]\ntestpaths = ["tests/"]\n' > pyproject.toml
+rs="$(rsec "$("$CK" . --structure)")"
+grep -q "tests/test_in_scope.py" <<<"$rs"        && fail "C1: trailing-slash testpaths compared literally"
+grep -q "core/tests/test_colocated.py" <<<"$rs"  || fail "C1: trailing-slash normalisation swallowed a genuinely out-of-scope file"
 # R1: a GLOB in testpaths is pytest's own feature. This row does not implement
 # glob semantics, so it must STOP rather than answer — the row's own stated
 # philosophy, already used for the unparseable case.
@@ -924,7 +938,7 @@ rm setup.cfg
 # the census's own scope note must SAY it cannot answer this
 out="$("$CK" . --structure)"
 grep -qi "runner-scope row" <<<"$out"            || fail "C1: the orphan-census scope note does not cross-reference this row"
-git rm -rq core tests && git commit -qm fixture-runner-scope-undo
+git rm -rq core tests tools/check_gate.sh && git commit -qm fixture-runner-scope-undo
 
 # C5 state-claim staleness: opt-in only, listed with NO dating, and the
 # reference tier is excluded (its own expiry gate already covers state.md)
