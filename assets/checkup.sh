@@ -794,7 +794,104 @@ if [ "$STRUCT" = 1 ]; then
   echo "   file in it has an implicit inbound reference, so scanning it would report"
   echo "   false orphans. A suite the CI config must NAME is in scope only if it"
   echo "   lives in the three directories above."
+  echo "   HONEST CROSS-REFERENCE: that exclusion is safe only while the runner"
+  echo "   really does discover the directory. A colocated test dir it does NOT"
+  echo "   collect looks discovered and is invisible here — the runner-scope row"
+  echo "   below is the check for that, and this census cannot answer it."
   echo ""
+
+  # 2b. runner scope: tracked tests the configured runner never collects -----
+  # Distinct question from the census above ("does anything reference this
+  # file"): this one compares the RUNNER's configured scope against tracked
+  # test files, and is answerable exit-code-shaped. Field witness: 8 tests over
+  # two adopted modules had never been collected while `pytest` reported green,
+  # because `testpaths` named a sibling directory. `testpaths` ONLY —
+  # norecursedirs is a different parser class with no field witness yet.
+  # bash+awk by construction: checkup has no python3 dependency and does not
+  # acquire one for a report row.
+  RS_F=""; RS_TP=""
+  for c in pytest.ini pyproject.toml tox.ini setup.cfg; do
+    [ -f "$c" ] || continue
+    case "$c" in
+      pyproject.toml) sec="[tool.pytest.ini_options]" ;;
+      setup.cfg)      sec="[tool:pytest]" ;;
+      *)              sec="[pytest]" ;;
+    esac
+    # section-SCOPED: a `testpaths` key under some other tool's table is not
+    # pytest's. Handles ini `a b` lists and toml `["a", "b"]` including the
+    # simple multiline array form.
+    RS_TP="$(awk -v sec="$sec" -v Q="'" '
+      { l=$0; sub(/[[:space:]]*[#;].*$/, "", l)
+        t=l; sub(/^[[:space:]]+/, "", t); sub(/[[:space:]]+$/, "", t)
+        if (open) { val = val " " t; if (t ~ /\]/) open=0; next }
+        if (t ~ /^\[/) { insec = (t == sec); if (insec) sawsec=1; next }
+        if (insec && t ~ /^testpaths[[:space:]]*=/) {
+          found=1; v=t; sub(/^testpaths[[:space:]]*=[[:space:]]*/, "", v)
+          if (v ~ /\[/ && v !~ /\]/) { open=1; val=v; next }
+          val=v } }
+      END { if (!sawsec) { print "NOSEC"; exit }
+            if (!found)  { print "NOKEY"; exit }
+            gsub(/[][",]/, " ", val); gsub(Q, " ", val)
+            n=split(val, a, /[[:space:]]+/); out=""
+            for (i = 1; i <= n; i++) if (a[i] != "") out = out a[i] "\n"
+            if (out == "") { print "EMPTY"; exit }
+            printf "%s", out }' "$c" 2>/dev/null || echo NOSEC)"
+    case "$RS_TP" in
+      # pytest.ini IS the config file even with no `[pytest]` section; for the
+      # other three the section is what makes the file pytest's config at all,
+      # so an absent one means keep looking.
+      NOSEC) if [ "$c" != pytest.ini ]; then RS_TP=""; continue; fi
+             RS_TP=NOKEY ;;
+      "")    RS_TP=NOKEY ;;
+    esac
+    RS_F="$c"; break
+  done
+  if [ -n "$RS_F" ] && [ "$RS_TP" = EMPTY ]; then
+    echo "## runner scope — MANUAL-CHECK"
+    echo "  \`$RS_F\` declares \`testpaths\` but nothing literal could be extracted"
+    echo "  from it. Read the key by hand and compare it against the tracked test"
+    echo "  files: a parser that guesses here would print a confident wrong answer,"
+    echo "  which is the exact failure this row exists to end."
+    echo ""
+  elif [ -n "$RS_F" ] && [ "$RS_TP" != NOKEY ]; then
+    # collected into an ARRAY, not a `a|b` case pattern: `|` arrives after
+    # expansion, and a case pattern's alternation is parsed before it — the
+    # pattern would match one literal string containing a pipe.
+    RS_A=(); RS_ALL=0
+    while IFS= read -r tp; do
+      [ -n "$tp" ] || continue
+      tp="${tp%/}"
+      if [ "$tp" = "." ] || [ -z "$tp" ]; then RS_ALL=1; break; fi
+      RS_A[${#RS_A[@]}]="$tp"
+    done <<RSTP
+$RS_TP
+RSTP
+    RS_OUT=""; RS_N=0; RS_TOT=0
+    while IFS= read -r t; do
+      case "$t" in test_*.py|*_test.py|*/test_*.py|*/*_test.py) : ;; *) continue ;; esac
+      RS_TOT=$((RS_TOT + 1))
+      [ "$RS_ALL" = 0 ] || continue
+      RS_IN=0
+      for tp in "${RS_A[@]}"; do
+        case "$t" in "$tp"/*|"$tp") RS_IN=1; break ;; esac
+      done
+      [ "$RS_IN" = 0 ] || continue
+      RS_N=$((RS_N + 1)); RS_OUT="$RS_OUT  $t
+"
+    done <<RSFILES
+$(git ls-files 2>/dev/null || true)
+RSFILES
+    echo "## runner scope — $RS_N of $RS_TOT tracked pytest-collectible file(s) outside \`testpaths\` ($RS_F)"
+    [ -z "$RS_OUT" ] || printf '%s' "$RS_OUT"
+    echo "   A file listed here is not a failing test — it is a test the configured"
+    echo "   runner never collects, so it reads green by never running. Widen"
+    echo "   testpaths or move the file. Candidates are pytest-COLLECTIBLE names"
+    echo "   only (test_*.py / *_test.py), never the census's verification-family"
+    echo "   regex above: \"this shell check is outside pytest scope\" is a nonsense"
+    echo "   finding. SILENT BY DESIGN when no pytest config declares testpaths —"
+    echo "   pytest then collects rootdir-wide and everything is in scope."
+    echo ""
+  fi
 
   # 3. plans/specs corpus + doc-size histogram ------------------------------
   TRACKED_DOCS="$(git ls-files 2>/dev/null | grep -E '^docs/.*\.md$' || true)"

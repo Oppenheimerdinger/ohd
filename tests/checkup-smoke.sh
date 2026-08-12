@@ -858,6 +858,57 @@ grep -qi "harness repo itself" <<<"$out"    || fail "census does not state it ap
 grep -qi "baseline" <<<"$out"               || fail "structure run banks no baselines for the re-count"
 # R22: counts and byte sizes ONLY — no token estimates anywhere
 grep -qiE "[0-9][^|]*tok(en)?s?\b" <<<"$out" && fail "structure output estimates tokens (R22-blocked)"
+# C1 (#34) runner scope: tracked pytest-collectible files the configured runner
+# never collects — the question the orphan census structurally cannot answer.
+# Both directions on every rule: SILENT where pytest collects rootdir-wide,
+# speaking only where a config narrows collection.
+out="$("$CK" . --structure)"
+grep -qi "runner scope" <<<"$out"                && fail "C1: row spoke on a project with NO pytest config (must be SILENT)"
+mkdir -p core/tests tests
+printf 'def test_a():\n    assert 1\n' > core/tests/test_colocated.py
+printf 'def test_c():\n    assert 1\n' > core/tests/other_test.py
+printf 'def test_b():\n    assert 1\n' > tests/test_in_scope.py
+git add -A && git commit -qm fixture-runner-scope
+# a config carrying the section but NO testpaths: pytest collects rootdir-wide,
+# so everything is in scope and the row still has nothing to say
+printf '[tool.pytest.ini_options]\naddopts = "-q"\n' > pyproject.toml
+out="$("$CK" . --structure)"
+grep -qi "runner scope" <<<"$out"                && fail "C1: row spoke when the config declares no testpaths (must be SILENT)"
+# testpaths narrows collection, and the colocated dir stops being discovered —
+# it still LOOKS discovered, which is the whole failure
+printf '[tool.pytest.ini_options]\ntestpaths = ["tests"]\n' > pyproject.toml
+out="$("$CK" . --structure)"
+grep -qi "runner scope" <<<"$out"                || fail "C1: no runner-scope row when testpaths narrows collection"
+grep -q "core/tests/test_colocated.py" <<<"$out" || fail "C1: never-collected colocated test not reported"
+grep -q "core/tests/other_test.py" <<<"$out"     || fail "C1: the *_test.py naming form is not treated as a candidate"
+grep -q "tests/test_in_scope.py" <<<"$out"       && fail "C1: a test INSIDE testpaths reported as out of scope"
+grep -q "tools/helper.sh" <<<"$out"              && fail "C1: a shell check censused as a pytest candidate (VER_RE leaked in)"
+# the simple MULTILINE array form parses, and widening testpaths silences it
+printf '[tool.pytest.ini_options]\ntestpaths = [\n  "tests",\n  "core",\n]\n' > pyproject.toml
+out="$("$CK" . --structure)"
+grep -qi "runner scope" <<<"$out"                || fail "C1: row vanished instead of reporting zero"
+grep -q "core/tests/test_colocated.py" <<<"$out" && fail "C1: the multiline testpaths array was not parsed"
+rm pyproject.toml
+# ini form, and SECTION SCOPING both ways: a testpaths under another tool's
+# table is not pytest's
+printf '[tool:other]\ntestpaths = tests\n' > setup.cfg
+out="$("$CK" . --structure)"
+grep -qi "runner scope" <<<"$out"                && fail "C1: testpaths under another tool's section read as pytest's"
+printf '[tool:pytest]\ntestpaths = tests\n' > setup.cfg
+out="$("$CK" . --structure)"
+grep -q "core/tests/test_colocated.py" <<<"$out" || fail "C1: ini-form [tool:pytest] testpaths not parsed"
+# key present but nothing literal extractable: MANUAL-CHECK naming the file —
+# a parser that guesses here prints a confident wrong answer
+printf '[tool:pytest]\ntestpaths =\n' > setup.cfg
+out="$("$CK" . --structure)"
+grep -q "MANUAL-CHECK" <<<"$out"                 || fail "C1: unparseable testpaths did not raise MANUAL-CHECK"
+grep -q "setup.cfg" <<<"$out"                    || fail "C1: MANUAL-CHECK does not name the config file"
+rm setup.cfg
+# the census's own scope note must SAY it cannot answer this
+out="$("$CK" . --structure)"
+grep -qi "runner-scope row" <<<"$out"            || fail "C1: the orphan-census scope note does not cross-reference this row"
+git rm -rq core tests && git commit -qm fixture-runner-scope-undo
+
 # C5 state-claim staleness: opt-in only, listed with NO dating, and the
 # reference tier is excluded (its own expiry gate already covers state.md)
 mkdir -p docs/reference
