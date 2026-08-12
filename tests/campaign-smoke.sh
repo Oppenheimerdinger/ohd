@@ -125,10 +125,42 @@ export CAMPAIGN_TRUNK=main
 )
 
 # new: worktree + branch + state doc
-"$CS" new c1 >/dev/null
+out="$("$CS" new c1)"
 [ -d "$TMP/wt/c1" ]                       || fail "worktree missing"
 git rev-parse -q --verify c1 >/dev/null   || fail "branch missing"
 [ -f docs/campaigns/c1.md ]                || fail "state doc missing"
+# B3: the scaffold prompts for the pre-registered revert bar, so the bar lands
+# in the doc rather than in chat
+grep -qi "revert bar" docs/campaigns/c1.md || fail "state-doc scaffold does not prompt for the pre-registered revert bar"
+
+# C2 (#37) post-create hook — three legs: absent, present, failing.
+# ABSENT is the default and must be a zero-behavior-change path.
+grep -qi "post-create" <<<"$out"           && fail "C2: absent hook still announced itself"
+# PRESENT: invoked with the new doc's path, before any commit `new` could make
+mkdir -p tools
+printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$1" >> .hook-registry\n' > tools/campaign-post-create
+chmod +x tools/campaign-post-create
+out="$("$CS" new c6)"
+grep -qxF "docs/campaigns/c6.md" .hook-registry || fail "C2: hook not invoked with the new doc's path"
+grep -qi "post-create hook" <<<"$out"      || fail "C2: a successful hook run is not reported at all"
+# FAILING: loud, and the doc STAYS — it is the user's work, and `new` has
+# already created the worktree, so a non-zero exit would invite a retry that
+# dies on 'already exists'
+printf '#!/usr/bin/env bash\nexit 3\n' > tools/campaign-post-create
+chmod +x tools/campaign-post-create
+set +e; err="$("$CS" new c7 2>&1 >/dev/null)"; rc=$?; set -e
+[ "$rc" = 0 ]                              || fail "C2: a failing hook aborted 'new' after the worktree already existed"
+[ -f docs/campaigns/c7.md ]                || fail "C2: failing hook rolled back the state doc"
+grep -q "exited 3" <<<"$err"               || fail "C2: the hook's exit status is not reported"
+grep -q "FAILED" <<<"$err"                 || fail "C2: the hook failure is not LOUD"
+# a present-but-not-executable hook is a silent no-op otherwise — exactly the
+# failure this hook point exists to end
+chmod -x tools/campaign-post-create
+err="$("$CS" new c8 2>&1 >/dev/null)"
+grep -qi "not executable" <<<"$err"        || fail "C2: a present but non-executable hook did nothing, silently"
+[ -f docs/campaigns/c8.md ]                || fail "C2: non-executable hook path lost the state doc"
+rm -f tools/campaign-post-create .hook-registry
+for h in c6 c7 c8; do "$CS" abort "$h" --purge >/dev/null 2>&1 || true; done
 
 # name validation (numbered mode rejects free names)
 if CAMPAIGN_NAMING=numbered "$CS" new badname 2>/dev/null; then fail "numbered naming accepted bad name"; fi
