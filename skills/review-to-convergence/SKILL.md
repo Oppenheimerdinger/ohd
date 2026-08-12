@@ -81,6 +81,11 @@ hard iteration cap (the main session sees every review and can judge), but an
 unusually long run is a signal to suspect the deliverable, not to keep
 looping.
 
+**The pre-registered revert bar — an optional pattern, not a requirement.** Before the round that could fire it, commit a NUMERIC trigger into the state doc ("if round N returns a fourth instance of shape X, revert the optional hardening"),
+and ask that round's reviewer to report the count EVEN WHEN IT IS ZERO. Reporting the zero is what makes the count decide something instead of being arguable; committing it beforehand is what keeps it a bar rather than a rationalization.
+It complements the moving-target stop above rather than replacing it — that stop fires when the DELIVERABLE is mutating, this one bounds optional-hardening churn on a deliverable that is already fixed.
+A field run committed both of its bars 34 and 21 minutes before the reviewers that fired them, declined one on the record and honored the next; one witness is why this is a pattern and not a mandate, so a loop that registers no bar is not out of compliance.
+
 ## Reviewer focus by deliverable
 | Deliverable | Reviewer checks |
 |---|---|
