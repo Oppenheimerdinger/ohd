@@ -869,6 +869,9 @@ printf 'def test_a():\n    assert 1\n' > core/tests/test_colocated.py
 printf 'def test_c():\n    assert 1\n' > core/tests/other_test.py
 printf 'def test_b():\n    assert 1\n' > tests/test_in_scope.py
 git add -A && git commit -qm fixture-runner-scope
+# section-scoped: these same paths appear in the orphan census in this very
+# output, so a whole-output grep would witness the wrong section
+rsec() { awk '/^## runner scope/,/^$/' <<<"$1"; }
 # a config carrying the section but NO testpaths: pytest collects rootdir-wide,
 # so everything is in scope and the row still has nothing to say
 printf '[tool.pytest.ini_options]\naddopts = "-q"\n' > pyproject.toml
@@ -883,6 +886,20 @@ grep -q "core/tests/test_colocated.py" <<<"$out" || fail "C1: never-collected co
 grep -q "core/tests/other_test.py" <<<"$out"     || fail "C1: the *_test.py naming form is not treated as a candidate"
 grep -q "tests/test_in_scope.py" <<<"$out"       && fail "C1: a test INSIDE testpaths reported as out of scope"
 grep -q "tools/helper.sh" <<<"$out"              && fail "C1: a shell check censused as a pytest candidate (VER_RE leaked in)"
+# R1: `./tests` is the directory pytest resolves it to. A literal comparison
+# here does not fail safe — it NAMES a file the runner really does collect.
+printf '[tool.pytest.ini_options]\ntestpaths = ["./tests"]\n' > pyproject.toml
+rs="$(rsec "$("$CK" . --structure)")"
+grep -q "tests/test_in_scope.py" <<<"$rs"        && fail "C1/R1: './tests' compared literally — a COLLECTED file reported as never-collected"
+grep -q "core/tests/test_colocated.py" <<<"$rs"  || fail "C1/R1: './tests' normalisation swallowed a genuinely out-of-scope file"
+# R1: a GLOB in testpaths is pytest's own feature. This row does not implement
+# glob semantics, so it must STOP rather than answer — the row's own stated
+# philosophy, already used for the unparseable case.
+printf '[tool.pytest.ini_options]\ntestpaths = ["tests*"]\n' > pyproject.toml
+out="$("$CK" . --structure)"
+grep -q "MANUAL-CHECK" <<<"$out"                 || fail "C1/R1: a glob in testpaths was answered literally instead of raising MANUAL-CHECK"
+grep -qi "glob" <<<"$out"                        || fail "C1/R1: the MANUAL-CHECK does not name the glob as the cause"
+grep -q "tests/test_in_scope.py" <<<"$(rsec "$out")" && fail "C1/R1: glob testpaths still printed a file verdict"
 # the simple MULTILINE array form parses, and widening testpaths silences it
 printf '[tool.pytest.ini_options]\ntestpaths = [\n  "tests",\n  "core",\n]\n' > pyproject.toml
 out="$("$CK" . --structure)"

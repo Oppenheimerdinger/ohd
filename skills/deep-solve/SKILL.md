@@ -78,8 +78,10 @@ chosen during Phase 1:
    - Fix findings → re-dispatch → repeat until a round returns ZERO Critical
      and ZERO Important, every residual Minor carrying a disposition.
    - Keep a per-round convergence log and print it with the gate banner —
-     review-to-convergence's log format (`round N: <reviewers>× <lens> @<hash>
-     → X findings → fixed/rebutted-upheld/minor-logged`). The deliverable is a
+     in review-to-convergence's log format, READ FROM THAT SKILL rather than
+     copied here: r2c owns the one format, and the copy that used to sit on
+     this line went stale the first time the format grew a field. The
+     deliverable is a
      brief, not a tree, so the `@<sha>` slot is FILLED with a CONTENT hash of
      the brief — `sha256sum | cut -c1-7`, r2c's rule — never dropped: dropping
      it is what made "re-reviewing the same artifact is not a new round"

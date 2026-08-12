@@ -844,14 +844,27 @@ if [ "$STRUCT" = 1 ]; then
              RS_TP=NOKEY ;;
       "")    RS_TP=NOKEY ;;
     esac
+    # pytest expands GLOB patterns in testpaths itself. This row does not
+    # implement glob semantics, and a literal comparison against `tests*` names
+    # files the runner really does collect — so it stops instead of answering,
+    # the same call the unparseable case already makes.
+    case "$RS_TP" in *'*'*|*'?'*|*'['*) RS_TP=GLOB ;; esac
     RS_F="$c"; break
   done
-  if [ -n "$RS_F" ] && [ "$RS_TP" = EMPTY ]; then
+  if [ -n "$RS_F" ] && { [ "$RS_TP" = EMPTY ] || [ "$RS_TP" = GLOB ]; }; then
     echo "## runner scope — MANUAL-CHECK"
-    echo "  \`$RS_F\` declares \`testpaths\` but nothing literal could be extracted"
-    echo "  from it. Read the key by hand and compare it against the tracked test"
-    echo "  files: a parser that guesses here would print a confident wrong answer,"
-    echo "  which is the exact failure this row exists to end."
+    if [ "$RS_TP" = GLOB ]; then
+      echo "  \`$RS_F\` declares \`testpaths\` containing a GLOB pattern, which pytest"
+      echo "  expands itself. This row does not implement glob semantics, so it"
+      echo "  stops here rather than comparing the pattern literally — doing that"
+      echo "  names files the runner genuinely does collect."
+    else
+      echo "  \`$RS_F\` declares \`testpaths\` but nothing literal could be extracted"
+      echo "  from it."
+    fi
+    echo "  Read the key by hand and compare it against the tracked test files: a"
+    echo "  parser that guesses here would print a confident wrong answer, which is"
+    echo "  the exact failure this row exists to end."
     echo ""
   elif [ -n "$RS_F" ] && [ "$RS_TP" != NOKEY ]; then
     # collected into an ARRAY, not a `a|b` case pattern: `|` arrives after
@@ -860,7 +873,10 @@ if [ "$STRUCT" = 1 ]; then
     RS_A=(); RS_ALL=0
     while IFS= read -r tp; do
       [ -n "$tp" ] || continue
-      tp="${tp%/}"
+      # `tests/`, `./tests` and `tests` are ONE directory to pytest, and a
+      # literal comparison against the unnormalised forms reports files the
+      # runner really does collect.
+      tp="${tp%/}"; tp="${tp#./}"
       if [ "$tp" = "." ] || [ -z "$tp" ]; then RS_ALL=1; break; fi
       RS_A[${#RS_A[@]}]="$tp"
     done <<RSTP
