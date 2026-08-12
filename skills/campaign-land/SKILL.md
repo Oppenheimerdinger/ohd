@@ -173,6 +173,12 @@ residual, and a finding closed by the author's own fiat is not one). Shape:
 - **No scaling by diff size.** "Small diff, one finding, obviously fixed" is
   exactly the shape of the regression this rule exists for. A one-line fix gets
   a second look at the fixed SHA like everything else.
+- **The TERMINAL round's brief takes this log and the filled land-report rows
+  as INPUT, not just the diff** — r2c owns what it then checks (quoted gate
+  results re-run, `@<sha>` existence and uniqueness, provenance declared per
+  round). Nine rounds once reviewed a diff while nothing ever read the document
+  making the claims about that review, and an outside evaluator found three
+  false attestations sitting in it.
 
 This standardizes a practice that already exists — 25 of 68 filled Phase-3 rows
 recorded a second look in a dozen ad-hoc phrasings. Writing it one way is what

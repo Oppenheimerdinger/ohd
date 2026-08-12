@@ -110,7 +110,8 @@ cmd_new() {
 - follow-on:
 <!-- a finding made during REVIEW belongs on the follow-on line above: the
 review log is not read at land time. Harness friction goes on a '- friction:'
-line as it happens — reconstructing it at the end loses the small stuff. -->
+line as it happens — reconstructing it at the end loses the small stuff.
+A revert bar (NUMERIC trigger, committed BEFORE the round that could fire it — review-to-convergence's optional pattern) belongs in this doc too, never in chat. -->
 
 ## plan
 <!-- living plan: certain stretch = task checkboxes; uncertain stretch = ONE
@@ -118,6 +119,34 @@ line (next probe + decision rule). Results edit this section, plus a one-line
 reason. -->
 DOC
     echo "state doc: $doc  (TRUNK-owned: commit it on trunk; do NOT commit it on the campaign branch — add/add conflicts at merge)"
+    # Opt-in post-create hook. A project whose own gates key on the doc corpus
+    # needs this doc REGISTERED in the same breath as its creation — otherwise
+    # `new` itself reddens trunk before any work is done (it bit four
+    # consecutive campaigns in the field, including the one opened to fix the
+    # trap). `new` never commits, so the hook necessarily runs before the first
+    # commit: registration and doc land together. Absent = zero behavior change.
+    # IN-REPO PATH ONLY, deliberately — an env-var override would be an
+    # out-of-repo channel (a poisoned .envrc, CI env, or shell profile) making a
+    # routine `new` exec an arbitrary binary; a committed hook is the same trust
+    # class as this script itself.
+    local hook="$ROOT/tools/campaign-post-create"
+    if [ -x "$hook" ]; then
+      local hrc=0
+      "$hook" "$doc" || hrc=$?
+      if [ "$hrc" = 0 ]; then
+        echo "post-create hook: tools/campaign-post-create ok ($doc registered)"
+      else
+        echo "" >&2
+        echo "!! post-create hook FAILED: tools/campaign-post-create exited $hrc" >&2
+        echo "!! the state doc STAYS at $doc — it is your work, and the hook's" >&2
+        echo "!! failure is the hook's news. Register it by hand or fix the hook" >&2
+        echo "!! before landing; whatever the hook was going to tell your gates," >&2
+        echo "!! they have not been told." >&2
+        echo "" >&2
+      fi
+    elif [ -e "$hook" ]; then
+      echo "WARN: $hook exists but is NOT executable, so it did not run — chmod +x it, or delete it. A hook that silently does nothing is the failure this hook point exists to end." >&2
+    fi
   fi
   echo "worktree: $wt  (branch '$n' off origin/$TRUNK)"
   [ -n "$WORKTREE_HINT" ] && echo "${WORKTREE_HINT//\{wt\}/$wt}"

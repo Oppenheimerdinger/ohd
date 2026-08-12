@@ -23,7 +23,7 @@ Genuinely trivial / throwaway / one-line work is exempt. **Anything non-trivial 
 ## The loop
 1. Produce it (test-first for code).
 2. Dispatch an **independent** reviewer (fresh context; reviewer ≠ author).
-3. Fix Critical/Important; log Minor. A false claim is fixed by sweeping every restatement of it, not the one line the reviewer happened to cite.
+3. Fix Critical/Important; log Minor. A false claim is fixed by sweeping every restatement of it, not the one line the reviewer happened to cite. **The fix wave declares its scope** — the next round's log line names what entered beyond the findings' repairs, and anything additional either carries its one-clause justification there or goes to the follow-on line instead: review-prompted hardening is new code written under fatigue that reviews itself worst (a field run spent rounds 3–7 finding defects exclusively in it, and ended by deleting 81 of its lines).
 4. Re-review → step 2.
 5. A round returning **zero Critical and zero Important**, every residual disposed ⟹ done — or, when the loop restarted on a replaced artifact, that round plus the one sanctioned confirmation round on the frozen hash (below). Not before.
 
@@ -49,8 +49,8 @@ by riding out the terminal round. A residual with none recorded means NOT
 converged: closure by fiat with a log line drawn around it.
 
 **Convergence log (artifact, hand-off blocker):** when declaring done, print
-one line per round — `round N: <reviewers>× <lens> @<sha> → X findings →
-fixed/rebutted-upheld/minor-logged`, the terminal round ending `→ C0 I0` (zero Critical, zero Important) plus each residual's disposition.
+one line per round — `round N: <reviewers>× <lens> @<sha> (fix wave: repairs only | +N additional: <one-clause reason>) → X findings → fixed/rebutted-upheld/minor-logged`,
+the terminal round ending `→ C0 I0` (zero Critical, zero Important) plus each residual's disposition. The fix-wave token is step 3's declaration, owed from round 2 on.
 **This is the one format**; other skills point here rather than restate it.
 The lens and reviewer count are part of the log: `C0 I0` from one design-lens
 pass must not relay as the multi-reviewer rigor it wasn't. A fixed-pipeline
@@ -67,6 +67,10 @@ file** (design doc, ADR, analysis), the log goes INTO it (a short `## Review
 log` footer) or its commit message — the file outlives the chat that
 reviewed it.
 
+**The terminal round reviews the attestation layer, not only the diff.** Its INPUT includes the convergence log so far — inside a campaign, the filled land-report rows too — and it runs three checks over them: (a) RE-RUN every gate result quoted there and print the current output beside the quote; a stale quote is a finding.
+(b) Check each round's `@<sha>` exists and that no two rounds share one (the frozen-hash confirmation round above excepted). (c) Check that every round line DECLARES its provenance — a continued agent says `continued rN agent`, a model differing from the session's is named, and an undeclared line reads as "fresh, session model".
+**The reviewer enforces that provenance is DECLARED, never that it is true** — no in-harness reviewer can read transcripts, spawn timestamps or model IDs, so the undeclared reading stands as the AUTHOR's own attestation, falsifiable later against the record. Field witness: three false attestations survived nine rounds of review over the same document.
+
 ## Scope guard
 
 Use this loop only on a FIXED deliverable. If review findings start driving a
@@ -76,6 +80,11 @@ converge. A fixed deliverable normally converges in 1–3 passes; there is no
 hard iteration cap (the main session sees every review and can judge), but an
 unusually long run is a signal to suspect the deliverable, not to keep
 looping.
+
+**The pre-registered revert bar — an optional pattern, not a requirement.** Before the round that could fire it, commit a NUMERIC trigger into the state doc ("if round N returns a fourth instance of shape X, revert the optional hardening"),
+and ask that round's reviewer to report the count EVEN WHEN IT IS ZERO. Reporting the zero is what makes the count decide something instead of being arguable; committing it beforehand is what keeps it a bar rather than a rationalization.
+It complements the moving-target stop above rather than replacing it — that stop fires when the DELIVERABLE is mutating, this one bounds optional-hardening churn on a deliverable that is already fixed.
+A field run committed both of its bars 34 and 21 minutes before the reviewers that fired them, declined one on the record and honored the next; one witness is why this is a pattern and not a mandate, so a loop that registers no bar is not out of compliance.
 
 ## Reviewer focus by deliverable
 | Deliverable | Reviewer checks |
